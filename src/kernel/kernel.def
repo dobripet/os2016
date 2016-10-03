@@ -1,0 +1,5 @@
+LIBRARY kernel.dll
+
+EXPORTS
+	SysCall
+	Run_VM
