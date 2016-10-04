@@ -1,11 +1,12 @@
 #include <Windows.h>
-#include <stdio.h>
+#include <iostream>
 
 typedef void(__stdcall *TRun_VM)();
 
 int main() {
 
-	printf("boot test\n");
+	std::cout << "boot test";
+	
 	HMODULE kernel = LoadLibrary(L"kernel.dll");
 	TRun_VM vm = (TRun_VM)GetProcAddress(kernel, "Run_VM");
 	if (vm) vm();
