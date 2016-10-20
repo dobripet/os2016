@@ -13,7 +13,6 @@ void HandleIO(CONTEXT &regs) {
 			}
 			break;	//scCreateFile
 
-
 		case scWriteFile: {
 				DWORD written;
 				const bool failed = !WriteFile((HANDLE)regs.Rdx, (void*)regs.Rdi, (DWORD)regs.Rcx, &written, NULL);

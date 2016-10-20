@@ -1,5 +1,4 @@
 #include "shell.h"
-
 #include "rtl.h"
 
 size_t __stdcall shell(const CONTEXT &regs) {
