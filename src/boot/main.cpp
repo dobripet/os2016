@@ -4,11 +4,10 @@
 typedef void(__stdcall *TRun_VM)();
 
 int main() {
-
-	std::cout << "boot test\n";
-	std::cin.get();
-	
 	HMODULE kernel = LoadLibrary(L"kernel.dll");
+	if (!kernel) {
+		return 1;
+	}
 	TRun_VM vm = (TRun_VM)GetProcAddress(kernel, "Run_VM");
 	if (vm) vm();
 	FreeLibrary(kernel);
