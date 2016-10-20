@@ -1,4 +1,4 @@
-dovolit/zakázat:
+dovolit/zakázat: 
 - smazání složky, ve které nìco je
 - stejné jméno složky jako souboru
 - pøidání souboru do složky, která neexistuje

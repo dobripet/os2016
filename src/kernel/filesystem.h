@@ -7,7 +7,6 @@
 #include <vector>
 #include <algorithm>
 
-
 typedef struct node {
 	int type;
 	std::string name;

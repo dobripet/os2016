@@ -52,7 +52,6 @@ void Run_VM() {
 	createFile(TYPE_FILE, "C://zcu", "test.txt", "lorem ipsum");
 	createFile(TYPE_DIRECTORY, "C://zcu", "/prvak", "lorem ipsum");
 	createFile(TYPE_FILE, "C://zcu", "prvak/..///prvak/test.txt", "lorem ipsum");
-	createFile(TYPE_FILE, "C://zcu", "prvak/../../../../test.txt", "lorem ipsum");
 
 	deleteFile("C://", "baf.txt");
 	deleteFile("C://", "test.txt");
