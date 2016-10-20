@@ -2,6 +2,10 @@
 
 #include "kernel.h"
 #include "io.h"
+#include "filesystem.h"
+#include <iostream>
+#include <string>
+#include <vector>
 
 HMODULE User_Programs;
 
@@ -42,5 +46,23 @@ void Run_VM() {
 		shell(regs);
 	}
 
+	createFile(TYPE_FILE, "C://", "test.txt", "lorem ipsum");
+	createFile(TYPE_FILE, "C://", "C://baf.txt", "lorem ipsum");
+	createFile(TYPE_DIRECTORY, "C://", "zcu", "lorem ipsum");
+	createFile(TYPE_FILE, "C://zcu", "test.txt", "lorem ipsum");
+	createFile(TYPE_DIRECTORY, "C://zcu", "/prvak", "lorem ipsum");
+	createFile(TYPE_FILE, "C://zcu", "prvak/..///prvak/test.txt", "lorem ipsum");
+	createFile(TYPE_FILE, "C://zcu", "prvak/../../../../test.txt", "lorem ipsum");
+
+	deleteFile("C://", "baf.txt");
+	deleteFile("C://", "test.txt");
+	deleteFile("C://", "zcu/test.txt");
+	deleteFile("C://zcu", "prvak/test.txt");
+	deleteFile("C://", "test.txt");
+	deleteFile("C://", "zcu/prvak/../prvak");
+	deleteFile("C://", "shit");
+	deleteFile("C://", "zcu");
+	
+	std::cin.get();
 	Shutdown_Kernel();
 }
