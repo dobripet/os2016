@@ -3,7 +3,7 @@
 #include <vector>
 
 /*
-num Command {
+enum Command {
 	rd,
 	md,
 	echo,

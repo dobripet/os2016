@@ -59,7 +59,7 @@ bool Parser::parse_commands(std::string line, std::vector<struct Command_params>
 	for (std::string com : commandsStr) {
 		Command_params par;
 		if (!parse_command(com, &par)) {
-			return false;
+			return ERR;
 		} else {
 			commands->push_back(par);
 		}
