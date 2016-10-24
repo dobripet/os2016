@@ -60,7 +60,7 @@ void Run_VM() {
 	deleteFile("C://", "aaa.txt");
 	deleteFile("C://", "bbb.txt");
 	deleteFile("C://", "eee.txt");
-	
+
 	std::cin.get();
 	Shutdown_Kernel();
 }
