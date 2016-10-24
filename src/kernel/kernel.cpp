@@ -46,21 +46,20 @@ void Run_VM() {
 		shell(regs);
 	}
 
-	createFile(TYPE_FILE, "C://", "test.txt", "lorem ipsum");
-	createFile(TYPE_FILE, "C://", "C://baf.txt", "lorem ipsum");
+	createFile(TYPE_FILE, "C://", "aaa.txt", "lorem ipsum");
+	createFile(TYPE_FILE, "C://", "C://bbb.txt", "lorem ipsum");
 	createFile(TYPE_DIRECTORY, "C://", "zcu", "lorem ipsum");
-	createFile(TYPE_FILE, "C://zcu", "test.txt", "lorem ipsum");
+	createFile(TYPE_FILE, "C://zcu", "ccc.txt", "lorem ipsum");
 	createFile(TYPE_DIRECTORY, "C://zcu", "/prvak", "lorem ipsum");
-	createFile(TYPE_FILE, "C://zcu", "prvak/..///prvak/test.txt", "lorem ipsum");
+	createFile(TYPE_FILE, "C://zcu", "prvak/..///prvak/ddd.txt", "lorem ipsum");
 
-	deleteFile("C://", "baf.txt");
-	deleteFile("C://", "test.txt");
-	deleteFile("C://", "zcu/test.txt");
-	deleteFile("C://zcu", "prvak/test.txt");
-	deleteFile("C://", "test.txt");
-	deleteFile("C://", "zcu/prvak/../prvak");
-	deleteFile("C://", "shit");
+	deleteFile("C://zcu", "prvak");
 	deleteFile("C://", "zcu");
+	deleteFile("C://", "zcu/ccc.txt");
+	
+	deleteFile("C://", "aaa.txt");
+	deleteFile("C://", "bbb.txt");
+	deleteFile("C://", "eee.txt");
 	
 	std::cin.get();
 	Shutdown_Kernel();

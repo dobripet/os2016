@@ -32,7 +32,7 @@ struct node *createFile(int type, std::string actualDirectory, std::string path,
 	}
 	
 	struct node *temp = cecko;
-	for (size_t i = 2; i < absolutePath.size(); i++)
+	for (size_t i = 1; i < absolutePath.size(); i++)
 	{
 		for (size_t j = 0; j < temp->children.size(); j++)
 		{
@@ -88,7 +88,7 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 	std::vector<std::string> name = split_string(path);
 
 	struct node *temp = cecko;
-	for (size_t i = 2; i < absolutePath.size(); i++)
+	for (size_t i = 1; i < absolutePath.size(); i++)
 	{
 		for (size_t j = 0; j < temp->children.size(); j++)
 		{
@@ -106,47 +106,63 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 			}
 		}
 	}
-	struct node *parent = temp->parent;
 
-	if (temp->type == TYPE_DIRECTORY) {
-		if ((temp->children).size() > 0) {
-			//TODO: co udìlat, když složka neni prázdná? smazat na základì nìjakých práv, nebo nedovolit vùbec?
-		}
-		else {
-			for (size_t i = 0; i < parent->children.size(); i++)
-			{
-				if (parent->children[i] == temp) {
-
-					parent->children.erase(parent->children.begin() + i);
-					std::cout << "Folder \"" << temp->name << "\" deleted." << std::endl;
-					//todo: delete node (free memory)
-					return S_OK;
-				}
-			}
-			std::cout << "Folder \"" << temp->name << "\" wasn't found." << std::endl;
-		}
+	if (temp != cecko) {
+		deleteFile(temp);
+	}
+	else {
+		std::cout << "Path " << absolutePathStr << " does not exist" << std::endl;
 	}
 
-	if (temp->type == TYPE_FILE) {
-		for (size_t i = 0; i < parent->children.size(); i++)
-		{
-			if (parent->children[i] == temp) {
+	return S_OK;
+}
 
+HRESULT deleteFile(struct node *toDelete) {
+	
+	struct node *parent = toDelete->parent;
+
+	if (toDelete->type == TYPE_DIRECTORY) {
+		if (!(toDelete->children).empty()) {
+			size_t last = (toDelete->children).size();
+			for (size_t i = 0; i < last; i++)
+			{
+				deleteFile(toDelete->children[0]);
+			}
+		}
+		
+		for (size_t i = 0; i < parent->children.size(); i++) {
+			if (parent->children[i] == toDelete) {
 				parent->children.erase(parent->children.begin() + i);
-				std::cout << "File \"" << temp->name << "\" deleted." << std::endl;
+				std::cout << "Folder \"" << toDelete->name << "\" deleted." << std::endl;
 				//todo: delete node (free memory)
 				return S_OK;
 			}
 		}
-		std::cout << "File \"" << temp->name << "\" wasn't found." << std::endl;
+		std::cout << "Folder \"" << toDelete->name << "\" wasn't found." << std::endl;
+		
 	}
-	
+
+	if (toDelete->type == TYPE_FILE) {
+		for (size_t i = 0; i < parent->children.size(); i++)
+		{
+			if (parent->children[i] == toDelete) {
+
+				parent->children.erase(parent->children.begin() + i);
+				std::cout << "File \"" << toDelete->name << "\" deleted." << std::endl;
+				//todo: delete node (free memory)
+				return S_OK;
+			}
+		}
+		std::cout << "File \"" << toDelete->name << "\" wasn't found." << std::endl;
+	}
+
 	return S_FALSE;
 }
 
+
 std::vector<std::string> split_string(std::string s) {
 	std::vector<std::string> path;
-	std::string rgx_str = "/";
+	std::string rgx_str = "/+";
 	std::regex rgx(rgx_str);
 	std::sregex_token_iterator iter(s.begin(), s.end(), rgx, -1);
 	std::sregex_token_iterator end;

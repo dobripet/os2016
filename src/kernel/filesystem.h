@@ -19,4 +19,5 @@ typedef struct node {
 struct node *createFile(int type, std::string actualDirectory, std::string path, std::string data);
 HRESULT addChild(struct node **parent, struct node **child);
 HRESULT deleteFile(std::string actualDirectory, std::string path);
+HRESULT deleteFile(struct node *toDetele);
 std::vector<std::string> split_string(std::string s);
