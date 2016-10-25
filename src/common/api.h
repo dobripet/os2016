@@ -51,12 +51,16 @@ constexpr bool test_cf(const DWORD flags) {
 
 //ah hodnoty 
 const __int8 scIO = 1;		//IO operace
+const __int8 scProcess = 2;		//Process operace
 
 
 //al hodnoty pro scIO 
 const __int8 scCreateFile = 1;
 const __int8 scWriteFile = 2;
 const __int8 scCloseFile = 5;
+
+//al hodnoty pro scProcess
+const __int8 scCreateProcess = 1;
 
 
 constexpr __int16 Compose_AX(const __int8 ah, const __int8 al) {

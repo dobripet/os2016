@@ -13,3 +13,8 @@ bool Write_File(const THandle file_handle, const void *buffer, const size_t buff
 bool Close_File(const THandle file_handle);
 		//uzavre soubor identifikovany pomoci deskriptoru
 		//vraci true, kdyz vse OK
+
+bool Create_Process(int(*function)(int argc, char* argv[]), int argc, char *argv[], const char*  name, const char*  current_dir, const char*  root_dir, THandle in, THandle out, THandle err);
+		//TODO slozky predelat
+		//vytvori novy a spusti novy process
+		//vraci true, kdyz vse OK
