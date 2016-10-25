@@ -2,6 +2,7 @@
 
 #include "kernel.h"
 #include "io.h"
+#include "process.h"
 #include "filesystem.h"
 #include <iostream>
 #include <string>
@@ -27,15 +28,20 @@ void Shutdown_Kernel() {
 	FreeLibrary(User_Programs);
 }
 
-void SysCall(CONTEXT &regs) {
+void __stdcall SysCall(CONTEXT &regs) {
 
 	switch (Get_AH((__int16) regs.Rax)) {
-		case scIO:		HandleIO(regs);
+		case scIO:	
+			HandleIO(regs); 
+			break;
+		case scProcess:		
+			HandleProcess(regs);
+			break;
 	}
 
 }
 
-void Run_VM() {
+void __stdcall Run_VM() {
 	Initialize_Kernel();
 
 	//spustime shell - v realnem OS bychom ovsem spousteli login
@@ -62,5 +68,6 @@ void Run_VM() {
 	deleteFile("C://", "eee.txt");
 
 	std::cin.get();
+
 	Shutdown_Kernel();
 }

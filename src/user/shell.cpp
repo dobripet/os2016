@@ -3,6 +3,10 @@
 #include "parser.hpp"
 #include <iostream>
 
+int wc(int argc, char * argv[]) {
+	std::cout << "bezi program wc s parametry: " << argc << "\n";
+	return 0;
+}
 size_t __stdcall shell(const CONTEXT &regs) {
 
 	/*
@@ -35,7 +39,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			std::cout << "out: " << paramz.stdoutpath << std::endl << std::endl;
 		}
 	}
-
+	std::cout << "poustim process z shellu\n";
+	Create_Process(&wc, 1, nullptr, "WC","tady","rootik", GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
 
 	return 0;
 }
