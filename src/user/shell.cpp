@@ -35,7 +35,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			std::cout << "out: " << paramz.stdoutpath << std::endl << std::endl;
 		}
 	}
-	
+
 
 	return 0;
 }
