@@ -17,7 +17,7 @@ enum Command {
 };
 */
 
-typedef struct Command_params {
+typedef struct Parsed_command_params {
 
 //Command com;
 	std::string com;
@@ -29,18 +29,18 @@ typedef struct Command_params {
 	std::string stdinpath;
 	std::vector<std::string> params;	
 	
-} Command_params;
+} parsed_params;
 
 typedef struct Parser {
 
 	private:
 		std::string err_msg;
-		bool parse_command(std::string line, struct Command_params * command);
+		bool parse_command(std::string line, struct Parsed_command_params * command);
 
 	public:
 		Parser() : err_msg("No error.") {};
 		std::string get_error_message();
-		bool parse_commands(std::string line, std::vector<struct Command_params> * commands);
+		bool parse_commands(std::string line, std::vector<struct Parsed_command_params> * commands);
 		//~Parser();
 		
 } Parser;

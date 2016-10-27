@@ -54,9 +54,31 @@ bool Close_File(const THandle file_handle) {
 	return Do_SysCall(regs);
 }
 
-bool Create_Process(int(*function)(int, char*[]), int argc, char *argv[], const char*  name, const char*  current_dir, const char*  root_dir, THandle in, THandle out, THandle err){
+
+bool Create_Process(TEntryPoint * func, command_params * par)
+{
 	CONTEXT regs = Prepare_SysCall_Context(scProcess, scCreateProcess);
-	regs.Rbx = (decltype(regs.Rbx)) function;
+	regs.Rbx = (decltype(regs.Rbx))func;
+	regs.Rcx = (decltype(regs.Rcx))par;
+	return Do_SysCall(regs);
+}
+
+/*
+bool Create_Process(void(*func)(PCB * pcb, std::vector<std::string> argv), run_params * params)
+{
+	CONTEXT regs = Prepare_SysCall_Context(scProcess, scCreateProcess);
+	regs.Rbx = (decltype(regs.Rbx))func;
+	regs.Rcx = (decltype(regs.Rcx))params;
+	return Do_SysCall(regs);
+}*/
+
+
+
+/*
+bool Create_Process(TEntryPoint * func, int argc, char *argv[], const char*  name, const char*  current_dir, const char*  root_dir, THandle in, THandle out, THandle err) {
+//bool Create_Process(int(*func)(int argc, char *argv[]), int argc, char *argv[], const char*  name, const char*  current_dir, const char*  root_dir, THandle in, THandle out, THandle err){
+	CONTEXT regs = Prepare_SysCall_Context(scProcess, scCreateProcess);
+	regs.Rbx = (decltype(regs.Rbx)) func;
 	regs.Rcx = (decltype(regs.Rcx)) argc;
 	regs.Rdx = (decltype(regs.Rdx)) argv;
 
@@ -68,3 +90,4 @@ bool Create_Process(int(*function)(int, char*[]), int argc, char *argv[], const 
 	regs.R13 = (decltype(regs.R12)) err;
 	return Do_SysCall(regs);
 }
+*/
