@@ -13,7 +13,7 @@ std::string Parser::get_error_message() {
 	return err_msg;
 }
 
-bool Parser::parse_commands(std::string line, std::vector<struct Command_params> * commands) {
+bool Parser::parse_commands(std::string line, std::vector<struct Parsed_command_params> * commands) {
 
 	std::vector<std::string> commandsStr;
 	size_t pos = line.find('\"'), oldpos = 0, lastpos = 0;
@@ -56,7 +56,7 @@ bool Parser::parse_commands(std::string line, std::vector<struct Command_params>
 		}				
 	}
 	for (std::string com : commandsStr) {
-		Command_params par;
+		Parsed_command_params par;
 		if (!parse_command(com, &par)) {
 			return ERR;
 		} else {
@@ -66,7 +66,7 @@ bool Parser::parse_commands(std::string line, std::vector<struct Command_params>
 	return OK;
 }
 
-bool Parser::parse_command(std::string command, struct Command_params * paramz) {
+bool Parser::parse_command(std::string command, struct Parsed_command_params * paramz) {
 	
 	*paramz = {"", false, false, false, "", "", ""};
 	bool leftpending = false, rightpending = false;

@@ -52,6 +52,8 @@ void __stdcall Run_VM() {
 		shell(regs);
 	}
 
+	/*
+	std::cout << std::endl;
 	createFile(TYPE_FILE, "C://", "aaa.txt", "lorem ipsum");
 	createFile(TYPE_FILE, "C://", "C://bbb.txt", "lorem ipsum");
 	createFile(TYPE_DIRECTORY, "C://", "zcu", "lorem ipsum");
@@ -66,7 +68,7 @@ void __stdcall Run_VM() {
 	deleteFile("C://", "aaa.txt");
 	deleteFile("C://", "bbb.txt");
 	deleteFile("C://", "eee.txt");
-
+	*/
 	std::cin.get();
 
 	Shutdown_Kernel();
