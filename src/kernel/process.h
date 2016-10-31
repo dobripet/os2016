@@ -9,7 +9,6 @@ const size_t PROCESS_TABLE_SIZE = 1024;
 const size_t CREATE_PROCESS_ERROR = 211;
 
 void HandleProcess(CONTEXT &regs);
-
 /*
 struct open_file {
 	unsigned int count;
@@ -34,10 +33,14 @@ typedef struct create_process_params {
 	THandle *current_node, *root_node;
 	std::vector<std::string> params;
 	std::string name;
+	bool wait;
 
 } command_params;
 
 
+
+int createProcess(/*TEntryPoint * func,*/ command_params * par);
+
 //int createProcess(void(*func)(PCB * pcb, std::vector<std::string> argv), run_params* params);
 //int createProcess(TEntryPoint * func, int argc, char *argv[], const char*  name, const char*  current_dir, const char*  root_dir, THandle in, THandle out, THandle err);
-int createProcess(TEntryPoint * func, command_params * par);
+//int createProcess(TEntryPoint * func, command_params * par);

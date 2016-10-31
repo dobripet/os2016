@@ -13,6 +13,10 @@ size_t __stdcall wc(const CONTEXT &regs) {
 
 	PCB thisProcess = *((PCB *)regs.Rbx);
 	std::vector<std::string> params = *((std::vector<std::string> *)regs.Rcx);
-	std::cout << "Jsem proces \"" << thisProcess.name << "\" s pid = " << thisProcess.pid << " a mam " << params.size() << " parametru."<< std::endl;
-	return 0;
+	int s = params.size();
+	std::string q = "\nJsem proces \"" + thisProcess.name + "\" s pid = " + std::to_string(thisProcess.pid) + " a mam " + std::to_string(s) + " parametru.\n";
+	
+	//std::string q = *((std::string*) regs.Rbx);
+	std::cout << q;
+	return (size_t)0;
 }

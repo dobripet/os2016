@@ -33,7 +33,7 @@ bool Close_File(const THandle file_handle);
 //bool Create_Process(void(*func)(PCB * pcb, std::vector<std::string> argv), run_params * params);
 //bool Create_Process(int(*function)(int argc, char* argv[]), int argc, char *argv[], const char*  name, const char*  current_dir, const char*  root_dir, THandle in, THandle out, THandle err);
 //bool Create_Process(TEntryPoint * func, int argc, char *argv[], const char*  name, const char*  current_dir, const char*  root_dir, THandle in, THandle out, THandle err);
-bool Create_Process(TEntryPoint * func, command_params * par);
+bool Create_Process(/*TEntryPoint * func,*/ command_params * par);
 		//TODO slozky predelat
 		//vytvori novy a spusti novy process
 		//vraci true, kdyz vse OK

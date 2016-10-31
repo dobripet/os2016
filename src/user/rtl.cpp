@@ -55,10 +55,10 @@ bool Close_File(const THandle file_handle) {
 }
 
 
-bool Create_Process(TEntryPoint * func, command_params * par)
+bool Create_Process(/*TEntryPoint * func,*/ command_params * par)
 {
 	CONTEXT regs = Prepare_SysCall_Context(scProcess, scCreateProcess);
-	regs.Rbx = (decltype(regs.Rbx))func;
+	//regs.Rbx = (decltype(regs.Rbx))func;
 	regs.Rcx = (decltype(regs.Rcx))par;
 	return Do_SysCall(regs);
 }

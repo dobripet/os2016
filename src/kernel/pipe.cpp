@@ -13,7 +13,7 @@ bool pipe::write(char c)
 	if (closed_out) {
 		return false;
 	}
-	while (queue.size >= MAX_SIZE && !closed_out) { //TODO spis by mel bejt vstup do kriticky sekce uz pred timhle (pac tu chci size)
+	while (queue.size() >= MAX_SIZE && !closed_out) { //TODO spis by mel bejt vstup do kriticky sekce uz pred timhle (pac tu chci size)
 		//TODO wait on condition
 		SleepConditionVariableCS(&buffer_full, &crit_sec, INFINITE);
 	} 
