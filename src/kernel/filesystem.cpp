@@ -108,6 +108,9 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 	}
 
 	if (temp != cecko) {
+		char* buffer = new char[6];
+		getData(temp, 2, 6, &buffer);
+		std::cout << buffer << std::endl;
 		deleteFile(temp);
 	}
 	else {
@@ -172,4 +175,14 @@ std::vector<std::string> split_string(std::string s) {
 		iter++;
 	}
 	return path;
+}
+
+HRESULT getData(struct node *file, size_t startPosition, size_t size, char** buffer) {
+	if (!file) return S_FALSE;
+	if (size <= 0) return S_FALSE;
+	if (startPosition < 0 || startPosition > file->data.size()) return S_FALSE;
+	for (size_t i = startPosition; i < startPosition + size; i++) {
+		(*buffer)[i] = file->data.at(i);
+	}
+	return S_OK;
 }

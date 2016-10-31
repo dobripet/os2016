@@ -20,4 +20,5 @@ struct node *createFile(int type, std::string actualDirectory, std::string path,
 HRESULT addChild(struct node **parent, struct node **child);
 HRESULT deleteFile(std::string actualDirectory, std::string path);
 HRESULT deleteFile(struct node *toDetele);
+HRESULT getData(struct node *file, size_t startPosition, size_t size, char** buffer);
 std::vector<std::string> split_string(std::string s);
