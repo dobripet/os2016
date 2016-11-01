@@ -43,6 +43,7 @@ void __stdcall SysCall(CONTEXT &regs) {
 }
 
 void __stdcall Run_VM() {
+
 	Initialize_Kernel();
 
 	command_params par;
@@ -52,7 +53,7 @@ void __stdcall Run_VM() {
 	//par.params = paramz.params;
 	par.name = "shell";
 	//par.current_node = zde ROOT
-	par.wait = true;
+	par.waitForProcess = true; //musime na nej pockat
 
 	int pid = createProcess(&par);
 	if (pid == - 1) {
@@ -69,8 +70,6 @@ void __stdcall Run_VM() {
 		shell(regs);
 	}
 	*/
-
-	//wait for shell
 
 	/*
 	std::cout << std::endl;
@@ -89,7 +88,7 @@ void __stdcall Run_VM() {
 	deleteFile("C://", "bbb.txt");
 	deleteFile("C://", "eee.txt");
 	*/
-	std::cin.get();
+	//std::cin.get();
 
 	Shutdown_Kernel();
 }
