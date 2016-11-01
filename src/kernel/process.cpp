@@ -7,6 +7,7 @@
 std::mutex process_table_mtx; //mutex for process table
 PCB * process_table[PROCESS_TABLE_SIZE] = { nullptr };//process table with max 1024 processes
 
+
 void HandleProcess(CONTEXT & regs) {
 	switch (Get_AL((__int16)regs.Rax)) {
 	case scCreateProcess:

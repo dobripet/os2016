@@ -23,7 +23,9 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	Write_File(stdin, hello, strlen(hello), written);
 	Close_File(stdin);
 	*/
-
+	const char* hello = "Test zapisu: Hello world!\n";
+	size_t written;
+	Write_File(STD_IN, hello, strlen(hello), written);
 
 	std::cout << std::endl << "Ukazka parsovani" << std::endl;
 	Parser p;
