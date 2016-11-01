@@ -40,37 +40,12 @@ size_t __stdcall shell(const CONTEXT &regs) {
 		for (size_t i = 0, lastCommand = commands.size() - 1; i < commands.size(); i++) {
 			Parsed_command_params paramz = commands[i];
 
-			/*std::cout << "command: " << paramz.com;
-			std::cout << std::endl << "params: ";
-			for (std::string ss : paramz.params) {
-				std::cout << ss << ", ";
-			}
-			std::cout << std::endl << "switches: " << paramz.switches << std::endl;
-			std::cout << "in: " << paramz.stdinpath << std::endl;
-			std::cout << "out: " << paramz.stdoutpath << std::endl << std::endl;*/
-
-			/*	TEntryPoint t;
-				if (paramz.com == "wc") {
-					t = (TEntryPoint)wc;
-				}*/
-				//else if echo
-				//else if dir
-				//atd....
-			/*	else {
-					//nejakej error - ale sem by to nikdy nemelo spadnout, protoze to kontroluje uz parser
-				}
-				*/
-				//	std::cout << "\nPoustim z shellu proces: " << paramz.com << ", size=" << paramz.params.size() << std::endl;
-	
 			/*
-			
 			TODO
 
 			1/ Zahrnout:
 				- paramz.stdinpath
 				- paramz.stdoutpath
-				- paramz.switches
-
 			*/
 
 			command_params par;
