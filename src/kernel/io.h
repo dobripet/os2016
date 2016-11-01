@@ -5,6 +5,7 @@
 #include "..\common\api.h"
 
 void initIO();
+void freeIO();
 
 void HandleIO(CONTEXT &regs);
 

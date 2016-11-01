@@ -25,6 +25,11 @@ void initIO() {
 	open_files_table[0]->pipe = nullptr;
 	open_files_table[0]->std = GetStdHandle(STD_ERROR_HANDLE);
 }
+void freeIO() {
+	delete open_files_table[0];
+	delete open_files_table[1];
+	delete open_files_table[2];
+}
 
 void HandleIO(CONTEXT &regs) {
 
