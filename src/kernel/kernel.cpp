@@ -23,9 +23,11 @@ void Set_Error(const bool failed, CONTEXT &regs) {
 
 void Initialize_Kernel() {
 	User_Programs = LoadLibrary(L"user.dll");	
+	initIO();//vytvori handly 0,1,2 pro standardni io
 }
 
 void Shutdown_Kernel() {
+	freeIO();//uvolni handly 0,1,2 pro standardni io
 	FreeLibrary(User_Programs);
 }
 
@@ -43,16 +45,17 @@ void __stdcall SysCall(CONTEXT &regs) {
 }
 
 void __stdcall Run_VM() {
+
 	Initialize_Kernel();
 
 	command_params par;
-	par.STDIN = GetStdHandle(STD_INPUT_HANDLE); //realnej soubor pokud bude presmerovani vstupu do naseho programu?
-	par.STDOUT = GetStdHandle(STD_OUTPUT_HANDLE); //realnej soubor pokud bude presmerovani vystup z naseho programu?
-	par.STDERR = GetStdHandle(STD_ERROR_HANDLE);
+	par.STDIN = (THandle) 0;// GetStdHandle(STD_INPUT_HANDLE); //realnej soubor pokud bude presmerovani vstupu do naseho programu?
+	par.STDOUT = (THandle) 1;// GetStdHandle(STD_OUTPUT_HANDLE); //realnej soubor pokud bude presmerovani vystup z naseho programu?
+	par.STDERR = (THandle) 2;// GetStdHandle(STD_ERROR_HANDLE);
 	//par.params = paramz.params;
 	par.name = "shell";
 	//par.current_node = zde ROOT
-	par.wait = true;
+	par.waitForProcess = true; //musime na nej pockat
 
 	int pid = createProcess(&par);
 	if (pid == - 1) {
@@ -69,8 +72,6 @@ void __stdcall Run_VM() {
 		shell(regs);
 	}
 	*/
-
-	//wait for shell
 
 	/*
 	std::cout << std::endl;
@@ -89,7 +90,7 @@ void __stdcall Run_VM() {
 	deleteFile("C://", "bbb.txt");
 	deleteFile("C://", "eee.txt");
 	*/
-	std::cin.get();
+	//std::cin.get();
 
 	Shutdown_Kernel();
 }
