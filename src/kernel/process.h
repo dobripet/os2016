@@ -12,21 +12,6 @@ const size_t CREATE_PROCESS_OK = 0;
 
 void HandleProcess(CONTEXT &regs);
 
-/*
-
-musime si pamatovat kdo ma co otevreno a jak (cteni/zapis)
-pak taky musime vedet, kterej handle co znamena (konzole/soubor/roura)
-
-*/
-
-/*
-struct open_file {
-	unsigned int count;
-	unsigned int flags;
-	node *node;
-};//kernel v sobe bude drzet tuto tabulku
-*/
-
 typedef struct process_control_block {
 
 	unsigned int pid;
@@ -51,3 +36,5 @@ typedef struct create_process_params {
 
 
 int createProcess(command_params * par);
+
+extern PCB *process_table[1024];

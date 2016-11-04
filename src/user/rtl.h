@@ -6,6 +6,11 @@
 #include <string>
 #include "..\kernel\filesystem.h"
 #include "..\kernel\process.h"
+#include "..\kernel\io.h"
+
+#define STD_IN 0
+#define STD_OUT 1
+#define STD_ERR 2
 
 /*
 typedef struct process_params {

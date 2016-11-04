@@ -39,10 +39,11 @@ THandle Create_File(const char* file_name, size_t flags) {
 
 bool Write_File(const THandle file_handle, const void *buffer, const size_t buffer_size, size_t &written) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scWriteFile);
-	regs.Rdx = (decltype(regs.Rdx)) file_handle;
-	regs.Rdi = (decltype(regs.Rdi)) buffer;
-	regs.Rcx = buffer_size;	
-
+	write_params *par = new write_params();
+	par->buffer = buffer;
+	par->handle = file_handle;
+	par->size = buffer_size;
+	regs.Rcx = (decltype(regs.Rdx)) par;
 	const bool result = Do_SysCall(regs);
 	written = regs.Rax;
 	return result;

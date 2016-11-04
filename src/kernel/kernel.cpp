@@ -23,9 +23,11 @@ void Set_Error(const bool failed, CONTEXT &regs) {
 
 void Initialize_Kernel() {
 	User_Programs = LoadLibrary(L"user.dll");	
+	initIO();//vytvori handly 0,1,2 pro standardni io
 }
 
 void Shutdown_Kernel() {
+	freeIO();//uvolni handly 0,1,2 pro standardni io
 	FreeLibrary(User_Programs);
 }
 
@@ -47,9 +49,9 @@ void __stdcall Run_VM() {
 	Initialize_Kernel();
 
 	command_params par;
-	par.STDIN = GetStdHandle(STD_INPUT_HANDLE); //realnej soubor pokud bude presmerovani vstupu do naseho programu?
-	par.STDOUT = GetStdHandle(STD_OUTPUT_HANDLE); //realnej soubor pokud bude presmerovani vystup z naseho programu?
-	par.STDERR = GetStdHandle(STD_ERROR_HANDLE);
+	par.STDIN = (THandle) 0;// GetStdHandle(STD_INPUT_HANDLE); //realnej soubor pokud bude presmerovani vstupu do naseho programu?
+	par.STDOUT = (THandle) 1;// GetStdHandle(STD_OUTPUT_HANDLE); //realnej soubor pokud bude presmerovani vystup z naseho programu?
+	par.STDERR = (THandle) 2;// GetStdHandle(STD_ERROR_HANDLE);
 	//par.params = paramz.params;
 	par.name = "shell";
 	//par.current_node = zde ROOT

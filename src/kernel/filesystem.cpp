@@ -108,9 +108,13 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 	}
 
 	if (temp != cecko) {
-		char* buffer = new char[6];
-		getData(temp, 2, 6, &buffer);
-		std::cout << buffer << std::endl;
+		//testovací volání nastavení/získání dat na konkrétní pozici
+		
+		setData(&temp, 8, 5, "testy");
+		char* buffer;
+		getData(&temp, 0, 11, &buffer);
+		std::cout << temp->data << " - " << buffer << std::endl;
+		
 		deleteFile(temp);
 	}
 	else {
@@ -177,12 +181,31 @@ std::vector<std::string> split_string(std::string s) {
 	return path;
 }
 
-HRESULT getData(struct node *file, size_t startPosition, size_t size, char** buffer) {
+HRESULT getData(struct node **file, size_t startPosition, int size, char** buffer) {
 	if (!file) return S_FALSE;
 	if (size <= 0) return S_FALSE;
-	if (startPosition < 0 || startPosition > file->data.size()) return S_FALSE;
+	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
+	(*buffer) = (char*) malloc(sizeof(char) * (size + 1));
 	for (size_t i = startPosition; i < startPosition + size; i++) {
-		(*buffer)[i] = file->data.at(i);
+		(*buffer)[i - startPosition] = (*file)->data.at(i);
 	}
+	(*buffer)[size] = '\0';
+	return S_OK;
+}
+
+HRESULT setData(struct node **file, size_t startPosition, int size, char* buffer) {
+	if (!file) return S_FALSE;
+	if (size <= 0) return S_FALSE;
+	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
+	
+	for (size_t i = startPosition; i < startPosition + size && i < (*file)->data.size(); i++) {
+		(*file)->data[i] = buffer[i - startPosition];
+	}
+
+	if ((*file)->data.size() < startPosition + size) {
+		size_t fileSize = (*file)->data.size();
+		(*file)->data.append((buffer + (size - (startPosition - fileSize))));
+	}
+	
 	return S_OK;
 }
