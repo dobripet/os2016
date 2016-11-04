@@ -29,8 +29,9 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	regs.Rdx = (decltype(regs.Rdx))argv;
 		
 	size_t ret = func(regs);
+	//TODO delat neco s navratovou hodnotou
 
-	//uklid:
+	//TODO uklid:
 	/*
 		ZAPSAT EOF NA STDOUT
 		ZAVRIT OTEVRENE SOUBORY
@@ -64,8 +65,11 @@ int createProcess(command_params * par)
 	process_table[pid]->IO_decriptors.push_back(par->STDOUT);
 	process_table[pid]->IO_decriptors.push_back(par->STDERR);
 	process_table[pid]->name = par->name;
-	//newProc.current_dir = ...
-	//newProc.root_dir = ...
+	/*
+	TODO
+		newProc.current_dir = ...
+		newProc.root_dir = ...
+	*/
 	
 	TEntryPoint func = (TEntryPoint)GetProcAddress(User_Programs, par->name);
 	if (!func) {

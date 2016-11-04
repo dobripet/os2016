@@ -6,6 +6,7 @@
 #include <thread>
 #include <chrono>
 
+//string.copy
 #pragma warning(disable: 4996)
 
 /*
@@ -24,7 +25,6 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	Close_File(stdin);
 	*/
 
-
 	std::cout << std::endl << "Ukazka parsovani" << std::endl;
 	Parser p;
 	//std::string pes = "type \"file.txt|\" > \"jinejfile/o k.txt\" nikdy nechci | dir bla bla  \"c://ppxx\"c://pp < soubor.txt|  wc /lv/a\"aaa|todle\" > xoxo.txt < pesss.txt /x";
@@ -36,16 +36,21 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	}
 	else {
 		std::cout << "Parsing OK." << std::endl;
-		//for (Parsed_command_params paramz : commands) {
+		
+
+		//TODO mezi kazdejma dvema spustit rouru (pokud se stane, ze nejakej proces ma stdout do souboru i do roury, soubor vystup sezere, a roura dostane jenom EOF)
 		for (size_t i = 0, lastCommand = commands.size() - 1; i < commands.size(); i++) {
 			Parsed_command_params paramz = commands[i];
 
 			/*
 			TODO
 
-			1/ Zahrnout:
+			Tohle asi resit az v kernelu, odtud poslat jenom string
+
+			 Zahrnout:
 				- paramz.stdinpath
 				- paramz.stdoutpath
+
 			*/
 
 			command_params par;
@@ -76,11 +81,5 @@ size_t __stdcall shell(const CONTEXT &regs) {
 		}
 
 	}
-	//std::this_thread::sleep_for(std::chrono::seconds(1));
-
-//	TEntryPoint t = (TEntryPoint)wc;
-//	Create_Process(&t, 1, nullptr, "WC","tady","rootik", GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
-	//Create_Process(&wc, )
-
 	return 0;
 }

@@ -13,6 +13,13 @@ const size_t CREATE_PROCESS_OK = 0;
 void HandleProcess(CONTEXT &regs);
 
 /*
+
+musime si pamatovat kdo ma co otevreno a jak (cteni/zapis)
+pak taky musime vedet, kterej handle co znamena (konzole/soubor/roura)
+
+*/
+
+/*
 struct open_file {
 	unsigned int count;
 	unsigned int flags;
