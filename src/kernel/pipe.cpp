@@ -1,54 +1,84 @@
 #include "pipe.h"
+#include <iostream>
 
 pipe::pipe()
 {
 	InitializeConditionVariable(&buffer_full);
 	InitializeConditionVariable(&buffer_empty);
 	InitializeCriticalSection(&crit_sec);
+	closed_in = false;
+	closed_out = false;
 }
 
-//TODO prestat psat, kdyz uz nikdo necte
+bool pipe::write(char * s, int len)
+{
+	for (int i = 0; i < len; i++) {
+		if (!write(s[i])) {
+			return false;
+		}
+	}
+	return true;
+}
+
 bool pipe::write(char c)
 {
 	if (closed_out) {
 		return false;
 	}
-	while (queue.size() >= MAX_SIZE && !closed_out) { //TODO spis by mel bejt vstup do kriticky sekce uz pred timhle (pac tu chci size)
-		//TODO wait on condition
+	while (queue.size() >= MAX_SIZE && !closed_out) {
 		SleepConditionVariableCS(&buffer_full, &crit_sec, INFINITE);
 	} 
 	if (closed_out) {
 		return false;
 	}
-	//TODO critical section start
 	EnterCriticalSection(&crit_sec);
 	queue.push(c);
-	//TODO critical section end
 	LeaveCriticalSection(&crit_sec);
-	//TODO wake condition up
 	WakeConditionVariable(&buffer_empty);
 	return true;
 }
 
+bool pipe::read(int count, char *str, int *r)
+{
+	int pos = 0;
+	while (pos < count) {
+		
+		char c = read();
+		str[pos++] = c;          
+		if (c == EOF) { 
+			break;
+		}
+	}
+	*r = pos;
+	return true;
+}
 
-//TODO prestat cist, pokud uz nikdo nepise (resit pripady, kdy spim kvuli prazdny fronte, ale pipa uz je zavrena pro zapis)
 char pipe::read()
 {
 	while (queue.size() < 1 && !closed_in) {
 		SleepConditionVariableCS(&buffer_empty, &crit_sec, INFINITE);
 	}
-	if (closed_in) {
-		return EOF_char;
+	if (closed_in && queue.size() < 1) {
+		return EOF;
 	}
-	//TODO critical section start
 	EnterCriticalSection(&crit_sec);
 	char ret = queue.front();
 	queue.pop();
-	//TODO critical section end
 	LeaveCriticalSection(&crit_sec);
-	//TODO wake condition up
 	WakeConditionVariable(&buffer_full);
 	return ret;
+}
+
+void pipe::close_read()
+{
+	closed_out = true;
+	WakeConditionVariable(&buffer_full);
+}
+
+void pipe::close_write()
+{
+	closed_in = true;
+	WakeConditionVariable(&buffer_empty);
 }
 
 pipe::~pipe()

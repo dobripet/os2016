@@ -20,14 +20,13 @@ void Set_Error(const bool failed, CONTEXT &regs) {
 		clc(regs.EFlags);
 }
 
-
 void Initialize_Kernel() {
 	User_Programs = LoadLibrary(L"user.dll");	
-	initIO();//vytvori handly 0,1,2 pro standardni io
+	initSystemIO();//vytvori handly 0,1,2 pro standardni io
 }
 
 void Shutdown_Kernel() {
-	freeIO();//uvolni handly 0,1,2 pro standardni io
+	closeSystemIO();//uvolni handly 0,1,2 pro standardni io
 	FreeLibrary(User_Programs);
 }
 
@@ -41,7 +40,6 @@ void __stdcall SysCall(CONTEXT &regs) {
 			HandleProcess(regs);
 			break;
 	}
-
 }
 
 void __stdcall Run_VM() {
@@ -49,29 +47,20 @@ void __stdcall Run_VM() {
 	Initialize_Kernel();
 
 	command_params par;
-	par.STDIN = (THandle) 0;// GetStdHandle(STD_INPUT_HANDLE); //realnej soubor pokud bude presmerovani vstupu do naseho programu?
-	par.STDOUT = (THandle) 1;// GetStdHandle(STD_OUTPUT_HANDLE); //realnej soubor pokud bude presmerovani vystup z naseho programu?
-	par.STDERR = (THandle) 2;// GetStdHandle(STD_ERROR_HANDLE);
-	//par.params = paramz.params;
+	par.STDIN = (FDHandle) 0; //realnej soubor pokud bude presmerovani vstupu do naseho programu?
+	par.STDOUT = (FDHandle) 1; //realnej soubor pokud bude presmerovani vystup z naseho programu?
+	par.STDERR = (FDHandle) 2;
+
 	par.name = "shell";
 	//par.current_node = zde ROOT
 	par.waitForProcess = true; //musime na nej pockat
 
 	int pid = createProcess(&par);
 	if (pid == - 1) {
-		//oznamit error nemohl jsem spustit shell
+		//oznamit error , ze nesel spustit shell
 		return;
 	}
 
-	/*
-	//run shell in thread
-	TEntryPoint shell = (TEntryPoint)GetProcAddress(User_Programs, "shell");
-	if (shell) {
-		CONTEXT regs;  //ted je regs jenom nejak vyplneno kvuli preakladci
-		GetThreadContext(GetCurrentThread(), &regs);  //ale pak bude jeden z registru ukazovat na nejaky startup info blok
-		shell(regs);
-	}
-	*/
 
 	/*
 	std::cout << std::endl;
@@ -90,7 +79,16 @@ void __stdcall Run_VM() {
 	deleteFile("C://", "bbb.txt");
 	deleteFile("C://", "eee.txt");
 	*/
-	//std::cin.get();
+	
+
+	/*
+	TEntryPoint shell = (TEntryPoint)GetProcAddress(User_Programs, "shell");
+	if (shell) {
+	CONTEXT regs;  //ted je regs jenom nejak vyplneno kvuli preakladci
+	GetThreadContext(GetCurrentThread(), &regs);  //ale pak bude jeden z registru ukazovat na nejaky startup info blok
+	shell(regs);
+	}
+	*/
 
 	Shutdown_Kernel();
 }

@@ -8,13 +8,11 @@
 
 #pragma warning(disable: 4996)
 
-/*
-int wc(int argc, char * argv[]) {
-	std::cout << "bezi program wc s parametry: " << argc << "\n";
-	return 0;
-}*/
-
 size_t __stdcall shell(const CONTEXT &regs) {
+
+	FDHandle STDIN = (FDHandle)regs.R8;
+	FDHandle STDOUT = (FDHandle)regs.R9;
+	FDHandle STDERR = (FDHandle)regs.R10;
 
 	/*
 	THandle stdin = Create_File("CONOUT$", FILE_SHARE_WRITE);	//nahradte systemovym resenim, zatim viz Console u CreateFile na MSDN
@@ -23,9 +21,18 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	Write_File(stdin, hello, strlen(hello), written);
 	Close_File(stdin);
 	*/
+
+	/*
 	const char* hello = "Test zapisu: Hello world!\n";
 	size_t written;
-	Write_File(STD_IN, hello, strlen(hello), written);
+	Write_File(STDOUT, hello, strlen(hello), written);
+	*/
+
+
+	/*
+	tady to nejak bude bezet ve while(true) dokud nebude ctrl+z nebo tak neco
+	*/
+
 
 	std::cout << std::endl << "Ukazka parsovani" << std::endl;
 	Parser p;
@@ -38,7 +45,18 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	}
 	else {
 		std::cout << "Parsing OK." << std::endl;
-		//for (Parsed_command_params paramz : commands) {
+
+		std::vector<FDHandle> pipeWrite;
+		std::vector<FDHandle> pipeRead;
+
+		//vyrobeni tolika rour, kolik bude (pocet - 1) procesu
+		for (size_t i = 0; i < commands.size() - 1; i++) {
+			FDHandle write, read;
+			Open_Pipe(&write, &read);
+			pipeWrite.push_back(write);
+			pipeRead.push_back(read);
+		}
+
 		for (size_t i = 0, lastCommand = commands.size() - 1; i < commands.size(); i++) {
 			Parsed_command_params paramz = commands[i];
 
@@ -48,13 +66,38 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			1/ Zahrnout:
 				- paramz.stdinpath
 				- paramz.stdoutpath
+
+			2/ Do/ze souboru bude i kdyz bude roura. (presmerovani ma prednost pred rourou)
+				- Jak to vyresit s procesem, kterej na roure ceka na svuj vstup, 
+				  ale nic nedostane, protoze predchozi proces ma stdout do souboru?
+				  - mozna by mohl shell na predchozi proces cekat a dalsimu pak dat pipu se zavrenym vstupem
+				(a analogicky se psanim, kdyz dalsi proces ma stdin ze souboru - i kdyz to se mozna resit nemusi -
+				proste dam procesu k zapisovani rouru, kterej rovnou zavru vystup, takze to proces pozna a nebude tam uz psat)
 			*/
 
 			command_params par;
 			par.name = paramz.com.c_str();
-			par.STDIN = GetStdHandle(STD_INPUT_HANDLE); //nahradit prislusnym souborem, rourou, nebo stdinem z konzole
-			par.STDOUT = GetStdHandle(STD_OUTPUT_HANDLE); //nahradit prislusnym souborem, rourou, nebo stdoutem do konzole
-			par.STDERR = GetStdHandle(STD_ERROR_HANDLE);
+			if (paramz.redirectstdin) {
+				//par.STDIN = otevrit soubor(paramz.stdinpath);
+			}
+			else if (i == 0) {
+				par.STDIN = 0;
+			}
+			else {
+				par.STDIN = pipeRead[i - 1];
+			}
+
+			if (paramz.redirectstdout) {
+				//par.STDOUT = otevrit soubor(paramz.stdoutpath);
+			}
+			else if (i == lastCommand) {
+				par.STDOUT = 1;
+			}
+			else {
+				par.STDOUT = pipeWrite[i];
+			}
+
+			par.STDERR = STDERR;
 			par.argc = static_cast<int>(paramz.params.size());
 			par.argv = new char*[par.argc];
 			for (int i = 0; i < par.argc; i++) {
@@ -71,18 +114,11 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				par.switches = new char[1];
 				par.switches[0] = '\0';
 			}
-			
-			//par.current_node = ..	
-			par.waitForProcess = (i == lastCommand); //budeme cekat pouze na posledni proces
+
+			//par.current_node = shell current node
+			par.waitForProcess = (i == lastCommand); //budeme cekat na posledni proces
 			Create_Process(&par);
 		}
-
 	}
-	//std::this_thread::sleep_for(std::chrono::seconds(1));
-
-//	TEntryPoint t = (TEntryPoint)wc;
-//	Create_Process(&t, 1, nullptr, "WC","tady","rootik", GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
-	//Create_Process(&wc, )
-
 	return 0;
 }

@@ -17,9 +17,7 @@ Viz https://msdn.microsoft.com/en-us/library/windows/desktop/ms686903(v=vs.85).a
 typedef struct pipe {
 
 private:
-
-	const int EOF_char = -1;
-	const int MAX_SIZE = 2048;
+	static const int MAX_SIZE = 2048;
 	bool closed_in;
 	bool closed_out;
 	std::queue<char> queue;
@@ -29,8 +27,12 @@ private:
 public:
 
 	pipe();
+	bool write(char * s, int len);
 	bool write(char c);
 	char read();
+	bool pipe::read(int count, char *str, int * read);
+	void close_read();
+	void close_write();
 	~pipe();
 
 } pipe;

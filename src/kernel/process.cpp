@@ -34,7 +34,7 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 
 	//TODO uklid:
 	/*
-		ZAPSAT EOF NA STDOUT
+		ZAPSAT EOF NA STDOUT - to se asi bude delat v obsluze Close_File a jenom kdyz pujde o rouru
 		ZAVRIT OTEVRENE SOUBORY
 	*/
 	std::lock_guard<std::mutex> lock(process_table_mtx);

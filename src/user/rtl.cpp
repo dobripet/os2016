@@ -2,6 +2,7 @@
 
 #include <atomic>
 
+#include <iostream>
 extern "C" __declspec(dllimport) void __stdcall SysCall(CONTEXT &context);
 
 
@@ -28,31 +29,66 @@ bool Do_SysCall(CONTEXT &regs) {
 }
 
 
+bool Open_File(FDHandle * handle, const char * fname, int mode) {
 
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scOpenFile);
+	regs.Rdx = (decltype(regs.Rdx))fname;
+	regs.Rcx = (decltype(regs.Rcx))mode;
+	bool fail = Do_SysCall(regs);
+	*handle =  (FDHandle)regs.Rbx;
+	return fail;
+}
+
+bool Open_Pipe(FDHandle * writeHandle, FDHandle * readHandle) {
+
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scCreatePipe);
+	bool fail = Do_SysCall(regs);
+	*writeHandle = (FDHandle)regs.Rbx;
+	*readHandle = (FDHandle)regs.Rcx;
+	return fail;
+}
+
+bool Close_File(FDHandle file_handle) {
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scCloseFile);
+	regs.Rdx = (decltype(regs.Rdx))file_handle;
+	return Do_SysCall(regs);
+}
+
+bool Read_File(FDHandle handle, int len, char * buf, int * filled) {
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scReadFile);
+	regs.Rdx = (decltype(regs.Rdx))handle;
+	regs.Rcx = (decltype(regs.Rcx))len;
+	regs.Rbx = (decltype(regs.Rbx))buf;
+	bool ret = Do_SysCall(regs);
+	*filled = (int)regs.Rax;
+	return ret;
+}
+
+
+/*
 THandle Create_File(const char* file_name, size_t flags) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scCreateFile);
 	regs.Rdx = (decltype(regs.Rdx)) file_name;
 	regs.Rcx = flags;
 	Do_SysCall(regs);
 	return (THandle) regs.Rax;
-}
+}*/
 
-bool Write_File(const THandle file_handle, const void *buffer, const size_t buffer_size, size_t &written) {
+bool Write_File( FDHandle file_handle, char *buffer, int buffer_size/*, size_t &written*/) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scWriteFile);
-	write_params *par = new write_params();
+/*	write_params *par = new write_params();
 	par->buffer = buffer;
-	par->handle = file_handle;
+	par->HANDLE = file_handle;
 	par->size = buffer_size;
 	regs.Rcx = (decltype(regs.Rdx)) par;
-	const bool result = Do_SysCall(regs);
-	written = regs.Rax;
-	return result;
-}
+	*/
+	regs.Rbx = (decltype(regs.Rbx))file_handle;
+	regs.Rcx = (decltype(regs.Rcx))buffer;
+	regs.Rdx = (decltype(regs.Rdx))buffer_size;
 
-bool Close_File(const THandle file_handle) {
-	CONTEXT regs = Prepare_SysCall_Context(scIO, scCloseFile);
-	regs.Rdx = (decltype(regs.Rdx))file_handle;
-	return Do_SysCall(regs);
+	const bool result = Do_SysCall(regs);
+//	written = regs.Rax;
+	return result;
 }
 
 
