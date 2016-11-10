@@ -10,13 +10,16 @@ pipe::pipe()
 	closed_out = false;
 }
 
-bool pipe::write(char * s, int len)
+bool pipe::write(char * s, size_t len, size_t * written)
 {
+	*written = 0;
 	for (int i = 0; i < len; i++) {
 		if (!write(s[i])) {
+			*written = i;
 			return false;
 		}
 	}
+	*written = len;
 	return true;
 }
 
@@ -38,7 +41,7 @@ bool pipe::write(char c)
 	return true;
 }
 
-bool pipe::read(int count, char *str, int *r)
+bool pipe::read(size_t count, char *str, size_t *r)
 {
 	int pos = 0;
 	while (pos < count) {

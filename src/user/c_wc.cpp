@@ -68,7 +68,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 
 		while (true) {
 			char * buf = (char*)malloc(20 * sizeof(char));
-			int filled;
+			size_t filled;
 			buf[19] = '\0';
 			Read_File(STDIN, 20, buf, &filled);
 			std::cout << "pid=" << myPid << ", read=" <<  filled << ", text=" << buf << std::endl;
@@ -80,7 +80,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 
 		while (true) {
 			char * buf = (char*)malloc(20 * sizeof(char));
-			int filled;
+			size_t filled;
 			buf[19] = '\0';
 			Read_File(STDIN, 20, buf, &filled);
 

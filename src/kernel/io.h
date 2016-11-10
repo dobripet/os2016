@@ -25,6 +25,8 @@ const int OPEN_INSTANCES_TABLE_SIZE = 4* OPEN_FILES_TABLE_SIZE;
 const int F_MODE_READ = 7;
 const int F_MODE_WRITE = 8;
 const int F_MODE_BOTH = 9;
+const int F_MODE_CLEAR_WRITE = 10;
+const int F_MODE_CLEAR_BOTH = 11;
 
 const int F_TYPE_STD = 1;
 const int F_TYPE_FILE = 2;
@@ -77,5 +79,5 @@ typedef struct open_params {
 int open_pipe(FDHandle * whandle, FDHandle * rhandle);
 int open_file(char *path, int MODE, FDHandle * handle);
 int close_file(FDHandle handle);
-unsigned long read_file(FDHandle handle, int howMuch, char * buf);
-unsigned long write_file(FDHandle handle, int howMuch, char * buf);
+size_t read_file(FDHandle handle, size_t howMuch, char * buf);
+size_t write_file(FDHandle handle, size_t howMuch, char * buf);

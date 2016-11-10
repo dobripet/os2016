@@ -297,7 +297,7 @@ int close_file(FDHandle handle) {
 	return 1;
 }
 
-unsigned long read_file(FDHandle handle, int howMuch, char * buf) {
+size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
 	opened_file *file = opened_files_table[file_inst->file];
@@ -306,7 +306,7 @@ unsigned long read_file(FDHandle handle, int howMuch, char * buf) {
 		return 0;
 	}
 
-	int read = 0;
+	size_t read = 0;
 	BOOL success = false;
 
 	switch (file->FILE_TYPE) {
@@ -327,6 +327,7 @@ unsigned long read_file(FDHandle handle, int howMuch, char * buf) {
 	case F_TYPE_FILE:
 		//TODO
 		//cist z node
+		success = getData(&(file->node), file_inst->pos, howMuch, &buf);
 		break;
 	}
 
@@ -334,14 +335,14 @@ unsigned long read_file(FDHandle handle, int howMuch, char * buf) {
 	else return 0;
 }
 
-unsigned long write_file(FDHandle handle, int howMuch, char * buf) {
+size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 
 //	std::cout << "WRITE IO: " << buf << std::endl;
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
 	opened_file *file = opened_files_table[file_inst->file];
 
-	unsigned long written;
+	size_t written;
 	BOOL success = false;
 
 	if (file_inst->mode == F_MODE_READ) {
@@ -351,14 +352,15 @@ unsigned long write_file(FDHandle handle, int howMuch, char * buf) {
 	switch (file->FILE_TYPE) {
 
 	case F_TYPE_STD:
-		success = WriteFile(file->std, buf, howMuch, &written, nullptr);
+		success = WriteFile(file->std, buf, howMuch, (LPDWORD) &written, nullptr);
 		break;
 
 	case F_TYPE_PIPE:
-		(file->pipe)->write(buf, howMuch);
+		success = (file->pipe)->write(buf, howMuch, &written);
 		break;
 
 	case F_TYPE_FILE:
+		success = setData(&(file->node), file_inst->pos, howMuch, buf);
 		//TODO
 		//zapsat do node
 		break;

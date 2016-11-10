@@ -27,7 +27,21 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	size_t written;
 	Write_File(STDOUT, hello, strlen(hello), written);
 	*/
-
+	/*
+	char* t = "Test zapisu do souboru!\n";
+	Write_File(STDOUT, t, strlen(t));
+	FDHandle h;
+	Open_File(&h, "C:\testik.txt", F_MODE_WRITE);
+	char* t2 = "Tohle do souboru!\n";
+	Write_File(h, t2, strlen(t2));
+	Close_File(h);
+	Open_File(&h, "C:\testik.txt", F_MODE_READ);
+	char r[256];
+	size_t filled;
+	Read_File(h, 50, r, &filled);
+	Close_File(h);
+	Write_File(STDOUT, r, filled);
+	*/
 
 	/*
 	tady to nejak bude bezet ve while(true) dokud nebude ctrl+z nebo tak neco

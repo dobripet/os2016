@@ -54,13 +54,13 @@ bool Close_File(FDHandle file_handle) {
 	return Do_SysCall(regs);
 }
 
-bool Read_File(FDHandle handle, int len, char * buf, int * filled) {
+bool Read_File(FDHandle handle, size_t len, char * buf, size_t * filled) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scReadFile);
 	regs.Rdx = (decltype(regs.Rdx))handle;
 	regs.Rcx = (decltype(regs.Rcx))len;
 	regs.Rbx = (decltype(regs.Rbx))buf;
 	bool ret = Do_SysCall(regs);
-	*filled = (int)regs.Rax;
+	*filled = (size_t)regs.Rax;
 	return ret;
 }
 
@@ -74,7 +74,7 @@ THandle Create_File(const char* file_name, size_t flags) {
 	return (THandle) regs.Rax;
 }*/
 
-bool Write_File( FDHandle file_handle, char *buffer, int buffer_size/*, size_t &written*/) {
+bool Write_File( FDHandle file_handle, char *buffer, size_t buffer_size, size_t *written) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scWriteFile);
 /*	write_params *par = new write_params();
 	par->buffer = buffer;
@@ -87,7 +87,16 @@ bool Write_File( FDHandle file_handle, char *buffer, int buffer_size/*, size_t &
 	regs.Rdx = (decltype(regs.Rdx))buffer_size;
 
 	const bool result = Do_SysCall(regs);
-//	written = regs.Rax;
+	*written = regs.Rax;
+	return result;
+}
+bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size) {
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scWriteFile);
+	regs.Rbx = (decltype(regs.Rbx))file_handle;
+	regs.Rcx = (decltype(regs.Rcx))buffer;
+	regs.Rdx = (decltype(regs.Rdx))buffer_size;
+
+	const bool result = Do_SysCall(regs);
 	return result;
 }
 

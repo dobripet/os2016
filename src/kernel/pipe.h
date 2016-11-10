@@ -27,10 +27,10 @@ private:
 public:
 
 	pipe();
-	bool write(char * s, int len);
+	bool write(char * s, size_t len, size_t * written);
 	bool write(char c);
 	char read();
-	bool pipe::read(int count, char *str, int * read);
+	bool pipe::read(size_t count, char *str, size_t * read);
 	void close_read();
 	void close_write();
 	~pipe();
