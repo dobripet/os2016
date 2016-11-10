@@ -5,6 +5,57 @@
 
 struct node *cecko = createFile(TYPE_DIRECTORY, "C://", "C://", "");
 
+node *getCecko() {
+	return cecko;
+}
+
+node *openFile(int type, char *path, bool rewrite, node *node) {
+	char *name;
+	struct node *temp = findFile(node, path, &name);
+	
+
+
+	return temp;
+}
+
+struct node *findFile(struct node *currentDir, char *path, char **name)  {
+	std::string pathString(path);
+	std::vector<std::string> absolutePath;
+	std::string absolutePathStr;
+	struct node *temp;
+	if (pathString.substr(0, 4) == "C://") {
+		temp = cecko;
+	}
+	else {
+		temp = currentDir;
+	}
+
+	absolutePath = split_string(pathString);
+
+	size_t i = 0;
+	for (; i < absolutePath.size(); i++)
+	{
+		for (size_t j = 0; j < temp->children.size(); j++)
+		{
+			if (absolutePath[i] == "..") {
+				if (temp->parent == nullptr) {
+					std::cout << "Path does not exist" << std::endl;
+					return nullptr;
+				}
+				else {
+					temp = temp->parent;
+				}
+			}
+			else if (absolutePath[i] == temp->children[j]->name) {
+				temp = temp->children[j];
+				break;
+			}
+		}
+	}
+
+	return temp;
+}
+
 struct node *createFile(int type, std::string actualDirectory, std::string path, std::string data) {
 	node *newNode = new node;
 	if (!newNode) return nullptr;
@@ -13,12 +64,13 @@ struct node *createFile(int type, std::string actualDirectory, std::string path,
 	std::string absolutePathStr;
 	if (path.substr(0, 4) == "C://") {
 		absolutePathStr = path;
-	} else {
-		absolutePathStr = actualDirectory + (((path.substr(0,1) == "/") || (actualDirectory.length() == 4)) ? "" : "/") + path;
+	}
+	else {
+		absolutePathStr = actualDirectory + (((path.substr(0, 1) == "/") || (actualDirectory.length() == 4)) ? "" : "/") + path;
 	}
 
 	absolutePath = split_string(absolutePathStr);
-	
+
 	newNode->type = type;
 	std::vector<std::string> name = split_string(path);
 	newNode->name = name[name.size() - 1];
@@ -26,11 +78,11 @@ struct node *createFile(int type, std::string actualDirectory, std::string path,
 	newNode->path = absolutePathStr;
 	newNode->data = data;
 
-	if (path == "C://")  {
+	if (path == "C://") {
 		newNode->name = "C://";
 		return newNode;
 	}
-	
+
 	struct node *temp = cecko;
 	for (size_t i = 1; i < absolutePath.size(); i++)
 	{
@@ -40,17 +92,19 @@ struct node *createFile(int type, std::string actualDirectory, std::string path,
 				if (temp->parent == nullptr) {
 					std::cout << "Path does not exist" << std::endl;
 					return nullptr;
-				} else {
+				}
+				else {
 					temp = temp->parent;
 				}
-			} else if (absolutePath[i] == temp->children[j]->name && newNode->name != temp->children[j]->name) {
+			}
+			else if (absolutePath[i] == temp->children[j]->name && newNode->name != temp->children[j]->name) {
 				temp = temp->children[j];
 			}
 		}
 	}
 
 	addChild(&temp, &newNode);
-	
+
 	return newNode;
 }
 
@@ -60,7 +114,7 @@ HRESULT addChild(struct node **parent, struct node **child) {
 
 	for (size_t i = 0; i < (*parent)->children.size(); i++)
 	{
-		if ((*parent)->children[i]->name == (*child)->name)  {
+		if ((*parent)->children[i]->name == (*child)->name) {
 			(*parent)->children[i]->data = (*child)->data; //TODO: zakomentovat, pokud nechcem pøepisovat data existujícího souboru, ale jenom oznámit, že soubor existuje a má smùlu
 			std::cout << "File \"" << (*child)->name << "\" already exists. Data were overwritten." << std::endl;
 			return S_FALSE;
@@ -109,12 +163,12 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 
 	if (temp != cecko) {
 		//testovací volání nastavení/získání dat na konkrétní pozici
-		
+
 		setData(&temp, 8, 5, "testy");
 		char* buffer;
 		getData(&temp, 0, 11, &buffer);
 		std::cout << temp->data << " - " << buffer << std::endl;
-		
+
 		deleteFile(temp);
 	}
 	else {
@@ -125,7 +179,7 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 }
 
 HRESULT deleteFile(struct node *toDelete) {
-	
+
 	struct node *parent = toDelete->parent;
 
 	if (toDelete->type == TYPE_DIRECTORY) {
@@ -136,7 +190,7 @@ HRESULT deleteFile(struct node *toDelete) {
 				deleteFile(toDelete->children[0]);
 			}
 		}
-		
+
 		for (size_t i = 0; i < parent->children.size(); i++) {
 			if (parent->children[i] == toDelete) {
 				parent->children.erase(parent->children.begin() + i);
@@ -146,7 +200,7 @@ HRESULT deleteFile(struct node *toDelete) {
 			}
 		}
 		std::cout << "Folder \"" << toDelete->name << "\" wasn't found." << std::endl;
-		
+
 	}
 
 	if (toDelete->type == TYPE_FILE) {
@@ -185,7 +239,7 @@ HRESULT getData(struct node **file, size_t startPosition, int size, char** buffe
 	if (!file) return S_FALSE;
 	if (size <= 0) return S_FALSE;
 	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
-	(*buffer) = (char*) malloc(sizeof(char) * (size + 1));
+	(*buffer) = (char*)malloc(sizeof(char) * (size + 1));
 	for (size_t i = startPosition; i < startPosition + size; i++) {
 		(*buffer)[i - startPosition] = (*file)->data.at(i);
 	}
@@ -197,7 +251,7 @@ HRESULT setData(struct node **file, size_t startPosition, int size, char* buffer
 	if (!file) return S_FALSE;
 	if (size <= 0) return S_FALSE;
 	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
-	
+
 	for (size_t i = startPosition; i < startPosition + size && i < (*file)->data.size(); i++) {
 		(*file)->data[i] = buffer[i - startPosition];
 	}
@@ -206,6 +260,6 @@ HRESULT setData(struct node **file, size_t startPosition, int size, char* buffer
 		size_t fileSize = (*file)->data.size();
 		(*file)->data.append((buffer + (size - (startPosition - fileSize))));
 	}
-	
+
 	return S_OK;
 }

@@ -16,10 +16,13 @@ typedef struct node {
 	struct node *parent;
 } node;
 
-struct node *createFile(int type, std::string actualDirectory, std::string path, std::string data);
-HRESULT addChild(struct node **parent, struct node **child);
+node *getCecko();
+node *openFile(int type, char *path, bool rewrite, node *node);
+struct node *findFile(struct node *currentDir, char *path, char **name);
+node *createFile(int type, std::string actualDirectory, std::string path, std::string data);
+HRESULT addChild(node **parent, struct node **child);
 HRESULT deleteFile(std::string actualDirectory, std::string path);
-HRESULT deleteFile(struct node *toDetele);
-HRESULT getData(struct node **file, size_t startPosition, int size, char** buffer);
-HRESULT setData(struct node **file, size_t startPosition, int size, char* buffer);
+HRESULT deleteFile(node *toDetele);
+HRESULT getData(node **file, size_t startPosition, int size, char** buffer);
+HRESULT setData(node **file, size_t startPosition, int size, char* buffer);
 std::vector<std::string> split_string(std::string s);
