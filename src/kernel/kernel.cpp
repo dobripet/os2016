@@ -56,6 +56,9 @@ void __stdcall Run_VM() {
 	struct node *b = openFile(TYPE_DIRECTORY, "zcu/prvak", true, getCecko());
 	struct node *c = openFile(TYPE_FILE, "aaa.txt", true, b);
 	setData(&c, 0, 10, "asdfghjklq");
+	char *buffer = (char*)malloc(sizeof(char) * 10);
+	getData(&c, 0, 10, &buffer);
+	setData(&a, 0, 10, buffer);
 	//struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);
 
 	par.name = "shell";

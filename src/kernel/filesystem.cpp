@@ -230,7 +230,7 @@ HRESULT setData(struct node **file, size_t startPosition, int size, char* buffer
 
 		if ((*file)->data.length() < startPosition + size) {
 			int fileSize = (*file)->data.length();
-			//(*file)->data.append((buffer + (size - (startPosition - fileSize))));
+			//doøešit
 			(*file)->data.append((buffer + (size - (startPosition - fileSize))));
 		}
 	}
