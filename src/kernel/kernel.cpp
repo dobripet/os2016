@@ -51,6 +51,13 @@ void __stdcall Run_VM() {
 	par.STDOUT = (FDHandle) 1; //realnej soubor pokud bude presmerovani vystup z naseho programu?
 	par.STDERR = (FDHandle) 2;
 
+	std::cout << std::endl;
+	struct node *a = openFile(TYPE_DIRECTORY, "zcu", true, getCecko());
+	struct node *b = openFile(TYPE_DIRECTORY, "zcu/prvak", true, getCecko());
+	struct node *c = openFile(TYPE_FILE, "aaa.txt", true, b);
+	setData(&c, 0, 10, "asdfghjklq");
+	//struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);
+
 	par.name = "shell";
 	//par.current_node = zde ROOT
 	par.waitForProcess = true; //musime na nej pockat
@@ -61,8 +68,8 @@ void __stdcall Run_VM() {
 		return;
 	}
 
-
 	/*
+	
 	std::cout << std::endl;
 	createFile(TYPE_FILE, "C://", "aaa.txt", "lorem ipsum");
 	createFile(TYPE_FILE, "C://", "C://bbb.txt", "lorem ipsum");
@@ -70,7 +77,8 @@ void __stdcall Run_VM() {
 	createFile(TYPE_FILE, "C://zcu", "ccc.txt", "lorem ipsum");
 	createFile(TYPE_DIRECTORY, "C://zcu", "/prvak", "lorem ipsum");
 	createFile(TYPE_FILE, "C://zcu", "prvak/..///prvak/ddd.txt", "lorem ipsum");
-
+	struct node *newFile = openFile(0, "zcu/prvak", true, getCecko());
+	
 	deleteFile("C://zcu", "prvak");
 	deleteFile("C://", "zcu");
 	deleteFile("C://", "zcu/ccc.txt");

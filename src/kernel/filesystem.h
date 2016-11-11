@@ -10,16 +10,15 @@
 typedef struct node {
 	int type;
 	std::string name;
-	std::string path;
 	std::string data; //TODO: data nebudou string, pøepsat na strukturu "data"
 	std::vector<struct node*> children;
 	struct node *parent;
 } node;
 
 node *getCecko();
+node *mkdir(struct node *currentDir, char *path);
+node *getNodeFromPath(char *path);
 node *openFile(int type, char *path, bool rewrite, node *node);
-struct node *findFile(struct node *currentDir, char *path, char **name);
-node *createFile(int type, std::string actualDirectory, std::string path, std::string data);
 HRESULT addChild(node **parent, struct node **child);
 HRESULT deleteFile(std::string actualDirectory, std::string path);
 HRESULT deleteFile(node *toDetele);
