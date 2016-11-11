@@ -220,13 +220,19 @@ HRESULT setData(struct node **file, size_t startPosition, int size, char* buffer
 	if (size <= 0) return S_FALSE;
 	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
 
-	for (size_t i = startPosition; i < startPosition + size && i < (*file)->data.length(); i++) {
-		(*file)->data[i] = buffer[i - startPosition];
+	if ((*file)->data.length() == startPosition) {
+		(*file)->data.append(buffer);
 	}
+	else {
+		for (size_t i = startPosition; i < startPosition + size && i < (*file)->data.length(); i++) {
+			(*file)->data[i] = buffer[i - startPosition];
+		}
 
-	if ((*file)->data.length() < startPosition + size) {
-		size_t fileSize = (*file)->data.length();
-		(*file)->data.append((buffer + (size - (startPosition - fileSize))));
+		if ((*file)->data.length() < startPosition + size) {
+			int fileSize = (*file)->data.length();
+			//(*file)->data.append((buffer + (size - (startPosition - fileSize))));
+			(*file)->data.append((buffer + (size - (startPosition - fileSize))));
+		}
 	}
 
 	return S_OK;
