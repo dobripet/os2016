@@ -25,7 +25,9 @@ node *openFile(int type, char *path, bool rewrite, node *currentDir) {
 	std::vector<std::string> absolutePath;
 	std::string absolutePathStr;
 	struct node *temp;
+	size_t i = 0;
 	if (pathString.substr(0, 4) == "C://") {
+		i = 1;
 		temp = cecko;
 	}
 	else {
@@ -35,7 +37,7 @@ node *openFile(int type, char *path, bool rewrite, node *currentDir) {
 	//temp = uzel, kde mam zaèít prohledávat zadanou cestu pathString
 	absolutePath = split_string(pathString);
 	struct node *walker;
-	size_t i = 0;
+	
 	for (; i < absolutePath.size(); i++) //prolezení všech èástí [i] cesty
 	{
 		walker = temp;
