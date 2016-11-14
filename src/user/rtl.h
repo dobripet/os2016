@@ -4,7 +4,6 @@
 
 #include <vector>
 #include <string>
-#include "..\kernel\filesystem.h"
 #include "..\kernel\process.h"
 #include "..\kernel\io.h"
 
@@ -34,6 +33,7 @@ bool Close_File(FDHandle file_handle);
 
 bool Read_File(FDHandle handle, size_t len, char * buf, size_t *filled);
 
+//TODO Peek_File
 
 //THandle Create_File(const char* file_name, size_t flags);
 		//podle flags otevre, vytvori soubor a vrati jeho deskriptor
