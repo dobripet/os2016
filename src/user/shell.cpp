@@ -108,7 +108,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			else if (i == 0) {
 				//std_in = 0; //tady by mozna mel zdedit stdin od rodice? tj. handle duplikovat
 				//TODO urcite duplikovat!
-				Open_File(CURRENT_DIR, &std_in);
+				//Open_File(CURRENT_DIR, &std_in);
+				std_in = 0;
 			}
 			else {
 				std_in = pipeRead[i - 1];
@@ -136,7 +137,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			else if (i == lastCommand) {
 				//std_out = 1; //tady by mozna mel zdedit stdin od rodice? tj musela by se duplikovat handle
 				//TODO urcite duplikovat!
-				Open_File(CURRENT_DIR, &std_out);
+				//Open_File(CURRENT_DIR, &std_out);
+				std_out = 0;
 			}
 			else {
 				std_out = pipeWrite[i];

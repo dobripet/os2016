@@ -21,7 +21,8 @@ size_t __stdcall wc(const CONTEXT &regs) {
 	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
 	char *switches = (char *)regs.R12;
 	char * myName = (char *)regs.Rax;
-	int myPid = (int)regs.Rbx;
+	//int myPid = (int)regs.Rbx;
+	std::thread::id myPid = std::this_thread::get_id();
 	int argc = (int)regs.Rcx;
 	char ** argv = (char**)regs.Rdx;
 

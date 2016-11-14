@@ -9,23 +9,25 @@
 
 std::mutex process_table_mtx; //mutex for process table
 PCB * process_table[PROCESS_TABLE_SIZE] = { nullptr };//process table with max 1024 processes
-std::unordered_map<std::string, int> TIDtoPID;
+std::unordered_map< std::thread::id, int> TIDtoPID;
 
 
 void HandleProcess(CONTEXT & regs) {
 	switch (Get_AL((__int16)regs.Rax)) {
 	case scCreateProcess:
-		int pid = -1;
-		regs.Rax = (decltype(regs.Rax))createProcess((command_params *)regs.Rcx, &pid);
-		regs.Rbx = (decltype(regs.Rax))pid;
-		Set_Error(R_FAILED(regs.Rax), regs);
+		//int pid = -1;
+		regs.Rax = (decltype(regs.Rax))createProcess((command_params *)regs.Rcx/*, &pid*/);
+		//regs.Rbx = (decltype(regs.Rax))pid;
+		Set_Error(regs.Rax != 0, regs);
 		break;
-	default:
+	//default:
 		//gtfo
 	}
 }
 
 void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switches) {
+
+	TIDtoPID[std::this_thread::get_id()] = pid;
 
 	CONTEXT regs;
 	regs.R8 = (decltype(regs.R8))process_table[pid]->IO_descriptors[0]; //stdit
@@ -34,7 +36,7 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	regs.R11 = (decltype(regs.R11))process_table[pid]->IO_descriptors[3]; //current dir
 	regs.R12 = (decltype(regs.R12))switches;
 	regs.Rax = (decltype(regs.Rax))process_table[pid]->name;
-	regs.Rbx = (decltype(regs.Rbx))pid;
+	//regs.Rbx = (decltype(regs.Rbx))pid; //?
 	regs.Rcx = (decltype(regs.Rcx))argc;
 	regs.Rdx = (decltype(regs.Rdx))argv;
 
@@ -52,7 +54,7 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	process_table[pid] = nullptr;
 }
 
-RESULT createProcess(command_params * par, int *proc_pid)
+int createProcess(command_params * par/*, int *proc_pid*/)
 {
 	int pid = -1;
 	{
@@ -69,7 +71,7 @@ RESULT createProcess(command_params * par, int *proc_pid)
 	if (pid == -1) {
 		//v tabulce neni misto
 		SetLastError(CREATE_PROCESS_ERROR);
-		return R_ERR;
+		return 1;
 	}
 
 	process_table[pid]->pid = pid;
@@ -85,7 +87,7 @@ RESULT createProcess(command_params * par, int *proc_pid)
 		delete process_table[pid];
 		process_table[pid] = nullptr;
 		SetLastError(CREATE_PROCESS_ERROR);
-		return R_ERR;
+		return 1;
 	}
 
 	std::thread t(runProcess, func, pid, par->argc, par->argv, par->switches); 
@@ -97,6 +99,6 @@ RESULT createProcess(command_params * par, int *proc_pid)
 		t.detach();
 	}
 
-	*proc_pid = pid;
-	return R_OK;
+	//*proc_pid = pid;
+	return 0;
 }
