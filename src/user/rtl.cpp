@@ -28,6 +28,15 @@ bool Do_SysCall(CONTEXT &regs) {
 	return !failed;
 }
 
+bool Open_File(FDHandle old_handle, FDHandle * new_handle) {
+
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scDuplicateHandle);
+	regs.Rcx = (decltype(regs.Rcx))old_handle;
+	bool fail = Do_SysCall(regs);
+	*new_handle = (FDHandle)regs.Rbx;
+	return fail;
+}
+
 
 bool Open_File(FDHandle * handle, const char * fname, int mode) {
 

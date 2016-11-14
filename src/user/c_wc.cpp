@@ -8,9 +8,9 @@
 #include <atomic>
 
 //int s = 500;
-std::atomic<int> q = 0;
-std::atomic<bool> first = true;
-//std::mutex aaa;
+//std::atomic<int> q = 0;
+//std::atomic<bool> first = true;
+std::mutex aaa;
 
 
 size_t __stdcall wc(const CONTEXT &regs) {
@@ -18,11 +18,15 @@ size_t __stdcall wc(const CONTEXT &regs) {
 	FDHandle STDIN = (FDHandle)regs.R8;
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
+	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
+	char *switches = (char *)regs.R12;
 	char * myName = (char *)regs.Rax;
 	int myPid = (int)regs.Rbx;
 	int argc = (int)regs.Rcx;
 	char ** argv = (char**)regs.Rdx;
-	char *switches = (char *)regs.R11;
+
+
+	//smazat vsecko zakomentovany v celym tomhle souboru
 
 	/*
 	q += 10;
@@ -62,6 +66,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 	aaa.unlock();
 	*/
 
+	/*
 	if (first) {
 		first = !first;
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -72,6 +77,10 @@ size_t __stdcall wc(const CONTEXT &regs) {
 			buf[19] = '\0';
 			Read_File(STDIN, 20, buf, &filled);
 			std::cout << "pid=" << myPid << ", read=" <<  filled << ", text=" << buf << std::endl;
+			if (buf[filled - 1] == EOF) {
+				std::cout << "pid=" << myPid << ", EOF" << std::endl;
+				break;
+			}
 			Write_File(STDOUT, buf, 20);
 		}
 	}
@@ -83,9 +92,34 @@ size_t __stdcall wc(const CONTEXT &regs) {
 			size_t filled;
 			buf[19] = '\0';
 			Read_File(STDIN, 20, buf, &filled);
-
 			std::cout << "pid=" << myPid << ", read=" << filled << ", text=" << buf << std::endl;
+			if (buf[filled-1] == EOF) {
+				std::cout << "pid=" << myPid << ", EOF" << std::endl;
+				break;
+			}
 			Write_File(STDOUT, buf, 20);
+		}
+	}
+	*/
+
+	while (true) {
+		char * buf = (char*)malloc(21 * sizeof(char));
+		size_t filled;
+		Read_File(STDIN, 20, buf, &filled);	
+		if (buf[filled - 1] == EOF) {
+			buf[filled] = '\0';
+			aaa.lock();
+			std::cout << "pid=" << myPid << ", read=" << filled << ", text=" << buf << ", EOF" << std::endl;
+			aaa.unlock();
+			Write_File(STDOUT, buf, filled);
+			break;
+		}
+		else {
+			buf[filled] = '\0';
+			aaa.lock();
+			std::cout << "pid=" << myPid << ", read=" << filled << ", text=" << buf << std::endl;
+			aaa.unlock();
+			Write_File(STDOUT, buf, filled);
 		}
 	}
 

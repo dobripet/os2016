@@ -47,9 +47,9 @@ void __stdcall Run_VM() {
 	Initialize_Kernel();
 
 	command_params par;
-	par.STDIN = (FDHandle) 0; //realnej soubor pokud bude presmerovani vstupu do naseho programu?
-	par.STDOUT = (FDHandle) 1; //realnej soubor pokud bude presmerovani vystup z naseho programu?
-	par.STDERR = (FDHandle) 2;
+	par.handles.push_back((FDHandle)0); //realnej soubor pokud bude presmerovani vstupu do naseho programu?
+	par.handles.push_back((FDHandle)1); //realnej soubor pokud bude presmerovani vystup z naseho programu?
+	par.handles.push_back((FDHandle)2); //realnej soubor pokud bude presmerovani err z naseho programu?
 
 	std::cout << std::endl;
 	struct node *a = openFile(TYPE_DIRECTORY, "zcu", true, getCecko());
@@ -62,7 +62,8 @@ void __stdcall Run_VM() {
 	//struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);
 
 	par.name = "shell";
-	//par.current_node = zde ROOT
+	par.current_path = (char *)getCecko()->name.c_str();
+	par.handles.push_back((FDHandle)3);
 	par.waitForProcess = true; //musime na nej pockat
 
 	int pid = createProcess(&par);

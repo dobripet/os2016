@@ -15,10 +15,13 @@ size_t Get_Last_Error();
 IO
 */
 
+bool Open_File(FDHandle old_handle, FDHandle * new_handle);
+
 //otevre soubor v nasem FS se zaslanou cestou fname  
 //return true kdyz vse OK
 //do handle ulozi handle na soubor
 bool Open_File(FDHandle * handle, const char * fname, int mode); //jeste chybi typ esi slozka nebo soubor
+//a jeste mozna bude potreba posilat current_node
 
 //vyrobi rouru
 //return true kdyz vse OK

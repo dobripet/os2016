@@ -1,7 +1,6 @@
 #include "io.h"
 #include "kernel.h"
 #include "process.h"
-#include "filesystem.h"
 
 #include <iostream>
 
@@ -56,6 +55,18 @@ void initSystemIO() {
 	opened_files_table_instances[2] = new opened_file_instance();
 	opened_files_table_instances[2]->file = 2;
 	opened_files_table_instances[2]->mode = F_MODE_WRITE;
+
+	/*
+	working directory (FS root) for the first shell
+	*/
+	opened_files_table[3] = new opened_file();
+	opened_files_table[3]->node = getCecko();
+	opened_files_table[3]->openCount = 1;
+	opened_files_table[3]->FILE_TYPE = F_TYPE_FILE;
+
+	opened_files_table_instances[3] = new opened_file_instance();
+	opened_files_table_instances[3]->file = 3;
+	opened_files_table_instances[3]->mode = F_MODE_BOTH;
 }					
 
 void closeSystemIO() {
@@ -79,7 +90,6 @@ void HandleIO(CONTEXT &regs) {
 
 		case scCreatePipe: 
 
-			std::cout << std::endl;
 			FDHandle w, r;
 			regs.Rax = (decltype(regs.Rax))open_pipe(&w, &r);
 			regs.Rbx = (decltype(regs.Rbx))w;
@@ -89,21 +99,27 @@ void HandleIO(CONTEXT &regs) {
 
 		case scOpenFile: 
 
-			FDHandle h;
-			regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, &h);
-			regs.Rbx = (decltype(regs.Rbx))h;
+			FDHandle ho;
+			regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, &ho);
+			regs.Rbx = (decltype(regs.Rbx))ho;
 			Set_Error(regs.Rax == 0, regs);		
 			break;
 
 		case scCloseFile:
-
 			Set_Error(close_file((FDHandle)regs.Rdx) == 0, regs);
 			break;
 
 		case scReadFile:
 			regs.Rax = (decltype(regs.Rax))read_file((FDHandle)regs.Rdx, (int)regs.Rcx, (char*)regs.Rbx);
 			Set_Error(regs.Rax == 0, regs);
-			break;					  
+			break;	
+
+		case scDuplicateHandle: 
+			FDHandle hd;
+			regs.Rax = (decltype(regs.Rax))duplicate_handle((FDHandle)regs.Rcx, &hd);
+			regs.Rbx = (decltype(regs.Rbx))hd;
+			Set_Error(regs.Rax == 0, regs);
+			break;
 
 		/*
 		case scCreateFile: {
@@ -139,45 +155,37 @@ void HandleIO(CONTEXT &regs) {
 }
 
 bool findIfOpenedFileExists(node * n, FDHandle * handle) {
-	{
-		std::lock_guard<std::mutex> lock(files_table_mtx);
-		for (int i = 0; i < OPEN_FILES_TABLE_SIZE; i++) {
-			if (opened_files_table[i]->node == n) {
-				*handle = i;
-				return true;
-			}
+	std::lock_guard<std::mutex> lock(files_table_mtx);
+	for (int i = 0; i < OPEN_FILES_TABLE_SIZE; i++) {
+		if (opened_files_table[i] != nullptr && opened_files_table[i]->node == n) {
+			*handle = i;
+			return true;
 		}
 	}
 	return false;
 }
 
 int takeFirstEmptyPlaceInFileTable() {
-
 	int _h = -1;
-	{
-		std::lock_guard<std::mutex> lock(files_table_mtx);
-		for (int i = 0; i < OPEN_FILES_TABLE_SIZE; i++) {
-			if (opened_files_table[i] == nullptr) {
-				opened_files_table[i] = new opened_file();
-				_h = i;
-				break;
-			}
+	std::lock_guard<std::mutex> lock(files_table_mtx);
+	for (int i = 0; i < OPEN_FILES_TABLE_SIZE; i++) {
+		if (opened_files_table[i] == nullptr) {
+			opened_files_table[i] = new opened_file();
+			_h = i;
+			break;
 		}
 	}
 	return _h;
 }
 
 int takeFirstEmptyPlaceInInstanceTable() {
-
 	int _h = -1;
-	{
-		std::lock_guard<std::mutex> lock(files_table_mtx);
-		for (int i = 0; i < OPEN_INSTANCES_TABLE_SIZE; i++) {
-			if (opened_files_table_instances[i] == nullptr) {
-				opened_files_table_instances[i] = new opened_file_instance();
-				_h = i;
-				break;
-			}
+	std::lock_guard<std::mutex> lock(files_table_mtx);
+	for (int i = 0; i < OPEN_INSTANCES_TABLE_SIZE; i++) {
+		if (opened_files_table_instances[i] == nullptr) {
+			opened_files_table_instances[i] = new opened_file_instance();
+			_h = i;
+			break;
 		}
 	}
 	return _h;
@@ -228,16 +236,37 @@ int open_pipe(FDHandle * whandle, FDHandle * rhandle) {
 }
 
 
+int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
+
+	int new_h = takeFirstEmptyPlaceInInstanceTable();
+	if (new_h < 0) {
+		//fail
+		return 0;
+	}
+	opened_files_table_instances[new_h]->file = opened_files_table_instances[orig_handle]->file;
+	opened_files_table_instances[new_h]->mode = opened_files_table_instances[orig_handle]->mode;
+	//&pos?
+	{
+		std::lock_guard<std::mutex> lock(files_table_mtx);
+		opened_files_table[opened_files_table_instances[orig_handle]->file]->openCount++;
+	}
+	*duplicated_handle = new_h;
+	return 1;
+}
+
+// co se slozkama?????????????????
+//path must be \0 terminated!
+//If MODE is not READ and file of specified path already exists, its content gets deleted.
 int open_file(char *path, int MODE, FDHandle * handle) {
 
 	FDHandle H;
-	node *n; //node * n = fs.find/open/whatever (path);
-	
 
-	//delete tohle - ted je to jenom aby se to prelozilo, kdyz zatim neni fs.find/neco podobnyho
-	node q;
-	n = &q;
-	//
+	/*
+	Tady musi bejt PCB[pid]->current_node misto nullptr !!!! (no anebo current_node poslanej pres syscall)
+	Pokud furt nechceme posilat do jadra pid procesu (resp. pouzit na identifikaci procesu nativni thread ID),
+	tak musime do syscallu posilat current_node z uzivatelskyho procesu - coz by nemel bejt asi takovej problem?.
+	*/
+	node *n = openFile(TYPE_FILE, path, MODE != F_MODE_READ, nullptr /* !! */ );
 
 	if (!findIfOpenedFileExists(n, &H)) {
 		int _h = takeFirstEmptyPlaceInFileTable();
@@ -255,7 +284,10 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 		return 0;
 		//ERROR
 	}
-	opened_files_table[H]->openCount++;
+	{
+		std::lock_guard<std::mutex> lock(files_table_mtx);
+		opened_files_table[H]->openCount++;
+	}
 
 	opened_files_table_instances[_h]->mode = MODE;
 	opened_files_table_instances[_h]->file = H;
@@ -271,15 +303,16 @@ int close_file(FDHandle handle) {
 	if (fd->FILE_TYPE == F_TYPE_STD) {
 		return 0;
 	}
-	fd->openCount--;
+	{
+		std::lock_guard<std::mutex> lock(files_table_mtx);
+		fd->openCount--;
+	}
 
 	if (fd->FILE_TYPE == F_TYPE_PIPE) {
 		if (inst->mode == F_MODE_WRITE) {
-			//fd->pipe WRITE EOF !!!!!!!!!!!!!!!!!!!!!!!!!
-			//(pokud nahodou nestaci mit psaci konec zavrenej a roura bude EOF generovat sama, kdyz se nekdo pokusi cist)
-			//fd->pipe close write 
+			fd->pipe->close_write();
 		} else {
-			//fd->pipe close read
+			fd->pipe->close_read();
 		}
 	}
 
@@ -315,7 +348,8 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 		unsigned long r;
 		success = ReadFile(file->std, buf, howMuch, &r, nullptr);
 		if (r == 0 && success) {
-			r = EOF;
+			r = 1;
+			buf[0] = EOF;
 		}
 		read = r;
 		break;
@@ -336,8 +370,6 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 }
 
 size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
-
-//	std::cout << "WRITE IO: " << buf << std::endl;
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
 	opened_file *file = opened_files_table[file_inst->file];

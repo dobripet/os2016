@@ -17,15 +17,16 @@ typedef struct process_control_block {
 	unsigned int pid;
 	const char * name;
 	node *current_dir, *root_dir;//mozna node asi
-	std::vector<FDHandle> IO_decriptors; //tabulka souboru daneho procesu index by mel byt file descriptor
+	std::vector<FDHandle> IO_descriptors; //tabulka souboru daneho procesu index by mel byt file descriptor
 	//0 = stdin, 1 = stdout, 2 = stderr
 
 } PCB;//kazdej proces bude mit tuto strukturu
 
 typedef struct create_process_params {
 
-	FDHandle STDOUT, STDIN, STDERR;
-	node  *current_node, *root_node; //?
+	std::vector <FDHandle> handles; //0=STDIN, 1=STDOUT, 2=STDERR, 3=SLOZKA kde se proces nachazi
+	//FDHandle STDOUT, STDIN, STDERR;
+	char * current_path; //pouze kvuli informaci pro uzivatele, jinak neni na nic potreba
 	char * switches;
 	char ** argv;
 	int argc;

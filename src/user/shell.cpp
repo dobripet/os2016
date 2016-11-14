@@ -13,6 +13,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	FDHandle STDIN = (FDHandle)regs.R8;
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
+	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
+	//TODO char * currentDir = what?
 
 	/*
 	THandle stdin = Create_File("CONOUT$", FILE_SHARE_WRITE);	//nahradte systemovym resenim, zatim viz Console u CreateFile na MSDN
@@ -58,8 +60,6 @@ size_t __stdcall shell(const CONTEXT &regs) {
 		std::cout << p.get_error_message() << std::endl << std::endl;;
 	}
 	else {
-		std::cout << "Parsing OK." << std::endl;
-
 		std::vector<FDHandle> pipeWrite;
 		std::vector<FDHandle> pipeRead;
 
@@ -82,7 +82,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				- paramz.stdoutpath
 
 			2/ Do/ze souboru bude i kdyz bude roura. (presmerovani ma prednost pred rourou)
-				- Jak to vyresit s procesem, kterej na roure ceka na svuj vstup, 
+				- Jak to vyresit s procesem, kterej na roure ceka na svuj vstup,
 				  ale nic nedostane, protoze predchozi proces ma stdout do souboru?
 				  - mozna by mohl shell na predchozi proces cekat a dalsimu pak dat pipu se zavrenym vstupem
 				(a analogicky se psanim, kdyz dalsi proces ma stdin ze souboru - i kdyz to se mozna resit nemusi -
@@ -90,28 +90,58 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			*/
 
 			command_params par;
+			FDHandle std_in, std_out;// , std_err = STDERR;
 			par.name = paramz.com.c_str();
+
 			if (paramz.redirectstdin) {
-				//par.STDIN = otevrit soubor(paramz.stdinpath);
+
+				//TODO it's the first command, so it has both stdin file redirect and pipe input - What to do???
+				if (i != 0) {
+					/*
+					TODO myslim, ze muzeme rouru rovnou zavrit pro cteni. (pokud predpokladama, ze stdin ze
+					souboru ma prednost pred ctenim z roury).  A producent ma smulu - nema kam psat a ukonci se.
+					*/
+				}
+
+				//std_in = otevrit soubor(paramz.stdinpath);
 			}
 			else if (i == 0) {
-				par.STDIN = 0;
+				//std_in = 0; //tady by mozna mel zdedit stdin od rodice? tj. handle duplikovat
+				//TODO urcite duplikovat!
+				Open_File(CURRENT_DIR, &std_in);
 			}
 			else {
-				par.STDIN = pipeRead[i - 1];
+				std_in = pipeRead[i - 1];
 			}
 
 			if (paramz.redirectstdout) {
-				//par.STDOUT = otevrit soubor(paramz.stdoutpath);
+
+				//TODO it's not the last command, so it has both stdout file redirect and pipe outuput - What to do???
+				if (i != lastCommand) {
+					/*
+					Vystup do souboru ma prednost - roura nedostane nic. Ale myslim, ze nemuzeme rouru rovnou zavrit pro zapis,
+					protoze konzument by to detekoval tak, ze zadnej vstup nedostane a ukoncil by se - a tim padem by se ukoncil
+					drive, nez predchozi proces a to se nam moc nelibi.
+
+					Takze bych to udelal tak, ze rouru (stale otevrenou pro zapis) pridame do seznamu souboru producenta, ktery ale do
+					ni nic nezapise. A ten teprve az pri svem ukonceni rouru zavre. (A dalsi proces (konzument) se teprve az pak ukonci).
+					*/
+
+					//TODO Jak predat rouru do seznamu deskriptoru konzumenta? (Kdyz STDOUT v parametrech zabira soubor)
+					//Mozna predat vsechno jako vektor/seznam/whatever misto 3 promennejch STDIN/OUT/ERR.
+				}
+
+				//std_out = otevrit soubor(paramz.stdoutpath);
 			}
 			else if (i == lastCommand) {
-				par.STDOUT = 1;
+				//std_out = 1; //tady by mozna mel zdedit stdin od rodice? tj musela by se duplikovat handle
+				//TODO urcite duplikovat!
+				Open_File(CURRENT_DIR, &std_out);
 			}
 			else {
-				par.STDOUT = pipeWrite[i];
+				std_out = pipeWrite[i];
 			}
 
-			par.STDERR = STDERR;
 			par.argc = static_cast<int>(paramz.params.size());
 			par.argv = new char*[par.argc];
 			for (int i = 0; i < par.argc; i++) {
@@ -129,10 +159,42 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				par.switches[0] = '\0';
 			}
 
-			//par.current_node = shell current node
-			par.waitForProcess = (i == lastCommand); //budeme cekat na posledni proces
+			par.handles.push_back(std_in);
+			par.handles.push_back(std_out);
+			par.handles.push_back(STDERR);
+
+			
+			//duplicate current dir for new process
+			FDHandle h;
+			/*bool ok = */Open_File(CURRENT_DIR, &h); //navratova hodnota muze bejt fail
+			par.handles.push_back(h); 
+
+			par.waitForProcess = (i == lastCommand);// || paramz.com == "shell"; //budeme cekat na posledni proces 
+			//TODO asi na shell cekat taky? (jakoze tenhle se blokne, kdyz existuje jinej)
+			//nebo nejak jinak? nvm
+			/*
+			cekat na takovy veci jako "wc" kdyz nema jinej vstup? Nevim
+			ale kazdopadne WC musi pozrat vstup shellu? Roura? Jak pak resit konec?
+
+			ja bych na nej proste cekal, jenze kam pak pujde WC stdout? V cmd windowsu je platny "wc < soubor.txt | wc"
+			Prvni WC udela soubor  a druhy vystup z prvniho
+			*/
+			
 			Create_Process(&par);
 		}
 	}
+
+	/*
+	Shell pobezi ve while(true) {..}.
+	Ukoncen bude asi kdyz dostane EOF? (Ctrl+Z)
+	Musime nejak resit, aby kontroloval, jestli se nema ukoncit,
+	ale zaroven se nesmi tim ctenim zablokovat (coz se normalne pri cteni deje) - nejakej peek? timeout? nebo co?
+	*/
+
+	/*
+	cd "path"
+	Asi bude nutny nejak posilat PID shellu, protoze v tabulce otevrenych souboru se musi zmenit pro shell. 
+	*/
+
 	return 0;
 }

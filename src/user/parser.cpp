@@ -140,7 +140,7 @@ bool Parser::parse_command(std::string command, struct Parsed_command_params * p
 				return ERR;
 			}
 			if(str.length() == 1) {
-				err_msg = "Symbol / is not followed by alhpabetic symbols.";
+				err_msg = "Symbol / is not followed by alphabetic symbols.";
 				return ERR;
 			} 
 			if (str[1] == '/') {
