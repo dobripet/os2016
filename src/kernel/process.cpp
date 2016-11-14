@@ -25,7 +25,7 @@ void HandleProcess(CONTEXT & regs) {
 	}
 }
 
-std::mutex aa;
+
 void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switches) {
 
 	{

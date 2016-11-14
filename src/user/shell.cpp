@@ -108,8 +108,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			else if (i == 0) {
 				//std_in = 0; //tady by mozna mel zdedit stdin od rodice? tj. handle duplikovat
 				//TODO urcite duplikovat!
-				//Open_File(CURRENT_DIR, &std_in);
-				std_in = 0;
+				Open_File(STDIN, &std_in);
+				//std_in = 0;
 			}
 			else {
 				std_in = pipeRead[i - 1];
@@ -135,10 +135,10 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				//std_out = otevrit soubor(paramz.stdoutpath);
 			}
 			else if (i == lastCommand) {
-				//std_out = 1; //tady by mozna mel zdedit stdin od rodice? tj musela by se duplikovat handle
+				//std_out = 1; //tady by mozna mel zdedit stdout od rodice? tj musela by se duplikovat handle
 				//TODO urcite duplikovat!
-				//Open_File(CURRENT_DIR, &std_out);
-				std_out = 0;
+				Open_File(STDOUT, &std_out);
+				//std_out = 0;
 			}
 			else {
 				std_out = pipeWrite[i];
@@ -163,7 +163,10 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 			par.handles.push_back(std_in);
 			par.handles.push_back(std_out);
-			par.handles.push_back(STDERR);
+
+			FDHandle e;
+			Open_File(STDOUT, &e);
+			par.handles.push_back(e);
 
 			
 			//duplicate current dir for new process

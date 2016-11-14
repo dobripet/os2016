@@ -69,6 +69,7 @@ void initSystemIO() {
 	opened_files_table_instances[3]->mode = F_MODE_BOTH;
 }					
 
+/*
 void closeSystemIO() {
 	delete opened_files_table_instances[0];
 	delete opened_files_table_instances[1];
@@ -82,7 +83,7 @@ void closeSystemIO() {
 	opened_files_table[0] = nullptr;
 	opened_files_table[1] = nullptr;
 	opened_files_table[2] = nullptr;
-}
+}*/
 
 void HandleIO(CONTEXT &regs) {
 
@@ -297,12 +298,13 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 }
 
 int close_file(FDHandle handle) {
-
+	
+	
 	FD_instance * inst = opened_files_table_instances[handle];
 	FD * fd = opened_files_table[inst->file];
-	if (fd->FILE_TYPE == F_TYPE_STD) {
+	/*if (fd->FILE_TYPE == F_TYPE_STD) {
 		return 0;
-	}
+	}*/
 	{
 		std::lock_guard<std::mutex> lock(files_table_mtx);
 		fd->openCount--;

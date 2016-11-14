@@ -26,7 +26,7 @@ void Initialize_Kernel() {
 }
 
 void Shutdown_Kernel() {
-	closeSystemIO();//uvolni handly 0,1,2 pro standardni io
+	//closeSystemIO();//uvolni handly 0,1,2 pro standardni io
 	FreeLibrary(User_Programs);
 }
 
