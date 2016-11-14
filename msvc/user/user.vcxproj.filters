@@ -18,9 +18,6 @@
     <ClCompile Include="..\..\src\user\rtl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\user\shell.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\user\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

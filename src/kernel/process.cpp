@@ -44,9 +44,8 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	regs.Rcx = (decltype(regs.Rcx))argc;
 	regs.Rdx = (decltype(regs.Rdx))argv;
 
+	
 	size_t ret = func(regs);
-	//TODO delat neco s navratovou hodnotou
-
 
 	for (auto &handle : process_table[pid]->IO_descriptors) {
 		int ret = close_file(handle);

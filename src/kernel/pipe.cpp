@@ -56,6 +56,11 @@ bool pipe::read(size_t count, char *str, size_t *r)
 	return true;
 }
 
+bool pipe::peek(size_t * available)
+{
+	return ((*available = queue.size()) != 0);
+}
+
 char pipe::read()
 {
 	while (queue.size() < 1 && !closed_in) {

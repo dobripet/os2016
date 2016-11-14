@@ -24,13 +24,15 @@ private:
 	CRITICAL_SECTION crit_sec;
 	CONDITION_VARIABLE buffer_full, buffer_empty;
 
+	bool write(char c);
+	char read();
+
 public:
 
 	pipe();
 	bool write(char * s, size_t len, size_t * written);
-	bool write(char c);
-	char read();
 	bool pipe::read(size_t count, char *str, size_t * read);
+	bool pipe::peek(size_t * available);
 	void close_read();
 	void close_write();
 	~pipe();
