@@ -46,10 +46,6 @@ void __stdcall Run_VM() {
 
 	Initialize_Kernel();
 
-	command_params par;
-	par.handles.push_back((FDHandle)0); //realnej soubor pokud bude presmerovani vstupu do naseho programu?
-	par.handles.push_back((FDHandle)1); //realnej soubor pokud bude presmerovani vystup z naseho programu?
-	par.handles.push_back((FDHandle)2); //realnej soubor pokud bude presmerovani err z naseho programu?
 
 	std::cout << std::endl;
 	struct node *a = openFile(TYPE_DIRECTORY, "zcu", true, getRoot());
@@ -62,46 +58,19 @@ void __stdcall Run_VM() {
 	setData(&a, 0, filled, buffer);
 	struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);
 
+	//run shell
+	command_params par;
+	par.handles.push_back((FDHandle)0); 
+	par.handles.push_back((FDHandle)1); 
+	par.handles.push_back((FDHandle)2); 
 	par.name = "shell";
 	par.current_path = (char *)getRoot()->name.c_str();
 	par.handles.push_back((FDHandle)3);
 	par.waitForProcess = true; //musime na nej pockat
-
 	int pid = createProcess(&par);
 	if (pid == - 1) {
 		//oznamit error , ze nesel spustit shell
 		return;
 	}
-
-	/*
-	
-	std::cout << std::endl;
-	createFile(TYPE_FILE, "C://", "aaa.txt", "lorem ipsum");
-	createFile(TYPE_FILE, "C://", "C://bbb.txt", "lorem ipsum");
-	createFile(TYPE_DIRECTORY, "C://", "zcu", "lorem ipsum");
-	createFile(TYPE_FILE, "C://zcu", "ccc.txt", "lorem ipsum");
-	createFile(TYPE_DIRECTORY, "C://zcu", "/prvak", "lorem ipsum");
-	createFile(TYPE_FILE, "C://zcu", "prvak/..///prvak/ddd.txt", "lorem ipsum");
-	struct node *newFile = openFile(0, "zcu/prvak", true, getCecko());
-	
-	deleteFile("C://zcu", "prvak");
-	deleteFile("C://", "zcu");
-	deleteFile("C://", "zcu/ccc.txt");
-	
-	deleteFile("C://", "aaa.txt");
-	deleteFile("C://", "bbb.txt");
-	deleteFile("C://", "eee.txt");
-	*/
-	
-
-	/*
-	TEntryPoint shell = (TEntryPoint)GetProcAddress(User_Programs, "shell");
-	if (shell) {
-	CONTEXT regs;  //ted je regs jenom nejak vyplneno kvuli preakladci
-	GetThreadContext(GetCurrentThread(), &regs);  //ale pak bude jeden z registru ukazovat na nejaky startup info blok
-	shell(regs);
-	}
-	*/
-
 	Shutdown_Kernel();
 }
