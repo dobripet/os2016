@@ -22,6 +22,6 @@ node *openFile(int type, char *path, bool rewrite, node *node);
 HRESULT addChild(node **parent, struct node **child);
 HRESULT deleteFile(std::string actualDirectory, std::string path);
 HRESULT deleteFile(node *toDetele);
-HRESULT getData(node **file, size_t startPosition, int size, char** buffer, int *filled);
-HRESULT setData(node **file, size_t startPosition, int size, char* buffer);
+HRESULT getData(node **file, size_t startPosition, size_t size, char** buffer, size_t *filled);
+HRESULT setData(node **file, size_t startPosition, size_t size, char* buffer);
 std::vector<std::string> split_string(std::string s);

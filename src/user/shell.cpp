@@ -32,11 +32,11 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	char* t = "Test zapisu do souboru!\n";
 	Write_File(STDOUT, t, strlen(t));
 	FDHandle h;
-	Open_File(&h, "C:\testik.txt", F_MODE_WRITE);
+	Open_File(&h, "C://testik.txt", F_MODE_WRITE);
 	char* t2 = "Tohle do souboru!\n";
 	Write_File(h, t2, strlen(t2));
 	Close_File(h);
-	Open_File(&h, "C:\testik.txt", F_MODE_READ);
+	Open_File(&h, "C://testik.txt", F_MODE_READ);
 	char r[256];
 	size_t filled;
 	Read_File(h, 50, r, &filled);

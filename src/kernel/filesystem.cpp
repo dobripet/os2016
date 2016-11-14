@@ -198,7 +198,7 @@ std::vector<std::string> split_string(std::string s) {
 	return path;
 }
 
-HRESULT getData(struct node **file, size_t startPosition, int size, char** buffer, int *filled) {
+HRESULT getData(struct node **file, size_t startPosition, size_t size, char** buffer, size_t *filled) {
 	*filled = 0;
 	if (!file) return S_FALSE; 
 	if (size <= 0) return S_FALSE;
@@ -214,7 +214,7 @@ HRESULT getData(struct node **file, size_t startPosition, int size, char** buffe
 	return S_OK;
 }
 
-HRESULT setData(struct node **file, size_t startPosition, int size, char* buffer) {
+HRESULT setData(struct node **file, size_t startPosition, size_t size, char* buffer) {
 	if (!file) return S_FALSE;
 	if (size <= 0) return S_FALSE;
 	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;

@@ -53,7 +53,7 @@ void __stdcall Run_VM() {
 	struct node *c = openFile(TYPE_FILE, "aaa.txt", true, b);
 	setData(&c, 0, 10, "asdfghjklq");
 	char *buffer = (char*)malloc(sizeof(char) * 11);
-	int filled;
+	size_t filled;
 	getData(&c, 0, 11, &buffer, &filled);
 	setData(&a, 0, filled, buffer);
 	struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);

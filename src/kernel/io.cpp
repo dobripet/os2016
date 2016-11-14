@@ -363,13 +363,16 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 	case F_TYPE_FILE:
 		//TODO
 		//cist z node
-		int rr;
-		success = getData(&(file->node), file_inst->pos, howMuch, &buf, &rr);
+		if (getData(&(file->node), file_inst->pos, howMuch, &buf, &read) == 0) success = 1;
+		else success = 0;
 		break;
 	}
 
 	if (success) return read;
-	else return 0;
+	else {
+		SetLastError(ERROR_READ_FAULT);
+		return 0;
+	}
 }
 
 size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
@@ -395,12 +398,16 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 		break;
 
 	case F_TYPE_FILE:
-		success = setData(&(file->node), file_inst->pos, howMuch, buf);
+		if (setData(&(file->node), file_inst->pos, howMuch, buf) == 0) success = 1;
+		else success = 0;
 		//TODO
 		//zapsat do node
 		break;
 	}
 
-	if (success) return written; 
-	else return 0;
+	if (success) return written;
+	else {
+		SetLastError(ERROR_WRITE_FAULT);
+		return 0;
+	}
 }
