@@ -3,7 +3,7 @@
 #include <iterator>
 #include <regex>
 
-struct node *cecko = mkdir(nullptr, "C://");
+struct node *root = mkdir(nullptr, "C://");
 
 node *mkdir(struct node *currentDir, char *path) {
 	struct node *newFile = new node;
@@ -12,8 +12,8 @@ node *mkdir(struct node *currentDir, char *path) {
 	newFile->parent = nullptr;
 	return newFile;
 }
-node *getCecko() {
-	return cecko;
+node *getRoot() {
+	return root;
 }
 
 node *getNodeFromPath(char *path) {
@@ -28,7 +28,7 @@ node *openFile(int type, char *path, bool rewrite, node *currentDir) {
 	size_t i = 0;
 	if (pathString.substr(0, 4) == "C://") {
 		i = 1;
-		temp = cecko;
+		temp = root;
 	}
 	else {
 		temp = currentDir;
@@ -111,7 +111,7 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 
 	std::vector<std::string> name = split_string(path);
 
-	struct node *temp = cecko;
+	struct node *temp = root;
 	for (size_t i = 1; i < absolutePath.size(); i++)
 	{
 		for (size_t j = 0; j < temp->children.size(); j++)
@@ -131,14 +131,7 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 		}
 	}
 
-	if (temp != cecko) {
-		//testovací volání nastavení/získání dat na konkrétní pozici
-
-		setData(&temp, 8, 5, "testy");
-		char* buffer;
-		getData(&temp, 0, 11, &buffer);
-		std::cout << temp->data << " - " << buffer << std::endl;
-
+	if (temp != root) {
 		deleteFile(temp);
 	}
 	else {
@@ -205,15 +198,19 @@ std::vector<std::string> split_string(std::string s) {
 	return path;
 }
 
-HRESULT getData(struct node **file, size_t startPosition, int size, char** buffer) {
-	if (!file) return S_FALSE;
+HRESULT getData(struct node **file, size_t startPosition, int size, char** buffer, int *filled) {
+	*filled = 0;
+	if (!file) return S_FALSE; 
 	if (size <= 0) return S_FALSE;
 	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
-	(*buffer) = (char*)malloc(sizeof(char) * (size + 1));
-	for (size_t i = startPosition; i < startPosition + size; i++) {
+	
+	for (size_t i = startPosition; i < startPosition + size && i < (*file)->data.length(); i++) {
 		(*buffer)[i - startPosition] = (*file)->data.at(i);
+		(*filled)++;
 	}
-	(*buffer)[size] = '\0';
+	if (*filled != size) {
+		(*buffer)[*filled] = '\0';
+	}
 	return S_OK;
 }
 
