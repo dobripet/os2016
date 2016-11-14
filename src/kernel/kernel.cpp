@@ -52,17 +52,18 @@ void __stdcall Run_VM() {
 	par.handles.push_back((FDHandle)2); //realnej soubor pokud bude presmerovani err z naseho programu?
 
 	std::cout << std::endl;
-	struct node *a = openFile(TYPE_DIRECTORY, "zcu", true, getCecko());
-	struct node *b = openFile(TYPE_DIRECTORY, "zcu/prvak", true, getCecko());
+	struct node *a = openFile(TYPE_DIRECTORY, "zcu", true, getRoot());
+	struct node *b = openFile(TYPE_DIRECTORY, "zcu/prvak", true, getRoot());
 	struct node *c = openFile(TYPE_FILE, "aaa.txt", true, b);
 	setData(&c, 0, 10, "asdfghjklq");
-	char *buffer = (char*)malloc(sizeof(char) * 10);
-	getData(&c, 0, 10, &buffer);
-	setData(&a, 0, 10, buffer);
-	//struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);
+	char *buffer = (char*)malloc(sizeof(char) * 11);
+	int filled;
+	getData(&c, 0, 11, &buffer, &filled);
+	setData(&a, 0, filled, buffer);
+	struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);
 
 	par.name = "shell";
-	par.current_path = (char *)getCecko()->name.c_str();
+	par.current_path = (char *)getRoot()->name.c_str();
 	par.handles.push_back((FDHandle)3);
 	par.waitForProcess = true; //musime na nej pockat
 

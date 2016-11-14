@@ -60,7 +60,7 @@ void initSystemIO() {
 	working directory (FS root) for the first shell
 	*/
 	opened_files_table[3] = new opened_file();
-	opened_files_table[3]->node = getCecko();
+	opened_files_table[3]->node = getRoot();
 	opened_files_table[3]->openCount = 1;
 	opened_files_table[3]->FILE_TYPE = F_TYPE_FILE;
 
@@ -361,7 +361,8 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 	case F_TYPE_FILE:
 		//TODO
 		//cist z node
-		success = getData(&(file->node), file_inst->pos, howMuch, &buf);
+		int rr;
+		success = getData(&(file->node), file_inst->pos, howMuch, &buf, &rr);
 		break;
 	}
 
