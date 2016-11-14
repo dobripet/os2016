@@ -25,9 +25,13 @@ void HandleProcess(CONTEXT & regs) {
 	}
 }
 
+std::mutex aa;
 void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switches) {
 
-	TIDtoPID[std::this_thread::get_id()] = pid;
+	{
+		std::lock_guard<std::mutex> lock(process_table_mtx);
+		TIDtoPID[std::this_thread::get_id()] = pid;
+	}
 
 	CONTEXT regs;
 	regs.R8 = (decltype(regs.R8))process_table[pid]->IO_descriptors[0]; //stdit
@@ -50,6 +54,7 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	}
 
 	std::lock_guard<std::mutex> lock(process_table_mtx);
+	TIDtoPID.erase(std::this_thread::get_id());
 	delete process_table[pid];
 	process_table[pid] = nullptr;
 }

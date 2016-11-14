@@ -62,7 +62,7 @@ void __stdcall Run_VM() {
 	//struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);
 
 	par.name = "shell";
-	//par.current_path = (char *)getCecko()->name.c_str();
+	par.current_path = (char *)getCecko()->name.c_str();
 	par.handles.push_back((FDHandle)3);
 	par.waitForProcess = true; //musime na nej pockat
 
