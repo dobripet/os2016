@@ -87,71 +87,85 @@ void closeSystemIO() {
 
 void HandleIO(CONTEXT &regs) {
 
-	switch (Get_AL((__int16) regs.Rax)) {
+	switch (Get_AL((__int16)regs.Rax)) {
 
-		case scCreatePipe: 
+	case scCreatePipe: {
 
-			FDHandle w, r;
-			regs.Rax = (decltype(regs.Rax))open_pipe(&w, &r);
-			regs.Rbx = (decltype(regs.Rbx))w;
-			regs.Rcx = (decltype(regs.Rcx))r;
-			Set_Error(regs.Rax == 0, regs);
-			break;
+		FDHandle w, r;
+		regs.Rax = (decltype(regs.Rax))open_pipe(&w, &r);
+		regs.Rbx = (decltype(regs.Rbx))w;
+		regs.Rcx = (decltype(regs.Rcx))r;
+		Set_Error(regs.Rax == 0, regs);
+		break;
+	}
 
-		case scOpenFile: 
+	case scOpenFile: {
 
-			FDHandle ho;
-			regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, &ho);
-			regs.Rbx = (decltype(regs.Rbx))ho;
-			Set_Error(regs.Rax == 0, regs);		
-			break;
-
-		case scCloseFile:
-			Set_Error(close_file((FDHandle)regs.Rdx) == 0, regs);
-			break;
-
-		case scReadFile:
-			regs.Rax = (decltype(regs.Rax))read_file((FDHandle)regs.Rdx, (int)regs.Rcx, (char*)regs.Rbx);
-			Set_Error(regs.Rax == 0, regs);
-			break;	
-
-		case scDuplicateHandle: 
-			FDHandle hd;
-			regs.Rax = (decltype(regs.Rax))duplicate_handle((FDHandle)regs.Rcx, &hd);
-			regs.Rbx = (decltype(regs.Rbx))hd;
-			Set_Error(regs.Rax == 0, regs);
-			break;
-
-		/*
-		case scCreateFile: {
-				regs.Rax = (decltype(regs.Rax)) CreateFileA((char*)regs.Rdx, GENERIC_READ | GENERIC_WRITE , (DWORD) regs.Rcx, 0, OPEN_EXISTING, 0, 0);
-				//zde je treba podle Rxc doresit shared_read, shared_write, OPEN_EXISING, etc. podle potreby
-				Set_Error(regs.Rax == 0, regs);				
-			}
-		break;	//scCreateFile
-		*/
-			
-		case scWriteFile:
-			regs.Rax = (decltype(regs.Rax))write_file((FDHandle)regs.Rbx, (int)regs.Rdx, (char*)regs.Rcx);
-			Set_Error(regs.Rax == 0, regs);
+		FDHandle ho;
+		regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, &ho);
+		regs.Rbx = (decltype(regs.Rbx))ho;
+		Set_Error(regs.Rax == 0, regs);
 		break;
 
+	}
+	case scCloseFile: {
+		Set_Error(close_file((FDHandle)regs.Rdx) == 0, regs);
+		break;
+	}
 
-		/*
-		case scWriteFile: {
-				DWORD written;
-				const bool failed = !WriteFile((HANDLE)regs.Rdx, (void*)regs.Rdi, (DWORD)regs.Rcx, &written, NULL);
-				Set_Error(failed, regs);
-				if (!failed) regs.Rax = written;
-			}
-			break; //scWriteFile
-		*/
-		/*
-		case scCloseFile: {
-			Set_Error(!CloseHandle((HANDLE)regs.Rdx), regs);			
-			}
-			break;	//CloseFile
-			*/
+	case scPeekFile: {
+		size_t available;
+		regs.Rax = (decltype(regs.Rax))peek_file((FDHandle)regs.Rdx, &available);
+		regs.Rbx = (decltype(regs.Rax))available;
+		Set_Error(regs.Rax != 0, regs);
+		break;
+	}
+
+	case scReadFile: {
+		regs.Rax = (decltype(regs.Rax))read_file((FDHandle)regs.Rdx, (int)regs.Rcx, (char*)regs.Rbx);
+		Set_Error(regs.Rax == 0, regs);
+		break;
+	}
+
+	case scDuplicateHandle: {
+		FDHandle hd;
+		regs.Rax = (decltype(regs.Rax))duplicate_handle((FDHandle)regs.Rcx, &hd);
+		regs.Rbx = (decltype(regs.Rbx))hd;
+		Set_Error(regs.Rax == 0, regs);
+		break;
+	}
+
+							/*
+							case scCreateFile: {
+									regs.Rax = (decltype(regs.Rax)) CreateFileA((char*)regs.Rdx, GENERIC_READ | GENERIC_WRITE , (DWORD) regs.Rcx, 0, OPEN_EXISTING, 0, 0);
+									//zde je treba podle Rxc doresit shared_read, shared_write, OPEN_EXISING, etc. podle potreby
+									Set_Error(regs.Rax == 0, regs);
+								}
+							break;	//scCreateFile
+							*/
+
+	case scWriteFile: {
+		regs.Rax = (decltype(regs.Rax))write_file((FDHandle)regs.Rbx, (int)regs.Rdx, (char*)regs.Rcx);
+		Set_Error(regs.Rax == 0, regs);
+		break;
+	}
+
+
+					  /*
+					  case scWriteFile: {
+							  DWORD written;
+							  const bool failed = !WriteFile((HANDLE)regs.Rdx, (void*)regs.Rdi, (DWORD)regs.Rcx, &written, NULL);
+							  Set_Error(failed, regs);
+							  if (!failed) regs.Rax = written;
+						  }
+						  break; //scWriteFile
+					  */
+					  /*
+					  case scCloseFile: {
+						  Set_Error(!CloseHandle((HANDLE)regs.Rdx), regs);
+						  }
+						  break;	//CloseFile
+						  */
 	}
 }
 
@@ -255,6 +269,7 @@ int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 	return 1;
 }
 
+
 // co se slozkama?????????????????
 //path must be \0 terminated!
 //If MODE is not READ and file of specified path already exists, its content gets deleted.
@@ -267,6 +282,9 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 	Pokud furt nechceme posilat do jadra pid procesu (resp. pouzit na identifikaci procesu nativni thread ID),
 	tak musime do syscallu posilat current_node z uzivatelskyho procesu - coz by nemel bejt asi takovej problem?.
 	*/
+	//int pid = tidtopid.get(threadid)
+	//current = pcb[pid]->descriptors[3];
+
 	node *n = openFile(TYPE_FILE, path, MODE != F_MODE_READ, nullptr /* !! */ );
 
 	if (!findIfOpenedFileExists(n, &H)) {
@@ -332,6 +350,34 @@ int close_file(FDHandle handle) {
 	return 1;
 }
 
+//prototyp.. moc to nefunguje - ale mozna neni problem v tyhle funkci, ale v logice bezeni procesu.
+int peek_file(FDHandle handle, size_t *available) {
+
+	opened_file_instance *file_inst = opened_files_table_instances[handle];
+	opened_file *file = opened_files_table[file_inst->file];
+
+	switch (file->FILE_TYPE) {
+
+	case F_TYPE_STD: {
+		DWORD lpTotalBytesAvail = 0;
+		PeekNamedPipe(file->std, NULL, 0, NULL, &lpTotalBytesAvail, NULL);
+		*available = lpTotalBytesAvail;
+		break;
+	}
+	case F_TYPE_PIPE: {
+		file->pipe->peek(available);
+		break;
+	}
+	case F_TYPE_FILE: {
+		*available = 1 + file->node->data.length() - file_inst->pos;
+		//+1 for EOF
+		break;
+	}
+	}
+	return 0;
+}
+
+
 size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
@@ -346,26 +392,30 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 
 	switch (file->FILE_TYPE) {
 
-	case F_TYPE_STD:
+	case F_TYPE_STD: {	
 		unsigned long r;
 		success = ReadFile(file->std, buf, howMuch, &r, nullptr);
 		if (r == 0 && success) {
 			r = 1;
 			buf[0] = EOF;
+		} else if (!success) {
+			//?
 		}
 		read = r;
 		break;
 
-	case F_TYPE_PIPE:
+	}
+	case F_TYPE_PIPE: {
 		success = file->pipe->read(howMuch, buf, &read);
 		break;
-
-	case F_TYPE_FILE:
+	}
+	case F_TYPE_FILE: {
 		//TODO
 		//cist z node
 		if (getData(&(file->node), file_inst->pos, howMuch, &buf, &read) == 0) success = 1;
 		else success = 0;
 		break;
+	}
 	}
 
 	if (success) return read;

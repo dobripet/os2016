@@ -63,6 +63,15 @@ bool Close_File(FDHandle file_handle) {
 	return Do_SysCall(regs);
 }
 
+bool Peek_File(FDHandle handle, size_t * available)
+{
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scPeekFile);
+	regs.Rdx = (decltype(regs.Rdx))handle;
+	bool ret = Do_SysCall(regs);
+	*available = (size_t)regs.Rbx;
+	return ret;
+}
+
 bool Read_File(FDHandle handle, size_t len, char * buf, size_t * filled) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scReadFile);
 	regs.Rdx = (decltype(regs.Rdx))handle;

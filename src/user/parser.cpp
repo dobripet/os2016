@@ -1,5 +1,6 @@
 #include <set>
 #include <regex>
+#include <iostream>
 
 #include "parser.hpp"
 
@@ -68,6 +69,7 @@ bool Parser::parse_commands(std::string line, std::vector<struct Parsed_command_
 
 bool Parser::parse_command(std::string command, struct Parsed_command_params * paramz) {
 	
+	command += " ";
 	*paramz = {"", false, false, false, "", "", ""};
 	bool leftpending = false, rightpending = false;
 	int pos = 0;

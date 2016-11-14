@@ -31,9 +31,9 @@ bool Open_Pipe(FDHandle * writeHandle, FDHandle * readHandle);
 //vraci true, kdyz vse OK
 bool Close_File(FDHandle file_handle);
 
-bool Read_File(FDHandle handle, size_t len, char * buf, size_t *filled);
+bool Peek_File(FDHandle handle, size_t *available);
 
-//TODO Peek_File
+bool Read_File(FDHandle handle, size_t len, char * buf, size_t *filled);
 
 //THandle Create_File(const char* file_name, size_t flags);
 		//podle flags otevre, vytvori soubor a vrati jeho deskriptor

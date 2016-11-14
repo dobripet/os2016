@@ -52,6 +52,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	Parser p;
 	//std::string pes = "type \"file.txt|\" > \"jinejfile/o k.txt\" nikdy nechci | dir bla bla  \"c://ppxx\"c://pp < soubor.txt|  wc /lv/a\"aaa|todle\" > xoxo.txt < pesss.txt /x";
 	std::string pes = "wc parametr1 parametr2  | wc parametr3 | wc p1 p2 p3 /n | wc a b c d /jp";
+	//pes = "wc";
 	//std::cout << "Prikaz: " << pes << std::endl;
 	std::vector<Parsed_command_params> commands_parsed;
 	if (!p.parse_commands(pes, &commands_parsed)) {
@@ -161,6 +162,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 			par.handles.push_back(std_in);
 			par.handles.push_back(std_out);
+			
+			//duplicate stderr for current process
 			/*bool ok = */Open_File(STDOUT, &std_err); //navratova hodnota muze bejt fail
 			par.handles.push_back(std_err);
 
@@ -182,12 +185,12 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 	}
 
-
 	/*
 	Shell pobezi ve while(true) {..}.
 	Ukoncen bude asi kdyz dostane EOF? (Ctrl+Z)
 	Musime nejak resit, aby kontroloval, jestli se nema ukoncit,
 	ale zaroven se nesmi tim ctenim zablokovat (coz se normalne pri cteni deje) - nejakej peek? timeout? nebo co?
+	plati i pro dalsi procesy jako je rgen
 	*/
 
 	/*

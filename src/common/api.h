@@ -56,14 +56,16 @@ const __int8 scProcess = 2;		//Process operace
 
 
 //al hodnoty pro scIO 
+//const __int8 scCreateFile = 1;
+const __int8 scWriteFile = 2;
 const __int8 scOpenFile = 3;
 const __int8 scCreatePipe = 4;
 const __int8 scCloseFile = 5;
 const __int8 scReadFile = 6;
 const __int8 scDuplicateHandle = 7;
+const __int8 scPeekFile = 8;
 
-const __int8 scCreateFile = 1;
-const __int8 scWriteFile = 2;
+
 
 
 //al hodnoty pro scProcess

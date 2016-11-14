@@ -44,6 +44,7 @@ typedef struct opened_file_instance {
 
 //TODO peek_file(handle, *kolik_tam_je int) (kvuli tomu, abych se nezablokoval na roure, kdyz jenom chci vedet, esi nahodou nemam uz EOF - napr. pro RGEN)
 //TODO change where handle points to (kvuli CD)
+int peek_file(FDHandle handle, size_t *available);
 
 int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle);
 int open_pipe(FDHandle * whandle, FDHandle * rhandle);
