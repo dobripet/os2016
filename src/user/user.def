@@ -3,7 +3,7 @@ LIBRARY user.dll
 EXPORTS
 	shell
 	type
-	mk
+	md
 	rd
 	echo
 	wc

@@ -74,7 +74,7 @@ int createProcess(command_params * par/*, int *proc_pid*/)
 	if (pid == -1) {
 		//v tabulce neni misto
 		SetLastError(CREATE_PROCESS_ERROR);
-		return 1;
+		return -1;
 	}
 
 	//process_table[pid]->pid = pid;
@@ -82,7 +82,6 @@ int createProcess(command_params * par/*, int *proc_pid*/)
 		process_table[pid]->IO_descriptors.push_back(handle);
 	}
 	process_table[pid]->name = par->name;
-	
 	TEntryPoint func = (TEntryPoint)GetProcAddress(User_Programs, par->name);
 	if (!func) {
 		//vstupni bod se nepovedlo nalezt v uzivatelskych programech
@@ -90,7 +89,7 @@ int createProcess(command_params * par/*, int *proc_pid*/)
 		delete process_table[pid];
 		process_table[pid] = nullptr;
 		SetLastError(CREATE_PROCESS_ERROR);
-		return 1;
+		return -1;
 	}
 
 	std::thread t(runProcess, func, pid, par->argc, par->argv, par->switches); 

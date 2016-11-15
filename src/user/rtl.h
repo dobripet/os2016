@@ -47,7 +47,8 @@ bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size);
 		//uzavre soubor identifikovany pomoci deskriptoru
 		//vraci true, kdyz vse OK
 
-
+/*Vytvori slozku podle dane absolutni nebo relativni cesty*/
+bool Make_Dir(char *path);
 
 
 

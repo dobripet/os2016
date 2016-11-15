@@ -52,3 +52,4 @@ int open_file(char *path, int MODE, FDHandle * handle);
 int close_file(FDHandle handle);
 size_t read_file(FDHandle handle, size_t howMuch, char * buf);
 size_t write_file(FDHandle handle, size_t howMuch, char * buf);
+HRESULT mkdir(char *path);

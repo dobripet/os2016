@@ -69,6 +69,7 @@ void __stdcall Run_VM() {
 	par.waitForProcess = true; //musime na nej pockat
 	int pid = createProcess(&par);
 	if (pid == - 1) {
+		std::cout << " nenalezen";
 		//oznamit error , ze nesel spustit shell
 		return;
 	}
