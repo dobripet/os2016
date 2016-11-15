@@ -265,7 +265,7 @@ int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 	}
 	opened_files_table_instances[new_h]->file = opened_files_table_instances[orig_handle]->file;
 	opened_files_table_instances[new_h]->mode = opened_files_table_instances[orig_handle]->mode;
-	//&pos?
+	opened_files_table_instances[new_h]->pos = opened_files_table_instances[orig_handle]->pos; //?
 	{
 		std::lock_guard<std::mutex> lock(files_table_mtx);
 		opened_files_table[opened_files_table_instances[orig_handle]->file]->openCount++;

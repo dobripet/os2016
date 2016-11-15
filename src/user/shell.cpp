@@ -10,11 +10,167 @@
 
 size_t __stdcall shell(const CONTEXT &regs) {
 
+
 	FDHandle STDIN = (FDHandle)regs.R8;
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
-	/*Shell current directory*/
 	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
+
+	Parser parser;
+	char * buf_command = new char[1001];
+	buf_command[1000] = '\0';
+	char * shell_ = "\n\n>\0";
+
+	while (true) {
+
+		Write_File(STDOUT, shell_, strlen(shell_));
+
+		size_t filled;
+		Read_File(STDIN, 1000, buf_command, &filled);
+		buf_command[filled] = '\0';
+		if (buf_command[filled - 1] == EOF) { //gg
+			break;
+		}
+		
+		std::vector<Parsed_command_params> commands_parsed;
+		if (!parser.parse_commands(std::string(buf_command), &commands_parsed)) {
+			std::cout << parser.get_error_message() << std::endl << std::endl;;
+		}
+		else {
+
+			std::vector<FDHandle> pipeWrite;
+			std::vector<FDHandle> pipeRead;
+
+			//vyrobeni tolika rour, kolik bude (pocet - 1) procesu
+			for (size_t i = 0; i < commands_parsed.size() - 1; i++) {
+				FDHandle write, read;
+				Open_Pipe(&write, &read);
+				pipeWrite.push_back(write);
+				pipeRead.push_back(read);
+			}
+
+			std::vector<int> process_handles;
+
+			for (size_t i = 0, lastCommand = commands_parsed.size() - 1; i < commands_parsed.size(); i++) {
+				Parsed_command_params &current_params = commands_parsed[i];
+
+				/*
+				TODO
+
+				1/ Zahrnout:
+				- paramz.stdinpath
+				- paramz.stdoutpath
+
+				2/ Do/ze souboru bude i kdyz bude roura. (presmerovani ma prednost pred rourou)
+				- Jak to vyresit s procesem, kterej na roure ceka na svuj vstup,
+				ale nic nedostane, protoze predchozi proces ma stdout do souboru?
+				- mozna by mohl shell na predchozi proces cekat a dalsimu pak dat pipu se zavrenym vstupem
+				(a analogicky se psanim, kdyz dalsi proces ma stdin ze souboru - i kdyz to se mozna resit nemusi -
+				proste dam procesu k zapisovani rouru, kterej rovnou zavru vystup, takze to proces pozna a nebude tam uz psat)
+				*/
+
+				command_params par;
+				FDHandle std_in, std_out, std_err, if_pipe_and_stdout = -2;
+				par.name = current_params.com.c_str();
+
+				if (current_params.redirectstdin) {
+
+					//neni to prvni prikaz, tj. ma presmerovani ze souboru i z roury
+					if (i != 0) {
+						//proste zavreme jeho rouru pro cteni - a producent (predchozi
+						//proces) by mel poznat, ze roura je pro cteni zavrena a ukoncit se.
+						Close_File(pipeRead[i - 1]); //TODO test - bude to fungovat????
+					}
+
+					bool fail = Open_File(&std_in, current_params.stdinpath.c_str(), F_MODE_READ);
+					if (fail) {
+						//TODO zavreni rour na obou stranach??
+						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
+						continue;
+					}
+				}
+				else if (i == 0) {
+					//prvni prikaz, zdedime (duplikujeme handle) stdin od rodice.
+					Open_File(STDIN, &std_in);
+				}
+				else {
+					//nemame presmerovani, ani to neni prvni prikaz - bude se cist z roury.
+					std_in = pipeRead[i - 1];
+				}
+
+				if (current_params.redirectstdout) {
+
+					//neni to posledni prikaz, tj. ma presmerovani do souboru i do roury
+					if (i != lastCommand) {
+						//Presmerovani do souboru ma prednost, takze to udelame tak, 
+						//ze tento proces producenta stejne dostane rouru do seznamu souboru..
+						//a normalne ji uzavre jako kazdy jiny soubor, az se bude ukoncovat.
+						if_pipe_and_stdout = pipeWrite[i]; //TODO test
+					}
+
+					bool fail = Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
+					if (fail) {
+						//TODO zavreni rour na obou stranach??
+						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
+						continue;
+					}
+
+				}
+				else if (i == lastCommand) {
+					//posledni prikaz, zdedime (duplikujeme handle) stdout od rodice.
+					Open_File(STDOUT, &std_out);
+				}
+				else {
+					//nemame presmerovani, ani to neni posledni prikaz - bude se psat do roury.
+					std_out = pipeWrite[i];
+				}
+
+				par.argc = static_cast<int>(current_params.params.size());
+				par.argv = new char*[par.argc];
+				for (int i = 0; i < par.argc; i++) {
+					par.argv[i] = new char[current_params.params[i].length() + 1];
+					current_params.params[i].copy(par.argv[i], current_params.params[i].length(), 0);
+					par.argv[i][current_params.params[i].length()] = '\0';
+				}
+				if (current_params.hasswitches) {
+					par.switches = new char[current_params.switches.length() + 1];
+					current_params.switches.copy(par.switches, current_params.switches.length(), 0);
+					par.switches[current_params.switches.length()] = '\0';
+				}
+				else {
+					par.switches = new char[1];
+					par.switches[0] = '\0';
+				}
+
+				par.handles.push_back(std_in);
+				par.handles.push_back(std_out);
+
+				//duplicate stderr for current process
+				/*bool ok = */Open_File(STDOUT, &std_err); //navratova hodnota muze bejt fail
+				par.handles.push_back(std_err);
+
+				//duplicate current dir for new process
+				FDHandle h;
+				/*bool ok = */Open_File(CURRENT_DIR, &h); //navratova hodnota muze bejt fail
+				par.handles.push_back(h);
+
+				if (if_pipe_and_stdout != -2) {
+					par.handles.push_back(if_pipe_and_stdout);
+					if_pipe_and_stdout = -2;
+				}
+
+				int pid;
+				Create_Process(&par, &pid);
+				process_handles.push_back(pid);
+			}
+
+			for (auto &pid : process_handles) {
+				Join_and_Delete_Process(pid);
+			}
+		}
+	}
+
+
 
 	/*
 	THandle stdin = Create_File("CONOUT$", FILE_SHARE_WRITE);	//nahradte systemovym resenim, zatim viz Console u CreateFile na MSDN
@@ -76,7 +232,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	/*
 	tady to nejak bude bezet ve while(true) dokud nebude ctrl+z nebo tak neco
 	*/
-
+	/*
 	//std::cout << std::endl << "Ukazka parsovani" << std::endl;
 	Parser p;
 	//std::string pes = "type \"file.txt|\" > \"jinejfile/o k.txt\" nikdy nechci | dir bla bla  \"c://ppxx\"c://pp < soubor.txt|  wc /lv/a\"aaa|todle\" > xoxo.txt < pesss.txt /x";
@@ -87,140 +243,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	if (!p.parse_commands(pes, &commands_parsed)) {
 		std::cout << p.get_error_message() << std::endl << std::endl;;
 	}
-	else {
-	
-		std::vector<FDHandle> pipeWrite;
-		std::vector<FDHandle> pipeRead;
-
-		//vyrobeni tolika rour, kolik bude (pocet - 1) procesu
-		for (size_t i = 0; i < commands_parsed.size() - 1; i++) {
-			FDHandle write, read;
-			Open_Pipe(&write, &read);
-			pipeWrite.push_back(write);
-			pipeRead.push_back(read);
-		}
-
-		std::vector<int> process_handles;
-
-		for (size_t i = 0, lastCommand = commands_parsed.size() - 1; i < commands_parsed.size(); i++) {
-			Parsed_command_params &current_params = commands_parsed[i];
-
-			/*
-			TODO
-
-			1/ Zahrnout:
-				- paramz.stdinpath
-				- paramz.stdoutpath
-
-			2/ Do/ze souboru bude i kdyz bude roura. (presmerovani ma prednost pred rourou)
-				- Jak to vyresit s procesem, kterej na roure ceka na svuj vstup,
-				  ale nic nedostane, protoze predchozi proces ma stdout do souboru?
-				  - mozna by mohl shell na predchozi proces cekat a dalsimu pak dat pipu se zavrenym vstupem
-				(a analogicky se psanim, kdyz dalsi proces ma stdin ze souboru - i kdyz to se mozna resit nemusi -
-				proste dam procesu k zapisovani rouru, kterej rovnou zavru vystup, takze to proces pozna a nebude tam uz psat)
-			*/
-
-			command_params par;
-			FDHandle std_in, std_out, std_err, if_pipe_and_stdout = -2;// , if_pipe_and_stdin = -2;
-			par.name = current_params.com.c_str();
-
-			if (current_params.redirectstdin) {
-
-				//neni to prvni prikaz, tj. ma presmerovani ze souboru i z roury
-				if (i != 0) {
-					//proste zavreme jeho rouru pro cteni - a producent (predchozi
-					//proces) by mel poznat, ze roura je pro cteni zavrena a ukoncit se.
-					Close_File(pipeRead[i - 1]); //TODO test - bude to fungovat????
-				}
-
-				bool fail = Open_File(&std_in, current_params.stdoutpath.c_str(), F_MODE_READ);
-				if (fail) {
-					//TODO zavreni rour na obou stranach??
-					continue;
-				}
-			}
-			else if (i == 0) {
-				//prvni prikaz, zdedime (duplikujeme handle) stdin od rodice.
-				Open_File(STDIN, &std_in);
-			}
-			else {
-				//nemame presmerovani, ani to neni prvni prikaz - bude se cist z roury.
-				std_in = pipeRead[i - 1];
-			}
-
-			if (current_params.redirectstdout) {
-
-				//neni to posledni prikaz, tj. ma presmerovani do souboru i do roury
-				if (i != lastCommand) {
-					//Presmerovani do souboru ma prednost, takze to udelame tak, 
-					//ze tento proces producenta stejne dostane rouru do seznamu souboru..
-					//a normalne ji uzavre jako kazdy jiny soubor, az se bude ukoncovat.
-					if_pipe_and_stdout = pipeWrite[i]; //TODO test
-				}
-
-				bool fail = Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
-				if (fail) {
-					//TODO zavreni rour na obou stranach??
-					continue;
-				}
-
-			}
-			else if (i == lastCommand) {
-				//posledni prikaz, zdedime (duplikujeme handle) stdout od rodice.
-				Open_File(STDOUT, &std_out);
-			}
-			else {
-				//nemame presmerovani, ani to neni posledni prikaz - bude se psat do roury.
-				std_out = pipeWrite[i];
-			}
-
-			par.argc = static_cast<int>(current_params.params.size());
-			par.argv = new char*[par.argc];
-			for (int i = 0; i < par.argc; i++) {
-				par.argv[i] = new char[current_params.params[i].length() + 1];
-				current_params.params[i].copy(par.argv[i], current_params.params[i].length(), 0);
-				par.argv[i][current_params.params[i].length()] = '\0';
-			}
-			if (current_params.hasswitches) {
-				par.switches = new char[current_params.switches.length() + 1];
-				current_params.switches.copy(par.switches, current_params.switches.length(), 0);
-				par.switches[current_params.switches.length()] = '\0';
-			}
-			else {
-				par.switches = new char[1];
-				par.switches[0] = '\0';
-			}
-
-			par.handles.push_back(std_in);
-			par.handles.push_back(std_out);
-			
-			//duplicate stderr for current process
-			/*bool ok = */Open_File(STDOUT, &std_err); //navratova hodnota muze bejt fail
-			par.handles.push_back(std_err);
-
-			//duplicate current dir for new process
-			FDHandle h;
-			/*bool ok = */Open_File(CURRENT_DIR, &h); //navratova hodnota muze bejt fail
-			par.handles.push_back(h);
-
-			if (if_pipe_and_stdout != -2) {
-				par.handles.push_back(if_pipe_and_stdout);
-				if_pipe_and_stdout = -2;
-			}
-
-		//	par.waitForProcess = (i == lastCommand);// || paramz.com == "shell"; //budeme cekat na posledni proces 
-			//TODO asi na shell cekat taky? (jakoze tenhle se blokne, kdyz existuje jinej)
-
-			int pid;
-			Create_Process(&par, &pid);
-			process_handles.push_back(pid);
-		}
-
-		for (auto &pid : process_handles) {
-			Join_and_Delete_Process(pid);
-		}
-
-	}
+	*/
+	//else *to samy jako nahore*
 
 	/*
 	Shell pobezi ve while(true) {..}.
