@@ -124,7 +124,7 @@ bool Create_Process(/*TEntryPoint * func,*/ command_params * par, int * pid)
 	CONTEXT regs = Prepare_SysCall_Context(scProcess, scCreateProcess);
 	regs.Rcx = (decltype(regs.Rcx))par;
 	bool success = Do_SysCall(regs);
-	*pid = regs.Rdx;
+	*pid = (int)regs.Rdx;
 	return success;
 }
 
