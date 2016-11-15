@@ -119,11 +119,18 @@ bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size) {
 }
 
 
-bool Create_Process(/*TEntryPoint * func,*/ command_params * par)
+bool Create_Process(/*TEntryPoint * func,*/ command_params * par, int * pid)
 {
 	CONTEXT regs = Prepare_SysCall_Context(scProcess, scCreateProcess);
-	//regs.Rbx = (decltype(regs.Rbx))func;
 	regs.Rcx = (decltype(regs.Rcx))par;
+	bool ret = Do_SysCall(regs);
+	*pid = regs.Rdx;
+	return ret;
+}
+
+bool Join_and_Delete_Process(int pid) {
+	CONTEXT regs = Prepare_SysCall_Context(scProcess, scJoinProcess);
+	regs.Rbx = (decltype(regs.Rbx))pid;
 	return Do_SysCall(regs);
 }
 

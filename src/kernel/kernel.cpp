@@ -67,10 +67,14 @@ void __stdcall Run_VM() {
 	par.current_path = (char *)getRoot()->name.c_str();
 	par.handles.push_back((FDHandle)3);
 	par.waitForProcess = true; //musime na nej pockat
-	int pid = createProcess(&par);
+	int pid;
+	createProcess(&par/*, &t*/, &pid);
 	if (pid == - 1) {
 		//oznamit error , ze nesel spustit shell
-		return;
 	}
+	else {
+		joinProcess(pid);
+	}
+
 	Shutdown_Kernel();
 }

@@ -13,12 +13,19 @@ std::unordered_map< std::thread::id, int> TIDtoPID;
 
 void HandleProcess(CONTEXT & regs) {
 	switch (Get_AL((__int16)regs.Rax)) {
-	case scCreateProcess:
-		//int pid = -1;
-		regs.Rax = (decltype(regs.Rax))createProcess((command_params *)regs.Rcx/*, &pid*/);
-		//regs.Rbx = (decltype(regs.Rax))pid;
+	case scCreateProcess: {
+		//std::thread t;
+		int pid = -1;
+		regs.Rax = (decltype(regs.Rax))createProcess((command_params *)regs.Rcx, &pid);
+		regs.Rdx = (decltype(regs.Rdx))pid;
 		Set_Error(regs.Rax != 0, regs);
 		break;
+	} 
+	case scJoinProcess: {
+		regs.Rax = (decltype(regs.Rax))joinProcess((int)regs.Rbx);
+		Set_Error(regs.Rax != 0, regs);
+		break;
+	}
 	//default:
 		//gtfo
 	}
@@ -43,7 +50,6 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	regs.Rcx = (decltype(regs.Rcx))argc;
 	regs.Rdx = (decltype(regs.Rdx))argv;
 
-	
 	size_t ret = func(regs);
 
 	for (auto &handle : process_table[pid]->IO_descriptors) {
@@ -51,13 +57,13 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 		//ret? nemusi se povest zavrit? 
 	}
 
-	std::lock_guard<std::mutex> lock(process_table_mtx);
-	TIDtoPID.erase(std::this_thread::get_id());
-	delete process_table[pid];
-	process_table[pid] = nullptr;
+	//std::lock_guard<std::mutex> lock(process_table_mtx);
+	//TIDtoPID.erase(std::this_thread::get_id());
+//	delete process_table[pid];
+//	process_table[pid] = nullptr;
 }
 
-int createProcess(command_params * par/*, int *proc_pid*/)
+int createProcess(command_params * par, int *proc_pid)
 {
 	int pid = -1;
 	{
@@ -82,7 +88,7 @@ int createProcess(command_params * par/*, int *proc_pid*/)
 		process_table[pid]->IO_descriptors.push_back(handle);
 	}
 	process_table[pid]->name = par->name;
-	
+
 	TEntryPoint func = (TEntryPoint)GetProcAddress(User_Programs, par->name);
 	if (!func) {
 		//vstupni bod se nepovedlo nalezt v uzivatelskych programech
@@ -93,15 +99,29 @@ int createProcess(command_params * par/*, int *proc_pid*/)
 		return 1;
 	}
 
-	std::thread t(runProcess, func, pid, par->argc, par->argv, par->switches); 
+	//std::thread t(runProcess, func, pid, par->argc, par->argv, par->switches);
+	process_table[pid]->thr = std::thread(runProcess, func, pid, par->argc, par->argv, par->switches);
+	*proc_pid = pid;
 
+	//*t = std::thread(runProcess, func, pid, par->argc, par->argv, par->switches);
+
+	/*
 	if (par->waitForProcess) {
-		t.join();
+		process_table[pid]->thr.join();
 	}
 	else {
-		t.detach();
+		process_table[pid]->thr.detach();
 	}
+	*/
+	return 0;
+}
 
-	//*proc_pid = pid;
+
+int joinProcess(int pid) {
+	process_table[pid]->thr.join();
+	std::lock_guard<std::mutex> lock(process_table_mtx);
+	TIDtoPID.erase(std::this_thread::get_id());
+	delete process_table[pid];
+	process_table[pid] = nullptr;
 	return 0;
 }

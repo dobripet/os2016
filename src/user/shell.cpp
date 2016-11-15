@@ -71,6 +71,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			pipeRead.push_back(read);
 		}
 
+		std::vector<int> process_handles;
+
 		for (size_t i = 0, lastCommand = commands_parsed.size() - 1; i < commands_parsed.size(); i++) {
 			Parsed_command_params &current_params = commands_parsed[i];
 
@@ -180,7 +182,13 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			par.waitForProcess = (i == lastCommand);// || paramz.com == "shell"; //budeme cekat na posledni proces 
 			//TODO asi na shell cekat taky? (jakoze tenhle se blokne, kdyz existuje jinej)
 
-			Create_Process(&par);
+			int pid;
+			Create_Process(&par, &pid);
+			process_handles.push_back(pid);
+		}
+
+		for (auto &pid : process_handles) {
+			Join_and_Delete_Process(pid);
 		}
 
 	}

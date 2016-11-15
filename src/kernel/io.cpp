@@ -427,7 +427,7 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
 	opened_file *file = opened_files_table[file_inst->file];
 
-	size_t written;
+	size_t written = 0;
 	BOOL success = false;
 
 	if (file_inst->mode == F_MODE_READ) {

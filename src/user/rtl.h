@@ -57,4 +57,5 @@ PROCES
 
 //vytvori a spusti ve vlakne novy proces, specifikovany zaslanymi parametry
 //vraci true, kdyz vse OK
-bool Create_Process(command_params * par);
+bool Create_Process(command_params * par, int * pid);
+bool Join_and_Delete_Process(int pid);

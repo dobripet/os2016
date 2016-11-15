@@ -70,6 +70,7 @@ const __int8 scPeekFile = 8;
 
 //al hodnoty pro scProcess
 const __int8 scCreateProcess = 1;
+const __int8 scJoinProcess = 2;
 
 
 constexpr __int16 Compose_AX(const __int8 ah, const __int8 al) {

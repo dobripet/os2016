@@ -15,6 +15,7 @@ void HandleProcess(CONTEXT &regs);
 
 typedef struct process_control_block {
 
+	std::thread thr;
 	//unsigned int pid;
 	const char * name;
 	//node *current_dir, *root_dir;//mozna node asi
@@ -38,7 +39,9 @@ typedef struct create_process_params {
 
 } command_params;
 
-int createProcess(command_params * par);
+
+int joinProcess(int pid);
+int createProcess(command_params * par, int *pid /*, std::thread * t*/);
 
 extern PCB *process_table[PROCESS_TABLE_SIZE];
 extern std::unordered_map< std::thread::id, int> TIDtoPID;
