@@ -49,6 +49,7 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	//regs.Rbx = (decltype(regs.Rbx))pid; //?
 	regs.Rcx = (decltype(regs.Rcx))argc;
 	regs.Rdx = (decltype(regs.Rdx))argv;
+	regs.R13 = (decltype(regs.R13))&(process_table[pid]->currentPath);
 
 	size_t ret = func(regs);
 
@@ -88,6 +89,8 @@ int createProcess(command_params * par, int *proc_pid)
 		process_table[pid]->IO_descriptors.push_back(handle);
 	}
 	process_table[pid]->name = par->name;
+	//TODO getPathFromNode() misto node->name
+	process_table[pid]->currentPath = opened_files_table[opened_files_table_instances[process_table[pid]->IO_descriptors[3]]->file]->node->name;
 
 	TEntryPoint func = (TEntryPoint)GetProcAddress(User_Programs, par->name);
 	if (!func) {

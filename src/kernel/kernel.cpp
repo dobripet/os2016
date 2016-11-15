@@ -64,7 +64,7 @@ void __stdcall Run_VM() {
 	par.handles.push_back((FDHandle)1); 
 	par.handles.push_back((FDHandle)2); 
 	par.name = "shell";
-	par.current_path = (char *)getRoot()->name.c_str();
+//	par.current_path = (char *)getRoot()->name.c_str();
 	par.handles.push_back((FDHandle)3);
 //	par.waitForProcess = true; //musime na nej pockat
 	int pid;

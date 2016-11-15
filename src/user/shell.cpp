@@ -15,26 +15,30 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
 	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
-
+	std::string *path = (std::string *) regs.R13;
+	
+	//v parseru je nejakej problem (jeste jinej nez s tim echem) s whitespace, pracuju na oprave //Kuba
 	Parser parser;
 	char * buf_command = new char[1001];
 	buf_command[1000] = '\0';
-	char * shell_ = "\n\n>\0";
+	bool run = true;
+	
+	while (run) {
 
-	while (true) {
-
-		Write_File(STDOUT, shell_, strlen(shell_));
+		std::string shell_ = "\n\n" + *path + ">";
+		char * shell__ = (char *)shell_.c_str();
+		Write_File(STDOUT, shell__, strlen(shell__));
 
 		size_t filled;
 		Read_File(STDIN, 1000, buf_command, &filled);
 		buf_command[filled] = '\0';
-		if (buf_command[filled - 1] == EOF) { //gg
+		if (buf_command[filled - 1] == EOF) { //goodbye
 			break;
 		}
 		
 		std::vector<Parsed_command_params> commands_parsed;
 		if (!parser.parse_commands(std::string(buf_command), &commands_parsed)) {
-			std::cout << parser.get_error_message() << std::endl << std::endl;;
+			std::cout << parser.get_error_message() << std::endl;;
 		}
 		else {
 
@@ -69,6 +73,25 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				proste dam procesu k zapisovani rouru, kterej rovnou zavru vystup, takze to proces pozna a nebude tam uz psat)
 				*/
 
+				if (current_params.com == "exit") {
+					run = false;
+					break;
+				}
+				if (current_params.com == "cd") {
+					if (i != 0) {
+						Close_File(pipeRead[i - 1]);
+					}
+					if (i != lastCommand) {
+						Close_File(pipeWrite[i]);
+					}
+					if (current_params.params.size() != 1) {
+						Write_File(STDOUT, (char*)(*path).c_str(), (*path).length());
+					} else {
+						//CD: syscall?
+					}
+					continue;
+				}
+		
 				command_params par;
 				FDHandle std_in, std_out, std_err, if_pipe_and_stdout = -2;
 				par.name = current_params.com.c_str();
@@ -106,6 +129,9 @@ size_t __stdcall shell(const CONTEXT &regs) {
 						//ze tento proces producenta stejne dostane rouru do seznamu souboru..
 						//a normalne ji uzavre jako kazdy jiny soubor, az se bude ukoncovat.
 						if_pipe_and_stdout = pipeWrite[i]; //TODO test
+
+						//!!!!
+						//TODO asi taky muzu s klidem tu rouru zavrit. KDyz tedka shell ceka na vsecky, tak je jedno, kdo driv skonci
 					}
 
 					bool fail = Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);

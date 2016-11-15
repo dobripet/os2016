@@ -21,6 +21,7 @@ typedef struct process_control_block {
 	//node *current_dir, *root_dir;//mozna node asi
 	std::vector<FDHandle> IO_descriptors; //tabulka souboru daneho procesu index by mel byt file descriptor
 	//0 = stdin, 1 = stdout, 2 = stderr, 3 = current folder
+	std::string currentPath;
 
 
 
@@ -30,7 +31,7 @@ typedef struct create_process_params {
 
 	std::vector <FDHandle> handles; //0=STDIN, 1=STDOUT, 2=STDERR, 3=SLOZKA kde se proces nachazi
 	//FDHandle STDOUT, STDIN, STDERR;
-	char * current_path; //pouze kvuli informaci pro uzivatele, jinak neni na nic potreba
+	//char * current_path; //pouze kvuli informaci pro uzivatele, jinak neni na nic potreba
 	char * switches;
 	char ** argv;
 	int argc;
