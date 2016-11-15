@@ -396,7 +396,7 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 
 	case F_TYPE_STD: {	
 		unsigned long r;
-		success = ReadFile(file->std, buf, howMuch, &r, nullptr);
+		success = ReadFile(file->std, buf, (DWORD)howMuch, &r, nullptr);
 		if (r == 0 && success) {
 			r = 1;
 			buf[0] = EOF;
@@ -442,7 +442,7 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 	switch (file->FILE_TYPE) {
 
 	case F_TYPE_STD:
-		success = WriteFile(file->std, buf, howMuch, (LPDWORD) &written, nullptr);
+		success = WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD) &written, nullptr);
 		break;
 
 	case F_TYPE_PIPE:
