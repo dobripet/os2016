@@ -66,7 +66,7 @@ void __stdcall Run_VM() {
 	par.name = "shell";
 	par.current_path = (char *)getRoot()->name.c_str();
 	par.handles.push_back((FDHandle)3);
-	par.waitForProcess = true; //musime na nej pockat
+//	par.waitForProcess = true; //musime na nej pockat
 	int pid;
 	createProcess(&par/*, &t*/, &pid);
 	if (pid == - 1) {

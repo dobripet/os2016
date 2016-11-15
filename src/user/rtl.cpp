@@ -18,6 +18,8 @@ CONTEXT Prepare_SysCall_Context(__int8 major, __int8 minor) {
 	return regs;
 }
 
+
+//returns true if syscall was completed without an error
 bool Do_SysCall(CONTEXT &regs) {
 	SysCall(regs);
 
@@ -32,9 +34,9 @@ bool Open_File(FDHandle old_handle, FDHandle * new_handle) {
 
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scDuplicateHandle);
 	regs.Rcx = (decltype(regs.Rcx))old_handle;
-	bool fail = Do_SysCall(regs);
+	bool success = Do_SysCall(regs);
 	*new_handle = (FDHandle)regs.Rbx;
-	return fail;
+	return success;
 }
 
 
@@ -43,18 +45,18 @@ bool Open_File(FDHandle * handle, const char * fname, int mode) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scOpenFile);
 	regs.Rdx = (decltype(regs.Rdx))fname;
 	regs.Rcx = (decltype(regs.Rcx))mode;
-	bool fail = Do_SysCall(regs);
+	bool success = Do_SysCall(regs);
 	*handle =  (FDHandle)regs.Rbx;
-	return fail;
+	return success;
 }
 
 bool Open_Pipe(FDHandle * writeHandle, FDHandle * readHandle) {
 
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scCreatePipe);
-	bool fail = Do_SysCall(regs);
+	bool success = Do_SysCall(regs);
 	*writeHandle = (FDHandle)regs.Rbx;
 	*readHandle = (FDHandle)regs.Rcx;
-	return fail;
+	return success;
 }
 
 bool Close_File(FDHandle file_handle) {
@@ -67,9 +69,9 @@ bool Peek_File(FDHandle handle, size_t * available)
 {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scPeekFile);
 	regs.Rdx = (decltype(regs.Rdx))handle;
-	bool ret = Do_SysCall(regs);
+	bool success = Do_SysCall(regs);
 	*available = (size_t)regs.Rbx;
-	return ret;
+	return success;
 }
 
 bool Read_File(FDHandle handle, size_t len, char * buf, size_t * filled) {
@@ -77,9 +79,9 @@ bool Read_File(FDHandle handle, size_t len, char * buf, size_t * filled) {
 	regs.Rdx = (decltype(regs.Rdx))handle;
 	regs.Rcx = (decltype(regs.Rcx))len;
 	regs.Rbx = (decltype(regs.Rbx))buf;
-	bool ret = Do_SysCall(regs);
+	bool success = Do_SysCall(regs);
 	*filled = (size_t)regs.Rax;
-	return ret;
+	return success;
 }
 
 
@@ -104,18 +106,16 @@ bool Write_File( FDHandle file_handle, char *buffer, size_t buffer_size, size_t 
 	regs.Rcx = (decltype(regs.Rcx))buffer;
 	regs.Rdx = (decltype(regs.Rdx))buffer_size;
 
-	const bool result = Do_SysCall(regs);
+	const bool success = Do_SysCall(regs);
 	*written = regs.Rax;
-	return result;
+	return success;
 }
 bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scWriteFile);
 	regs.Rbx = (decltype(regs.Rbx))file_handle;
 	regs.Rcx = (decltype(regs.Rcx))buffer;
 	regs.Rdx = (decltype(regs.Rdx))buffer_size;
-
-	const bool result = Do_SysCall(regs);
-	return result;
+	return Do_SysCall(regs);
 }
 
 
@@ -123,9 +123,9 @@ bool Create_Process(/*TEntryPoint * func,*/ command_params * par, int * pid)
 {
 	CONTEXT regs = Prepare_SysCall_Context(scProcess, scCreateProcess);
 	regs.Rcx = (decltype(regs.Rcx))par;
-	bool ret = Do_SysCall(regs);
-	*pid =(int) regs.Rdx;
-	return ret;
+	bool success = Do_SysCall(regs);
+	*pid = (int)regs.Rdx;
+	return success;
 }
 
 bool Join_and_Delete_Process(int pid) {

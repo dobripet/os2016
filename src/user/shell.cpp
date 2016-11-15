@@ -208,7 +208,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				if_pipe_and_stdout = -2;
 			}
 
-			par.waitForProcess = (i == lastCommand);// || paramz.com == "shell"; //budeme cekat na posledni proces 
+		//	par.waitForProcess = (i == lastCommand);// || paramz.com == "shell"; //budeme cekat na posledni proces 
 			//TODO asi na shell cekat taky? (jakoze tenhle se blokne, kdyz existuje jinej)
 
 			int pid;

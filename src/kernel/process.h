@@ -35,7 +35,7 @@ typedef struct create_process_params {
 	char ** argv;
 	int argc;
 	const char * name;
-	bool waitForProcess; 
+//	bool waitForProcess; 
 
 } command_params;
 
