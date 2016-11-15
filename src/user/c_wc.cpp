@@ -6,6 +6,57 @@
 
 #include <atomic>
 
+/*
+size_t __stdcall wc(const CONTEXT &regs) {
+	FDHandle STDIN = (FDHandle)regs.R8;
+	FDHandle STDOUT = (FDHandle)regs.R9;
+	FDHandle STDERR = (FDHandle)regs.R10;
+	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
+	char *switches = (char *)regs.R12;
+	char * myName = (char *)regs.Rax;
+	//int myPid = (int)regs.Rbx;
+	std::thread::id myPid = std::this_thread::get_id();
+	int argc = (int)regs.Rcx;
+	char ** argv = (char**)regs.Rdx;
+
+
+	//for each (open_file(cesta z parametru))
+
+	int charCnt = 0, wordCnt = 0, lineCnt = 1;
+
+
+	boolean hasEOF = false;
+	while (!hasEOF) {
+
+		char * buf = (char*)malloc(101 * sizeof(char));
+		size_t filled;
+		Read_File(STDIN, 100, buf, &filled); //TODO ze souboru podle parametru
+
+		charCnt += filled;
+
+		for (int i = 0; i < filled; i++) {
+			switch (buf[i]) {
+			case EOF: {
+				charCnt--;
+				hasEOF = !hasEOF;
+				break;
+			}
+			case '\n': {
+				lineCnt++;
+				break;
+			}
+
+			//TODO
+			}
+		}
+	}
+
+
+	//TODO pocty na stdout
+}
+*/
+
+
 std::mutex aaa;
 
 

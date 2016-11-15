@@ -4,7 +4,6 @@
 #include <iostream>
 #include <thread>
 #include <Windows.h>
-#include <unordered_map>
 
 
 std::mutex process_table_mtx; //mutex for process table
@@ -78,7 +77,7 @@ int createProcess(command_params * par/*, int *proc_pid*/)
 		return 1;
 	}
 
-	process_table[pid]->pid = pid;
+	//process_table[pid]->pid = pid;
 	for (auto &handle : par->handles) {
 		process_table[pid]->IO_descriptors.push_back(handle);
 	}

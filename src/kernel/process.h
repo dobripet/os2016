@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <unordered_map>
 #include "filesystem.h"
 #include "..\common\api.h"
 
@@ -14,11 +15,13 @@ void HandleProcess(CONTEXT &regs);
 
 typedef struct process_control_block {
 
-	unsigned int pid;
+	//unsigned int pid;
 	const char * name;
-	node *current_dir, *root_dir;//mozna node asi
+	//node *current_dir, *root_dir;//mozna node asi
 	std::vector<FDHandle> IO_descriptors; //tabulka souboru daneho procesu index by mel byt file descriptor
-	//0 = stdin, 1 = stdout, 2 = stderr
+	//0 = stdin, 1 = stdout, 2 = stderr, 3 = current folder
+
+
 
 } PCB;//kazdej proces bude mit tuto strukturu
 
@@ -35,7 +38,7 @@ typedef struct create_process_params {
 
 } command_params;
 
-
 int createProcess(command_params * par);
 
-extern PCB *process_table[1024];
+extern PCB *process_table[PROCESS_TABLE_SIZE];
+extern std::unordered_map< std::thread::id, int> TIDtoPID;

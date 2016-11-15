@@ -277,15 +277,12 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 
 	FDHandle H;
 
-	/*
-	Tady musi bejt PCB[pid]->current_node misto nullptr !!!! (no anebo current_node poslanej pres syscall)
-	Pokud furt nechceme posilat do jadra pid procesu (resp. pouzit na identifikaci procesu nativni thread ID),
-	tak musime do syscallu posilat current_node z uzivatelskyho procesu - coz by nemel bejt asi takovej problem?.
-	*/
-	//int pid = tidtopid.get(threadid)
-	//current = pcb[pid]->descriptors[3];
+	const int pid = TIDtoPID[std::this_thread::get_id()]; 
+	const FDHandle inst_h = process_table[pid]->IO_descriptors[3]; 
+	const FDHandle file_h = opened_files_table_instances[inst_h]->file; 
+	node * current = opened_files_table[file_h]->node;
 
-	node *n = openFile(TYPE_FILE, path, MODE != F_MODE_READ, nullptr /* !! */ );
+	node *n = openFile(TYPE_FILE, path, MODE != F_MODE_READ, current);
 
 	if (!findIfOpenedFileExists(n, &H)) {
 		int _h = takeFirstEmptyPlaceInFileTable();
