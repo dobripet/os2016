@@ -9,16 +9,16 @@ size_t __stdcall echo(const CONTEXT &regs) {
 
 	std::cout << "DEBUG:echo volano s poctem parametru: " << regs.Rcx << "\n";
 	for (int i = 0; i < (int)regs.Rcx; i++) {
-		std::cout << "DEBUG:echo param " << i << ": "<< ((char**)regs.Rdx)[i] << "\n";
+		std::cout << "DEBUG:echo param " << i << ": " << ((char**)regs.Rdx)[i] << "\n";
 	}
-	/*Calling with wrong number of params*/
-	if ((int)regs.Rcx != 1) {
-		return (size_t)1;
+	std::string text = "";
+	for (int i = 0; i < (int)regs.Rcx; i++) {
+		text += (std::string)((char**)regs.Rdx)[i] + " ";
 	}
-	std::string text = ((char**)regs.Rdx)[0];
+	text.replace(text.length() - 1, 1, "\0");
 	size_t size = text.length();
 	size_t written;
-	std::cout << "DEBUG:echo text je " << text<< "\n";
+	std::cout << "DEBUG:echo text je " << text << "\n";
 	bool success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
 	size_t total = written;
 	while (success && total != size) {
