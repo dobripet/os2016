@@ -149,6 +149,11 @@ void HandleIO(CONTEXT &regs) {
 		Set_Error(regs.Rax == 0, regs);
 		break;
 	}
+	case scMakeDir: {
+		regs.Rax = (decltype(regs.Rax))mkdir((char*)regs.Rbx);
+		Set_Error(regs.Rax != 0, regs);
+		break;
+	}
 
 
 					  /*
@@ -456,5 +461,15 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 	else {
 		SetLastError(ERROR_WRITE_FAULT);
 		return 0;
-	}
+	}	
+}
+
+HRESULT mkdir(char * path) {
+	const int pid = TIDtoPID[std::this_thread::get_id()];
+	const FDHandle inst_h = process_table[pid]->IO_descriptors[3];
+	const FDHandle file_h = opened_files_table_instances[inst_h]->file;
+	node * current = opened_files_table[file_h]->node;
+	/*TODO pridat chybove hlasky a prehodit na metodu mkdir*/
+	openFile(TYPE_DIRECTORY, path, 0, current);
+	return S_OK;
 }

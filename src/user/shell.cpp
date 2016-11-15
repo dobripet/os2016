@@ -13,6 +13,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	FDHandle STDIN = (FDHandle)regs.R8;
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
+	/*Shell current directory*/
 	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
 
 	/*
@@ -44,6 +45,22 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	Write_File(STDOUT, r, filled);
 	*/
 
+	/*
+	char *c[] = {"cesticka"};
+	command_params *para =  new command_params;
+	para->argc = 1;
+	para->argv = c;
+	para->name = "md";
+	std::vector <FDHandle> handles;
+	handles.push_back(STDIN);
+	handles.push_back(STDOUT);
+	handles.push_back(STDERR);
+	handles.push_back(CURRENT_DIR);
+	para->handles = handles;
+	std::cout << "volame\n";
+	Create_Process(para);
+	std::cout << "konec\n";
+	delete para;*/
 	/*
 	tady to nejak bude bezet ve while(true) dokud nebude ctrl+z nebo tak neco
 	*/

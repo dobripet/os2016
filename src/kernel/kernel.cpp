@@ -70,6 +70,7 @@ void __stdcall Run_VM() {
 	int pid;
 	createProcess(&par/*, &t*/, &pid);
 	if (pid == - 1) {
+		std::cout << " nenalezen";
 		//oznamit error , ze nesel spustit shell
 	}
 	else {

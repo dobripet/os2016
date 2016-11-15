@@ -134,6 +134,13 @@ bool Join_and_Delete_Process(int pid) {
 	return Do_SysCall(regs);
 }
 
+
+bool Make_Dir(char *path) {
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scMakeDir);
+	regs.Rbx = (decltype(regs.Rbx))path;
+	return Do_SysCall(regs);
+}
+
 /*
 bool Create_Process(void(*func)(PCB * pcb, std::vector<std::string> argv), run_params * params)
 {
