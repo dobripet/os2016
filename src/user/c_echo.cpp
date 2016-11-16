@@ -2,16 +2,22 @@
 #include "c_echo.h"
 #include <string>
 #include <iostream>
-/*Param 0 is text, param 1 is size of text, param 2 target filehandle*/
+/*Multiple params connect to one string and prints to stdout*/
 size_t __stdcall echo(const CONTEXT &regs) {
 
 	FDHandle STDOUT = (FDHandle)regs.R9;
-	FDHandle STDERR= (FDHandle)regs.R10;
+	FDHandle STDERR = (FDHandle)regs.R10;
 	size_t total; 
 	size_t size;
+	/*Flag handling*/
+	if (!strcmp((char *)regs.R12, "h\0")) {
+		char * msg = "Displays messages\n\n  ECHO[message]\n\nType ECHO without parameters to display the current echo setting.\n\0";
+		size = strlen(msg);
+		bool success = Write_File(STDOUT, msg, size, &total);
+	}
 	/*No params*/
-	if ((int)regs.Rcx == 0) {
-		char * msg = "ECHO is on.\0";
+	else if ((int)regs.Rcx == 0) {
+		char * msg = "ECHO is always on.\0";
 		size = strlen(msg);
 		bool success = Write_File(STDOUT, (char *)msg, size, &total);
 	}
@@ -40,7 +46,7 @@ size_t __stdcall echo(const CONTEXT &regs) {
 	if (total != size) {
 		std::cout << "DEBUG:echo error\n";
 		char * msg = "ECHO: error - not all data written(possibly closed file handle)\0";
-		Write_File(STDERR, (char *)msg, strlen(msg), &total);
+		Write_File(STDERR, msg, strlen(msg), &total);
 		return (size_t)1;
 	}
 	else {
