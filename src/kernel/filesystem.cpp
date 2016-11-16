@@ -70,6 +70,9 @@ HRESULT getNodeFromPath(char *path, node *currentDir, node **file) {
 			}
 		}
 	}
+
+	(*file) = nullptr;
+	return S_FALSE;
 }
 
 HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
