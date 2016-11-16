@@ -2,6 +2,12 @@
 
 #include <Windows.h>
 
+const int ERR_PROCESS_CREATE = 0x101;
+const int ERR_IO_PATH_NOEXIST = 0x201;
+const int ERR_IO_FILE_ISFILE = 0x202;
+const int ERR_IO_FILE_ISFOLDER = 0x203;
+const int ERR_IO_FILE_ISOPENED = 0x204;
+
 typedef HANDLE THandle;
 typedef int FDHandle;
 
