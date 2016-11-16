@@ -65,6 +65,7 @@ const __int8 scReadFile = 6;
 const __int8 scDuplicateHandle = 7;
 const __int8 scPeekFile = 8;
 const __int8 scMakeDir = 9;
+const __int8 scChangeDir = 10;
 
 
 

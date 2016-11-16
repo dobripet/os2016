@@ -46,6 +46,8 @@ typedef struct opened_file_instance {
 //TODO change where handle points to (kvuli CD)
 int peek_file(FDHandle handle, size_t *available);
 
+int change_dir(char * path);
+
 int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle);
 int open_pipe(FDHandle * whandle, FDHandle * rhandle);
 int open_file(char *path, int MODE, FDHandle * handle);

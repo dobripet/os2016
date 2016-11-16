@@ -77,6 +77,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				*/
 
 				if (current_params.com == "exit") {
+					//join predchozi procesy napred?
+					//uzavrit dalsi roury atd?
 					run = false;
 					break;
 				}

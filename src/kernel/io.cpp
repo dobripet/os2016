@@ -153,7 +153,12 @@ void HandleIO(CONTEXT &regs) {
 		regs.Rax = (decltype(regs.Rax))mkdir((char*)regs.Rbx);
 		Set_Error(regs.Rax != 0, regs);
 		break;
-	}
+	
+	case scChangeDir: {
+		regs.Rax = (decltype(regs.Rax))change_dir((char*)regs.Rbx);
+		Set_Error(regs.Rax != 0, regs);
+		break;
+	}}
 
 
 					  /*
@@ -209,6 +214,53 @@ int takeFirstEmptyPlaceInInstanceTable() {
 		}
 	}
 	return _h;
+}
+
+//dat do .h, vyresit kdyz vrati chybu
+int change_dir(char * path) {
+	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
+	node * currentNode = opened_files_table[currentInst->file]->node;
+
+	//NAHRADIT ZA: node * n = findNode(currentNode, path) nebo openDir/findDir neco takovyho
+	node * n = openFile(TYPE_DIRECTORY, path, false, currentNode);
+	/*if (neni) error;
+	else if (neni to slozka) error;
+	else*/
+	{
+		FDHandle openedHandle;
+		bool exists = findIfOpenedFileExists(n, &openedHandle);
+		if (exists) {
+			std::lock_guard<std::mutex> lock(files_table_mtx);
+			opened_files_table[openedHandle]->openCount++;
+			currentInst->file = openedHandle;
+			
+		}
+		else {
+			{
+				std::lock_guard<std::mutex> lock(files_table_mtx);
+				opened_files_table[currentInst->file]->openCount--;
+				if (opened_files_table[currentInst->file]->openCount < 1) {
+					delete opened_files_table[currentInst->file];
+					opened_files_table[currentInst->file] = nullptr;
+				}
+			}
+			openedHandle = takeFirstEmptyPlaceInFileTable();
+			if (openedHandle < 0) {
+				//error
+			}
+			else {
+				std::lock_guard<std::mutex> lock(files_table_mtx);
+				currentInst->file = openedHandle;
+				opened_files_table[currentInst->file]->openCount = 1;
+			}
+		}
+
+		//zmena soucasne slozky volajicimu shellu
+		//process_table[TIDtoPID[std::this_thread::get_id()]]->currentPath = getPathFromNode(n)
+
+	}
+
+	return 0;
 }
 
 
