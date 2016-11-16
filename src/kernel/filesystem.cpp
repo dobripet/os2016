@@ -96,18 +96,19 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 	for (; i < absolutePath.size() - (last ? 0 : 1); i++) //prolezení všech èástí [i] cesty
 	{
 		walker = temp;
+		if (absolutePath[i] == "..") { //skok o adresáø výše
+			if (temp->parent == nullptr) {
+				std::cout << "Path does not exist" << std::endl; //už jsme v céèku, výš skoèit nejde
+				(*node) = nullptr;
+			}
+			else {
+				temp = temp->parent;
+			}
+		}
+
 		for (size_t j = 0; j < temp->children.size(); j++) //hledání potomka v aktuálním uzlu podle cesty [i]
 		{
-			if (absolutePath[i] == "..") { //skok o adresáø výše
-				if (temp->parent == nullptr) {
-					std::cout << "Path does not exist" << std::endl; //už jsme v céèku, výš skoèit nejde
-					(*node) = nullptr;
-				}
-				else {
-					temp = temp->parent;
-				}
-			}
-			else if (absolutePath[i] == temp->children[j]->name && temp->children[j]->type == TYPE_DIRECTORY) { //nalezli jsme správného potomka
+			if (absolutePath[i] == temp->children[j]->name && temp->children[j]->type == TYPE_DIRECTORY) { //nalezli jsme správného potomka
 				temp = temp->children[j];
 				break;
 			}
