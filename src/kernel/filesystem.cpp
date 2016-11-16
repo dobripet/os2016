@@ -109,7 +109,6 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 			}
 			else if (absolutePath[i] == temp->children[j]->name && temp->children[j]->type == TYPE_DIRECTORY) { //nalezli jsme správného potomka
 				temp = temp->children[j];
-				std::cout << i << " " << j << std::endl;
 				break;
 			}
 		}
@@ -244,7 +243,7 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 	}
 
 	if (temp != root) {
-		deleteFile(temp);
+		deleteNode(temp);
 	}
 	else {
 		std::cout << "Path " << absolutePathStr << " does not exist" << std::endl;
@@ -253,17 +252,20 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 	return S_OK;
 }
 
-HRESULT deleteFile(struct node *toDelete) {
+HRESULT deleteNode(struct node *toDelete) {
 
 	struct node *parent = toDelete->parent;
 
 	if (toDelete->type == TYPE_DIRECTORY) {
 		if (!(toDelete->children).empty()) {
+			return S_FALSE;
+			/* //rekurzivní mazání
 			size_t last = (toDelete->children).size();
 			for (size_t i = 0; i < last; i++)
 			{
 				deleteFile(toDelete->children[0]);
 			}
+			*/
 		}
 
 		for (size_t i = 0; i < parent->children.size(); i++) {

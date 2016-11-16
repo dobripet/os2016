@@ -24,7 +24,7 @@ HRESULT getPathFromNode(node *currentDir, std::string *path);
 HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *node);
 HRESULT addChild(node **parent, struct node **child);
 HRESULT deleteFile(std::string actualDirectory, std::string path);
-HRESULT deleteFile(node *toDetele);
+HRESULT deleteNode(node *toDetele);
 HRESULT getData(node **file, size_t startPosition, size_t size, char** buffer, size_t *filled);
 HRESULT setData(node **file, size_t startPosition, size_t size, char* buffer);
 std::vector<std::string> split_string(std::string s);
