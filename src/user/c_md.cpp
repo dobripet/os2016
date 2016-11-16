@@ -41,7 +41,6 @@ size_t __stdcall md(const CONTEXT &regs) {
 		return (size_t)1;
 	}
 	else {
-		std::string text = "";
 		for (int i = 0; i < (int)regs.Rcx; i++) {
 			char * path = ((char**)regs.Rdx)[i];
 			bool mkdir = Make_Dir(path);

@@ -146,6 +146,11 @@ bool Change_Dir(char *path) {
 	regs.Rbx = (decltype(regs.Rbx))path;
 	return Do_SysCall(regs);
 }
+bool Remove_Dir(char *path) {
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scRemoveDir);
+	regs.Rbx = (decltype(regs.Rbx))path;
+	return Do_SysCall(regs);
+}
 
 /*
 bool Create_Process(void(*func)(PCB * pcb, std::vector<std::string> argv), run_params * params)

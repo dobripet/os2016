@@ -4,8 +4,6 @@
 
 #include <vector>
 #include <string>
-#include "..\kernel\process.h"
-#include "..\kernel\io.h"
 
 size_t Get_Last_Error();
 
@@ -50,6 +48,7 @@ bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size);
 /*Vytvori slozku podle dane absolutni nebo relativni cesty*/
 bool Make_Dir(char *path);
 bool Change_Dir(char *path);
+bool Remove_Dir(char *path);
 
 
 /*********************************************************************************************************

@@ -28,18 +28,6 @@ typedef struct process_control_block {
 
 } PCB;//kazdej proces bude mit tuto strukturu
 
-typedef struct create_process_params {
-
-	std::vector <FDHandle> handles; //0=STDIN, 1=STDOUT, 2=STDERR, 3=SLOZKA kde se proces nachazi
-	//FDHandle STDOUT, STDIN, STDERR;
-	//char * current_path; //pouze kvuli informaci pro uzivatele, jinak neni na nic potreba
-	char * switches;
-	char ** argv;
-	int argc;
-	const char * name;
-//	bool waitForProcess; 
-
-} command_params;
 
 
 int joinProcess(int pid);

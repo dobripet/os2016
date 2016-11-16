@@ -159,7 +159,11 @@ void HandleIO(CONTEXT &regs) {
 		Set_Error(regs.Rax != 0, regs);
 		break;
 	}
-
+	case scRemoveDir: {
+		regs.Rax = (decltype(regs.Rax))remove_dir((char*)regs.Rbx);
+		Set_Error(regs.Rax != 0, regs);
+		break;
+	}
 	}
 
 
@@ -530,7 +534,7 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 	}	
 }
 
-HRESULT mkdir(char * path) {
+int mkdir(char * path) {
 	const int pid = TIDtoPID[std::this_thread::get_id()];
 	const FDHandle inst_h = process_table[pid]->IO_descriptors[3];
 	const FDHandle file_h = opened_files_table_instances[inst_h]->file;
@@ -540,4 +544,34 @@ HRESULT mkdir(char * path) {
 	mkdir(&dir, path, current);
 
 	return S_OK;
+}
+
+int remove_dir(char * path) {
+	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
+	node * currentNode = opened_files_table[currentInst->file]->node;
+
+	node *n;
+	HRESULT ok = getNodeFromPath(path, currentNode, &n);
+	if (ok != S_OK) {
+		/*not found*/
+		return 1;
+	}
+
+	if (n->type != TYPE_DIRECTORY) {
+		/*not directory*/
+		SetLastError(ERR_IO_FILE_ISFILE);
+		return 1;
+	}
+	FDHandle openedHandle;
+	bool exists = findIfOpenedFileExists(n, &openedHandle);
+	if (exists) {
+		/*dir in use*/
+		SetLastError(ERR_IO_FILE_ISOPENED);
+		return 1;
+	}
+	if (deleteNode(n) != S_OK) {
+		/*has children*/
+		return 1;
+	}
+	return 0;
 }
