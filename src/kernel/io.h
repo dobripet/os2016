@@ -12,7 +12,9 @@ void HandleIO(CONTEXT &regs);
 const int OPEN_FILES_TABLE_SIZE = 2056;
 const int OPEN_INSTANCES_TABLE_SIZE = 4* OPEN_FILES_TABLE_SIZE;
 
-
+const int F_TYPE_STD = 1;
+const int F_TYPE_FILE = 2;
+const int F_TYPE_PIPE = 3;
 
 typedef struct opened_file {
 
