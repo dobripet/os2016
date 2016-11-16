@@ -95,6 +95,9 @@ size_t __stdcall shell(const CONTEXT &regs) {
 						if (!Change_Dir((char*)current_params.params[0].c_str())) {
 							Write_File(STDOUT, "nope\0", 4);
 						}
+						else {
+							Write_File(STDOUT, "ok\0", 4);
+						}
 					}
 					continue;
 				}

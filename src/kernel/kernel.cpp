@@ -51,13 +51,13 @@ void __stdcall Run_VM() {
 	struct node *a, *b, *c, *d;
 	mkdir(&a, "zcu", getRoot());
 	mkdir(&b, "zcu/prvak", getRoot());
-	openFile(&c, "aaa.txt", true, b);
+	openFile(&c, "aaa.txt", true, true, b);
 	setData(&c, 0, 10, "asdfghjklq");
 	char *buffer = (char*)malloc(sizeof(char) * 11);
 	size_t filled;
 	getData(&c, 0, 11, &buffer, &filled);
 	setData(&a, 0, filled, buffer);
-	openFile(&d, "C://zcu/prvak/bbb.txt", true, a);
+	openFile(&d, "C://zcu/prvak/bbb.txt", true, true, a);
 
 
 	//run shell

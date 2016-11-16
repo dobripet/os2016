@@ -223,11 +223,15 @@ int change_dir(char * path) {
 
 	//NAHRADIT ZA: node * n = findNode(currentNode, path) nebo openDir/findDir neco takovyho
 	node *n;
-	getNodeFromPath(path, true, currentNode, &n);
+	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
+	if (ok != S_OK) {
+		return 1;
+	}
+	
 	/*if (neni) error;
 	else if (neni to slozka) error;
 	else*/
-	{
+	else{
 		FDHandle openedHandle;
 		bool exists = findIfOpenedFileExists(n, &openedHandle);
 		if (exists) {
@@ -346,7 +350,7 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 	node * current = opened_files_table[file_h]->node;
 
 	node *n;
-	openFile(&n, path, MODE != F_MODE_READ, current);
+	openFile(&n, path, MODE != F_MODE_READ, MODE != F_MODE_READ, current);
 
 	if (!findIfOpenedFileExists(n, &H)) {
 		int _h = takeFirstEmptyPlaceInFileTable();
@@ -530,6 +534,8 @@ HRESULT mkdir(char * path) {
 	const FDHandle file_h = opened_files_table_instances[inst_h]->file;
 	node * current = opened_files_table[file_h]->node;
 	/*TODO pridat chybove hlasky a prehodit na metodu mkdir*/
-	openFile(TYPE_DIRECTORY, path, 0, current);
+	node *dir; //zde uložena vytvoøená složka, pokud již existuje, uloží nullptr a vrátí false
+	mkdir(&dir, path, current);
+
 	return S_OK;
 }

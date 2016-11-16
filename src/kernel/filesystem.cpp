@@ -118,39 +118,49 @@ HRESULT getPathFromNode(node *currentDir, std::string *path) {
 	return S_OK;
 }
 
-HRESULT openFile(node **file, char *path, bool rewrite, node *currentDir) {
+HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *currentDir) {
 	node *parent;
 	getNodeFromPath(path, false, currentDir, &parent);
 
 	if (parent != nullptr) {
 		std::string pathString(path);
 		std::vector<std::string> absolutePath = split_string(pathString);
-		for (size_t j = 0; j < parent->children.size(); j++) //hledání potomka v aktuálním uzlu podle cesty [i]
+		for (size_t j = 0; j < parent->children.size(); j++) //hledání souboru v aktuálním uzlu
 		{
-			if (absolutePath[absolutePath.size() - 1] == "..") { //skok o adresáø výše
-				std::cout << "Path does not exist" << std::endl; //už jsme v céèku, výš skoèit nejde
+			if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty nemùže být skok o úroveò výš
+				std::cout << "Path does not exist" << std::endl;
 				(*file) = nullptr;
 				return S_FALSE;
 			}
 			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) { //nalezli jsme správného potomka
 				//soubor existuje
 				if (rewrite) {
+					//chceme pøepsat data
 					parent->children[j]->data.clear();
 				}
 				(*file) = parent->children[j];
 				return S_OK;
 			}
 		}
-		//struct node *newnode(TYPE_FILE, absolutePath[absolutePath.size() - 1], "", nullptr, node);
-		struct node *newFile = new node;
-		newFile->name = absolutePath[absolutePath.size() - 1];
-		newFile->type = TYPE_FILE;
-		newFile->parent = parent;
-		addChild(&parent, &newFile);
-		(*file) = newFile;
-		return S_OK;
+
+		if (create) {
+			//našli jsme soubor a chceme ho vytvoøit
+			struct node *newFile = new node;
+			newFile->name = absolutePath[absolutePath.size() - 1];
+			newFile->type = TYPE_FILE;
+			newFile->parent = parent;
+			addChild(&parent, &newFile);
+			(*file) = newFile;
+			return S_OK;
+		}
+		else {
+			//nenašli jsme soubor a ani ho nechceme vytvoøit
+			(*file) = nullptr;
+			return S_FALSE;
+		}
 	}
 
+	//cesta neexistuje
 	(*file) = nullptr;
 	return S_FALSE;
 }
