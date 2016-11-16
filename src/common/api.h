@@ -12,7 +12,7 @@ typedef void(__stdcall *TSysCall)(CONTEXT &context);			//prototyp funkce, ktera 
 const __int64 CarryFlag = 1;
 
 /*Error codes*/
-const int ERR_NOERR = 0x0; //zadny error
+const int ERR_NOERROR = 0x0; //zadny error
 const int ERR_PROCESS_CREATE = 0x101; //proces nejde vyrobit
 const int ERR_IO_FILE_CREATE = 0x205; //soubor nejde vyrobit
 const int ERR_IO_PATH_NOEXIST = 0x201; //cesta neexistuje

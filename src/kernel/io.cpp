@@ -69,28 +69,11 @@ void initSystemIO() {
 	opened_files_table_instances[3]->mode = F_MODE_BOTH;
 }					
 
-/*
-void closeSystemIO() {
-	delete opened_files_table_instances[0];
-	delete opened_files_table_instances[1];
-	delete opened_files_table_instances[2];
-	opened_files_table_instances[0] = nullptr;
-	opened_files_table_instances[1] = nullptr;
-	opened_files_table_instances[2] = nullptr;
-	delete opened_files_table[0];
-	delete opened_files_table[1];
-	delete opened_files_table[2];
-	opened_files_table[0] = nullptr;
-	opened_files_table[1] = nullptr;
-	opened_files_table[2] = nullptr;
-}*/
-
 void HandleIO(CONTEXT &regs) {
 
 	switch (Get_AL((__int16)regs.Rax)) {
 
 	case scCreatePipe: {
-
 		FDHandle w, r;
 		regs.Rax = (decltype(regs.Rax))open_pipe(&w, &r);
 		regs.Rbx = (decltype(regs.Rbx))w;
@@ -100,26 +83,25 @@ void HandleIO(CONTEXT &regs) {
 	}
 
 	case scOpenFile: {
-
 		FDHandle ho;
 		regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, &ho);
 		regs.Rbx = (decltype(regs.Rbx))ho;
 		Set_Error(regs.Rax == 0, regs);
 		break;
-
 	}
+
 	case scCloseFile: {
 		Set_Error(close_file((FDHandle)regs.Rdx) == 0, regs);
 		break;
 	}
 
-	case scPeekFile: {
-		size_t available;
-		regs.Rax = (decltype(regs.Rax))peek_file((FDHandle)regs.Rdx, &available);
-		regs.Rbx = (decltype(regs.Rax))available;
-		Set_Error(regs.Rax != 0, regs);
-		break;
-	}
+					  /*case scPeekFile: {
+						  size_t available;
+						  regs.Rax = (decltype(regs.Rax))peek_file((FDHandle)regs.Rdx, &available);
+						  regs.Rbx = (decltype(regs.Rax))available;
+						  Set_Error(regs.Rax != 0, regs);
+						  break;
+					  }*/
 
 	case scReadFile: {
 		regs.Rax = (decltype(regs.Rax))read_file((FDHandle)regs.Rdx, (int)regs.Rcx, (char*)regs.Rbx);
@@ -135,54 +117,31 @@ void HandleIO(CONTEXT &regs) {
 		break;
 	}
 
-							/*
-							case scCreateFile: {
-									regs.Rax = (decltype(regs.Rax)) CreateFileA((char*)regs.Rdx, GENERIC_READ | GENERIC_WRITE , (DWORD) regs.Rcx, 0, OPEN_EXISTING, 0, 0);
-									//zde je treba podle Rxc doresit shared_read, shared_write, OPEN_EXISING, etc. podle potreby
-									Set_Error(regs.Rax == 0, regs);
-								}
-							break;	//scCreateFile
-							*/
-
 	case scWriteFile: {
 		regs.Rax = (decltype(regs.Rax))write_file((FDHandle)regs.Rbx, (int)regs.Rdx, (char*)regs.Rcx);
 		Set_Error(regs.Rax == 0, regs);
 		break;
 	}
+
 	case scMakeDir: {
 		regs.Rax = (decltype(regs.Rax))mkdir((char*)regs.Rbx);
 		Set_Error(regs.Rax != 0, regs);
 		break;
-	
+	}
+
 	case scChangeDir: {
 		regs.Rax = (decltype(regs.Rax))change_dir((char*)regs.Rbx);
 		Set_Error(regs.Rax != 0, regs);
 		break;
 	}
+
 	case scRemoveDir: {
 		regs.Rax = (decltype(regs.Rax))remove_dir((char*)regs.Rbx);
 		Set_Error(regs.Rax != 0, regs);
 		break;
 	}
-	}
 
-
-					  /*
-					  case scWriteFile: {
-							  DWORD written;
-							  const bool failed = !WriteFile((HANDLE)regs.Rdx, (void*)regs.Rdi, (DWORD)regs.Rcx, &written, NULL);
-							  Set_Error(failed, regs);
-							  if (!failed) regs.Rax = written;
-						  }
-						  break; //scWriteFile
-					  */
-					  /*
-					  case scCloseFile: {
-						  Set_Error(!CloseHandle((HANDLE)regs.Rdx), regs);
-						  }
-						  break;	//CloseFile
-						  */
-	}
+	}//end switch
 }
 
 bool findIfOpenedFileExists(node * n, FDHandle * handle) {
@@ -265,14 +224,8 @@ int change_dir(char * path) {
 		}
 
 		//zmena soucasne slozky volajicimu shellu
-		
 		getPathFromNode(n, &(process_table[TIDtoPID[std::this_thread::get_id()]]->currentPath));
-		//nebo by slo vypropagovat novou cestu shellu ven, nez to takhle nastavovat
-		//mozna to bude lepsi, protoze asi jenom shell potrebuje cestu znat, takze je skoro zbytecny aby byla ulozena v PCB
-		//ale pak by bylo problematicky v process.cpp v createProcess to nastavovat?
-
 	}
-
 	return 0;
 }
 
@@ -340,9 +293,6 @@ int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 }
 
 
-// co se slozkama?????????????????
-//path must be \0 terminated!
-//If MODE is not READ and file of specified path already exists, its content gets deleted.
 int open_file(char *path, int MODE, FDHandle * handle) {
 
 	FDHandle H;
@@ -385,12 +335,9 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 
 int close_file(FDHandle handle) {
 	
-	
 	FD_instance * inst = opened_files_table_instances[handle];
 	FD * fd = opened_files_table[inst->file];
-	/*if (fd->FILE_TYPE == F_TYPE_STD) {
-		return 0;
-	}*/
+
 	{
 		std::lock_guard<std::mutex> lock(files_table_mtx);
 		fd->openCount--;
@@ -418,7 +365,7 @@ int close_file(FDHandle handle) {
 	return 1;
 }
 
-//prototyp.. moc to nefunguje - ale mozna neni problem v tyhle funkci, ale v logice bezeni procesu.
+/*
 int peek_file(FDHandle handle, size_t *available) {
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
@@ -444,7 +391,7 @@ int peek_file(FDHandle handle, size_t *available) {
 	}
 	return 0;
 }
-
+*/
 
 size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 
@@ -456,13 +403,13 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 	}
 
 	size_t read = 0;
-	BOOL success = false;
+	bool success = false;
 
 	switch (file->FILE_TYPE) {
 
-	case F_TYPE_STD: {	
+	case F_TYPE_STD: {
 		unsigned long r;
-		success = ReadFile(file->std, buf, (DWORD)howMuch, &r, nullptr);
+		success = (ReadFile(file->std, buf, (DWORD)howMuch, &r, nullptr) != FALSE);
 		if (r == 0 && success) {
 			r = 1;
 			buf[0] = EOF;
@@ -473,19 +420,17 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 		break;
 
 	}
+
 	case F_TYPE_PIPE: {
 		success = file->pipe->read(howMuch, buf, &read);
 		break;
 	}
 	case F_TYPE_FILE: {
-		//TODO
-		//cist z node
-		
-		if (getData(&(file->node), file_inst->pos, howMuch, &buf, &read) == 0) success = 1;
-		else success = 0;
+		success = (S_OK == getData(&(file->node), file_inst->pos, howMuch, &buf, &read));
 		break;
 	}
-	}
+
+	}//end switch
 
 	if (success) return read;
 	else {
@@ -500,7 +445,7 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 	opened_file *file = opened_files_table[file_inst->file];
 
 	size_t written = 0;
-	BOOL success = false;
+	bool success = false;
 
 	if (file_inst->mode == F_MODE_READ) {
 		return 0;
@@ -508,23 +453,29 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 
 	switch (file->FILE_TYPE) {
 
-	case F_TYPE_STD:
-		success = WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD) &written, nullptr);
-		break;
-
-	case F_TYPE_PIPE:
-		success = (file->pipe)->write(buf, howMuch, &written);
-		break;
-
-	case F_TYPE_FILE:
-		if (setData(&(file->node), file_inst->pos, howMuch, buf) == 0) success = 1;
-		else success = 0;
-		//TODO
-		//zapsat do node
+	case F_TYPE_STD: {
+		success = (WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD)&written, nullptr) != FALSE);
+		if (!success) {
+			//?
+		}
 		break;
 	}
 
-	if (success) return written;
+	case F_TYPE_PIPE: {
+		success = (file->pipe)->write(buf, howMuch, &written);
+		break;
+	}
+
+	case F_TYPE_FILE: {
+		success = (setData(&(file->node), file_inst->pos, howMuch, buf) == S_OK);
+		break;
+	}
+
+	} //end switch
+
+	if (success) {
+		return written;
+	}
 	else {
 		SetLastError(ERROR_WRITE_FAULT);
 		return 0;
@@ -536,11 +487,8 @@ int mkdir(char * path) {
 	const FDHandle inst_h = process_table[pid]->IO_descriptors[3];
 	const FDHandle file_h = opened_files_table_instances[inst_h]->file;
 	node * current = opened_files_table[file_h]->node;
-	/*TODO pridat chybove hlasky a prehodit na metodu mkdir*/
 	node *dir; //zde uložena vytvoøená složka, pokud již existuje, uloží nullptr a vrátí false
-	mkdir(&dir, path, current);
-
-	return S_OK;
+	return mkdir(&dir, path, current);
 }
 
 int remove_dir(char * path) {
