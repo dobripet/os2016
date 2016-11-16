@@ -42,6 +42,10 @@ size_t __stdcall shell(const CONTEXT &regs) {
 		}
 		else {
 
+			if (commands_parsed.size() == 0) {
+				continue;
+			}
+			
 			std::vector<FDHandle> pipeWrite;
 			std::vector<FDHandle> pipeRead;
 

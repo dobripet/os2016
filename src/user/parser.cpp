@@ -15,6 +15,17 @@ std::string Parser::get_error_message() {
 }
 
 bool Parser::parse_commands(std::string line, std::vector<struct Parsed_command_params> * commands) {
+	
+	size_t cnt = line.length();
+	while (cnt > 0 && (line[cnt - 1] == '\n' || line[cnt - 1] == '\r')) {
+		cnt--;
+	}
+	if (cnt <= 1) {
+		return true;
+	}
+	if (cnt != line.length()) {
+		line = line.substr(0, cnt);
+	}
 
 	std::vector<std::string> commandsStr;
 	size_t pos = line.find('\"'), oldpos = 0, lastpos = 0;
@@ -57,7 +68,16 @@ bool Parser::parse_commands(std::string line, std::vector<struct Parsed_command_
 		}				
 	}
 	for (std::string com : commandsStr) {
+		
 		Parsed_command_params par;
+
+		if (SET_valid_commands.count(com) > 0) {			
+			par = { "", false, false, false, "", "", "" };
+			par.com = com;
+			commands->push_back(par);
+			continue;
+		}
+
 		if (!parse_command(com, &par)) {
 			return ERR;
 		} else {
