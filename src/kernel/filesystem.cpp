@@ -3,24 +3,56 @@
 #include <iterator>
 #include <regex>
 
-struct node *root = mkdir(nullptr, "C://");
-
-node *mkdir(struct node *currentDir, char *path) {
+node *mkroot() {
 	struct node *newFile = new node;
 	newFile->type = TYPE_DIRECTORY;
 	newFile->name = "C:";
 	newFile->parent = nullptr;
 	return newFile;
 }
+
+struct node *root = mkroot();
+
+HRESULT mkdir(node **dir, char *path, node *currentDir) {
+	node *parent;
+	getNodeFromPath(path, false, currentDir, &parent);
+
+	if (parent != nullptr) {
+		std::string pathString(path);
+		std::vector<std::string> absolutePath = split_string(pathString);
+		for (size_t j = 0; j < parent->children.size(); j++) //hledání potomka v aktuálním uzlu podle cesty [i]
+		{
+			if (absolutePath[absolutePath.size() - 1] == "..") { //skok o adresáø výše
+				std::cout << "Path does not exist" << std::endl; //bulšit cesta, nemùžem konèit ..
+				(*dir) = nullptr;
+				return S_FALSE;
+			}
+			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) {
+				//složka existuje
+				(*dir) = nullptr;
+				return S_FALSE;
+			}
+		}
+		
+		struct node *newFile = new node;
+		newFile->name = absolutePath[absolutePath.size() - 1];
+		newFile->type = TYPE_DIRECTORY;
+		newFile->parent = parent;
+		addChild(&parent, &newFile);
+		(*dir) = newFile;
+		return S_OK;
+	}
+
+	(*dir) = nullptr;
+	return S_FALSE;
+}
+
+
 node *getRoot() {
 	return root;
 }
 
-node *getNodeFromPath(char *path) {
-	return nullptr;
-}
-
-node *openFile(int type, char *path, bool rewrite, node *currentDir) {
+HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 	std::string pathString(path);
 	std::vector<std::string> absolutePath;
 	std::string absolutePathStr;
@@ -37,8 +69,8 @@ node *openFile(int type, char *path, bool rewrite, node *currentDir) {
 	//temp = uzel, kde mam zaèít prohledávat zadanou cestu pathString
 	absolutePath = split_string(pathString);
 	struct node *walker;
-	
-	for (; i < absolutePath.size(); i++) //prolezení všech èástí [i] cesty
+
+	for (; i < absolutePath.size() - (last ? 0 : 1); i++) //prolezení všech èástí [i] cesty
 	{
 		walker = temp;
 		for (size_t j = 0; j < temp->children.size(); j++) //hledání potomka v aktuálním uzlu podle cesty [i]
@@ -46,36 +78,81 @@ node *openFile(int type, char *path, bool rewrite, node *currentDir) {
 			if (absolutePath[i] == "..") { //skok o adresáø výše
 				if (temp->parent == nullptr) {
 					std::cout << "Path does not exist" << std::endl; //už jsme v céèku, výš skoèit nejde
-					return nullptr;
+					(*node) = nullptr;
 				}
 				else {
 					temp = temp->parent;
 				}
 			}
-			else if (absolutePath[i] == temp->children[j]->name) { //nalezli jsme správného potomka
+			else if (absolutePath[i] == temp->children[j]->name && temp->children[j]->type == TYPE_DIRECTORY) { //nalezli jsme správného potomka
 				temp = temp->children[j];
 				std::cout << i << " " << j << std::endl;
 				break;
 			}
 		}
 		if (walker == temp) { //potomek nebyl nalezen
-			if (i + 1 == absolutePath.size()) {
-				//vytvoø soubor
-				struct node *newFile = new node;
-				newFile->type = TYPE_DIRECTORY;
-				newFile->name = absolutePath[absolutePath.size() - 1];
-				newFile->parent = nullptr;
-				addChild(&temp, &newFile);
-				return newFile;
-			}
-			else {
-				//cesta neexistuje
-			}
-			break;
+			(*node) = nullptr;
+			return S_FALSE;
 		}
 	}
 
-	return temp;
+	(*node) = temp;
+	return S_OK;
+}
+
+HRESULT getPathFromNode(node *currentDir, std::string *path) {
+	if (currentDir == nullptr) return S_FALSE;
+	std::vector<std::string> pathStr;
+	std::string absolutePath("C://");
+	node *temp = currentDir;
+	while (temp->parent != nullptr) {
+		pathStr.push_back(temp->name);
+		temp = temp->parent;
+	}
+
+	for (int i = pathStr.size() - 1; i >= 0; i--) {
+		absolutePath += pathStr[i] + "/";
+	}
+	//(*path) = (char*)malloc(sizeof(char)*(absolutePath.size()+1));
+	(*path) = absolutePath;
+	return S_OK;
+}
+
+HRESULT openFile(node **file, char *path, bool rewrite, node *currentDir) {
+	node *parent;
+	getNodeFromPath(path, false, currentDir, &parent);
+
+	if (parent != nullptr) {
+		std::string pathString(path);
+		std::vector<std::string> absolutePath = split_string(pathString);
+		for (size_t j = 0; j < parent->children.size(); j++) //hledání potomka v aktuálním uzlu podle cesty [i]
+		{
+			if (absolutePath[absolutePath.size() - 1] == "..") { //skok o adresáø výše
+				std::cout << "Path does not exist" << std::endl; //už jsme v céèku, výš skoèit nejde
+				(*file) = nullptr;
+				return S_FALSE;
+			}
+			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) { //nalezli jsme správného potomka
+				//soubor existuje
+				if (rewrite) {
+					parent->children[j]->data.clear();
+				}
+				(*file) = parent->children[j];
+				return S_OK;
+			}
+		}
+		//struct node *newnode(TYPE_FILE, absolutePath[absolutePath.size() - 1], "", nullptr, node);
+		struct node *newFile = new node;
+		newFile->name = absolutePath[absolutePath.size() - 1];
+		newFile->type = TYPE_FILE;
+		newFile->parent = parent;
+		addChild(&parent, &newFile);
+		(*file) = newFile;
+		return S_OK;
+	}
+
+	(*file) = nullptr;
+	return S_FALSE;
 }
 
 HRESULT addChild(struct node **parent, struct node **child) {
@@ -202,6 +279,7 @@ HRESULT getData(struct node **file, size_t startPosition, size_t size, char** bu
 	*filled = 0;
 	if (!file) return S_FALSE; 
 	if (size <= 0) return S_FALSE;
+	if ((*file)->type == TYPE_DIRECTORY) return S_FALSE;
 	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
 	
 	for (size_t i = startPosition; i < startPosition + size && i < (*file)->data.length(); i++) {
@@ -217,6 +295,7 @@ HRESULT getData(struct node **file, size_t startPosition, size_t size, char** bu
 HRESULT setData(struct node **file, size_t startPosition, size_t size, char* buffer) {
 	if (!file) return S_FALSE;
 	if (size <= 0) return S_FALSE;
+	if ((*file)->type == TYPE_DIRECTORY) return S_FALSE;
 	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
 
 	if ((*file)->data.length() == startPosition) {
@@ -228,7 +307,7 @@ HRESULT setData(struct node **file, size_t startPosition, size_t size, char* buf
 		}
 
 		if ((*file)->data.length() < startPosition + size) {
-			size_t fileSize = (*file)->data.length();
+			int fileSize = (*file)->data.length();
 			//doøešit
 			(*file)->data.append((buffer + (size - (startPosition - fileSize))));
 		}

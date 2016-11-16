@@ -90,8 +90,8 @@ int createProcess(command_params * par, int *proc_pid)
 	}
 	process_table[pid]->name = par->name;
 	//TODO getPathFromNode() misto node->name
-	process_table[pid]->currentPath = opened_files_table[opened_files_table_instances[process_table[pid]->IO_descriptors[3]]->file]->node->name;
-
+	//process_table[pid]->currentPath = opened_files_table[opened_files_table_instances[process_table[pid]->IO_descriptors[3]]->file]->node->name;
+	getPathFromNode(opened_files_table[opened_files_table_instances[process_table[pid]->IO_descriptors[3]]->file]->node, &(process_table[pid]->currentPath));
 	TEntryPoint func = (TEntryPoint)GetProcAddress(User_Programs, par->name);
 	if (!func) {
 		//vstupni bod se nepovedlo nalezt v uzivatelskych programech

@@ -222,7 +222,8 @@ int change_dir(char * path) {
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
 	//NAHRADIT ZA: node * n = findNode(currentNode, path) nebo openDir/findDir neco takovyho
-	node * n = openFile(TYPE_DIRECTORY, path, false, currentNode);
+	node *n;
+	getNodeFromPath(path, true, currentNode, &n);
 	/*if (neni) error;
 	else if (neni to slozka) error;
 	else*/
@@ -252,11 +253,13 @@ int change_dir(char * path) {
 				std::lock_guard<std::mutex> lock(files_table_mtx);
 				currentInst->file = openedHandle;
 				opened_files_table[currentInst->file]->openCount = 1;
+				opened_files_table[currentInst->file]->node = n;
 			}
 		}
 
 		//zmena soucasne slozky volajicimu shellu
-		//process_table[TIDtoPID[std::this_thread::get_id()]]->currentPath = getPathFromNode(n)
+		
+		getPathFromNode(n, &(process_table[TIDtoPID[std::this_thread::get_id()]]->currentPath));
 		//nebo by slo vypropagovat novou cestu shellu ven, nez to takhle nastavovat
 		//mozna to bude lepsi, protoze asi jenom shell potrebuje cestu znat, takze je skoro zbytecny aby byla ulozena v PCB
 		//ale pak by bylo problematicky v process.cpp v createProcess to nastavovat?
@@ -342,7 +345,8 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 	const FDHandle file_h = opened_files_table_instances[inst_h]->file; 
 	node * current = opened_files_table[file_h]->node;
 
-	node *n = openFile(TYPE_FILE, path, MODE != F_MODE_READ, current);
+	node *n;
+	openFile(&n, path, MODE != F_MODE_READ, current);
 
 	if (!findIfOpenedFileExists(n, &H)) {
 		int _h = takeFirstEmptyPlaceInFileTable();
@@ -469,6 +473,7 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 	case F_TYPE_FILE: {
 		//TODO
 		//cist z node
+		
 		if (getData(&(file->node), file_inst->pos, howMuch, &buf, &read) == 0) success = 1;
 		else success = 0;
 		break;

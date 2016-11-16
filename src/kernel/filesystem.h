@@ -16,9 +16,10 @@ typedef struct node {
 } node;
 
 node *getRoot();
-node *mkdir(struct node *currentDir, char *path);
-node *getNodeFromPath(char *path);
-node *openFile(int type, char *path, bool rewrite, node *node);
+HRESULT mkdir(node **dir, char *path, node *currentDir);
+HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node);
+HRESULT getPathFromNode(node *currentDir, std::string *path);
+HRESULT openFile(node **file, char *path, bool rewrite, node *node);
 HRESULT addChild(node **parent, struct node **child);
 HRESULT deleteFile(std::string actualDirectory, std::string path);
 HRESULT deleteFile(node *toDetele);

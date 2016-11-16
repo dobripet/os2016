@@ -92,7 +92,9 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					if (current_params.params.size() != 1) {
 						Write_File(STDOUT, (char*)(*path).c_str(), (*path).length());
 					} else {
-						//CD: syscall?
+						if (!Change_Dir((char*)current_params.params[0].c_str())) {
+							Write_File(STDOUT, "nope\0", 4);
+						}
 					}
 					continue;
 				}

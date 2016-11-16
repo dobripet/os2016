@@ -48,15 +48,17 @@ void __stdcall Run_VM() {
 
 
 	std::cout << std::endl;
-	struct node *a = openFile(TYPE_DIRECTORY, "zcu", true, getRoot());
-	struct node *b = openFile(TYPE_DIRECTORY, "zcu/prvak", true, getRoot());
-	struct node *c = openFile(TYPE_FILE, "aaa.txt", true, b);
+	struct node *a, *b, *c, *d;
+	mkdir(&a, "zcu", getRoot());
+	mkdir(&b, "zcu/prvak", getRoot());
+	openFile(&c, "aaa.txt", true, b);
 	setData(&c, 0, 10, "asdfghjklq");
 	char *buffer = (char*)malloc(sizeof(char) * 11);
 	size_t filled;
 	getData(&c, 0, 11, &buffer, &filled);
 	setData(&a, 0, filled, buffer);
-	struct node *d = openFile(TYPE_DIRECTORY, "C://zcu/prvak/bbb.txt", true, a);
+	openFile(&d, "C://zcu/prvak/bbb.txt", true, a);
+
 
 	//run shell
 	command_params par;
