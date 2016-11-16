@@ -17,7 +17,6 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
 	std::string *path = (std::string *) regs.R13;
 	
-	//v parseru je nejakej problem (jeste jinej nez s tim echem) s whitespace, pracuju na oprave //Kuba
 	Parser parser;
 	char * buf_command = new char[1001];
 	buf_command[1000] = '\0';
