@@ -47,9 +47,29 @@ HRESULT mkdir(node **dir, char *path, node *currentDir) {
 	return S_FALSE;
 }
 
-
 node *getRoot() {
 	return root;
+}
+
+HRESULT getNodeFromPath(char *path, node *currentDir, node **file) {
+	struct node *parent;
+	getNodeFromPath(path, false, currentDir, &parent);
+	if (parent != nullptr) {
+		std::string pathString(path);
+		std::vector<std::string> absolutePath = split_string(pathString);
+		for (size_t j = 0; j < parent->children.size(); j++) //hledání souboru v aktuálním uzlu
+		{
+			if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty nemùže být skok o úroveò výš
+				std::cout << "Path does not exist" << std::endl;
+				(*file) = nullptr;
+				return S_FALSE;
+			}
+			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) { //nalezli jsme správného potomka
+				(*file) = parent->children[j];
+				return S_OK;
+			}
+		}
+	}
 }
 
 HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
@@ -169,6 +189,8 @@ HRESULT addChild(struct node **parent, struct node **child) {
 	if (!*parent || !*child) return S_FALSE;
 	if ((*parent)->type == TYPE_FILE) return S_FALSE;
 
+
+	//asi redundantní kód?? øeší nejspíš už openFile
 	for (size_t i = 0; i < (*parent)->children.size(); i++)
 	{
 		if ((*parent)->children[i]->name == (*child)->name) {
