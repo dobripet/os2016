@@ -80,7 +80,7 @@ int createProcess(command_params * par, int *proc_pid)
 
 	if (pid == -1) {
 		//v tabulce neni misto
-		SetLastError(CREATE_PROCESS_ERROR);
+		SetLastError(ERR_PROCESS_CREATE);
 		return -1;
 	}
 
@@ -98,7 +98,7 @@ int createProcess(command_params * par, int *proc_pid)
 		std::lock_guard<std::mutex> lock(process_table_mtx);
 		delete process_table[pid];
 		process_table[pid] = nullptr;
-		SetLastError(CREATE_PROCESS_ERROR);
+		SetLastError(ERR_PROCESS_NOTFOUND);
 		return -1;
 	}
 

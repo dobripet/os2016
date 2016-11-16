@@ -14,6 +14,7 @@ const __int64 CarryFlag = 1;
 /*Error codes*/
 const int ERR_NOERROR = 0x0; //zadny error
 const int ERR_PROCESS_CREATE = 0x101; //proces nejde vyrobit
+const int ERR_PROCESS_NOTFOUND = 0x102; //nenalezen vstupni bod procesu
 const int ERR_IO_FILE_CREATE = 0x205; //soubor nejde vyrobit
 const int ERR_IO_PATH_NOEXIST = 0x201; //cesta neexistuje
 const int ERR_IO_FILE_ISFILE = 0x202; //node je soubor (kdyz chceme neco delat se slozkou)

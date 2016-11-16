@@ -499,6 +499,7 @@ int remove_dir(char * path) {
 	HRESULT ok = getNodeFromPath(path, currentNode, &n);
 	if (ok != S_OK) {
 		/*not found*/
+		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
 		return 1;
 	}
 
@@ -516,6 +517,7 @@ int remove_dir(char * path) {
 	}
 	if (deleteNode(n) != S_OK) {
 		/*has children*/
+		SetLastError(ERR_IO_FILE_NOTEMPTY); //tuhle chybu bude nastavovat FS nejspi
 		return 1;
 	}
 	return 0;
