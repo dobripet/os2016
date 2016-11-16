@@ -121,9 +121,10 @@ int createProcess(command_params * par, int *proc_pid)
 
 
 int joinProcess(int pid) {
+	std::thread::id tid = process_table[pid]->thr.get_id();
 	process_table[pid]->thr.join();
 	std::lock_guard<std::mutex> lock(process_table_mtx);
-	TIDtoPID.erase(std::this_thread::get_id());
+	TIDtoPID.erase(tid);
 	delete process_table[pid];
 	process_table[pid] = nullptr;
 	return 0;
