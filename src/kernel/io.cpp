@@ -257,6 +257,9 @@ int change_dir(char * path) {
 
 		//zmena soucasne slozky volajicimu shellu
 		//process_table[TIDtoPID[std::this_thread::get_id()]]->currentPath = getPathFromNode(n)
+		//nebo by slo vypropagovat novou cestu shellu ven, nez to takhle nastavovat
+		//mozna to bude lepsi, protoze asi jenom shell potrebuje cestu znat, takze je skoro zbytecny aby byla ulozena v PCB
+		//ale pak by bylo problematicky v process.cpp v createProcess to nastavovat?
 
 	}
 
