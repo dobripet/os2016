@@ -158,7 +158,9 @@ void HandleIO(CONTEXT &regs) {
 		regs.Rax = (decltype(regs.Rax))change_dir((char*)regs.Rbx);
 		Set_Error(regs.Rax != 0, regs);
 		break;
-	}}
+	}
+
+	}
 
 
 					  /*

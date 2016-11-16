@@ -13,11 +13,11 @@ HMODULE User_Programs;
 
 void Set_Error(const bool failed, CONTEXT &regs) {
 	if (failed) {
-		stc(regs.EFlags);
+		regs.EFlags = stc(regs.EFlags);
 		regs.Rax = GetLastError();
 	}
 	else
-		clc(regs.EFlags);
+		regs.EFlags = clc(regs.EFlags);
 }
 
 void Initialize_Kernel() {
