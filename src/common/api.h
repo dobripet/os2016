@@ -1,15 +1,15 @@
 #pragma once
 
 #include <Windows.h>
-#include <vector>
-
-const int ERR_PROCESS_CREATE = 0x101;
-const int ERR_IO_PATH_NOEXIST = 0x201;
-const int ERR_IO_FILE_ISFILE = 0x202;
-const int ERR_IO_FILE_ISFOLDER = 0x203;
-const int ERR_IO_FILE_ISOPENED = 0x204;
-const int ERR_IO_DIR_EXIST = 0x205;
-const int ERR_IO_DIR_NOTEMPTY = 0x206;
+ 
+const int ERR_NOERR = 0x0; //zadny error
+const int ERR_PROCESS_CREATE = 0x101; //proces nejde vyrobit
+const int ERR_IO_FILE_CREATE = 0x205; //soubor nejde vyrobit
+const int ERR_IO_PATH_NOEXIST = 0x201; //cesta neexistuje
+const int ERR_IO_FILE_ISFILE = 0x202; //node je soubor (kdyz chceme neco delat se slozkou)
+const int ERR_IO_FILE_ISFOLDER = 0x203; //node je slozka (kdyz chceme neco delat se souborem)
+const int ERR_IO_FILE_ISOPENED = 0x204; //node nekdo pouziva (nejde smazat)
+const int ERR_IO_FILE_NOTEMPTY = 0x206; //node neni prazdnej (slozka nejde smazat)
 
 typedef HANDLE THandle;
 typedef int FDHandle;

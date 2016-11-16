@@ -234,17 +234,13 @@ int change_dir(char * path) {
 		return 1;
 	}
 	
-	/*if (neni) error;
-	else if (neni to slozka) error;
-	else*/
 	else{
 		FDHandle openedHandle;
 		bool exists = findIfOpenedFileExists(n, &openedHandle);
 		if (exists) {
 			std::lock_guard<std::mutex> lock(files_table_mtx);
 			opened_files_table[openedHandle]->openCount++;
-			currentInst->file = openedHandle;
-			
+			currentInst->file = openedHandle;		
 		}
 		else {
 			{
@@ -262,6 +258,7 @@ int change_dir(char * path) {
 			else {
 				std::lock_guard<std::mutex> lock(files_table_mtx);
 				currentInst->file = openedHandle;
+				opened_files_table[currentInst->file]->openCount = F_TYPE_FILE;
 				opened_files_table[currentInst->file]->openCount = 1;
 				opened_files_table[currentInst->file]->node = n;
 			}

@@ -38,7 +38,7 @@ size_t __stdcall rd(const CONTEXT &regs) {
 			/*handle error*/
 			if (rmdir == false) {
 				switch (Get_Last_Error()) {
-					case ERR_IO_DIR_NOTEMPTY: {
+					case ERR_IO_FILE_NOTEMPTY: {
 						char *msg = "The directory is not empty.\n\0";
 						Write_File(STDERR, msg, strlen(msg));
 						break;
