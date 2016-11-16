@@ -6,7 +6,7 @@
 
 const bool OK = true;
 const bool ERR = !OK;
-const std::set<std::string> SET_valid_commands = {"clear", "exit", "cd", "md", "wc", "rd", "echo", /*"dir",*/ "type", "freq", "rgen", "ps", "sort", "shell"}; 
+const std::set<std::string> SET_valid_commands = {"exit", "cd", "md", "wc", "rd", "echo", /*"dir",*/ "type", "freq", "rgen", "ps", "sort", "shell"}; 
 const std::regex RGX_nab("[^a-zA-z]");
 const std::regex RGX_command_params("<|>|\"|/[a-zA-z]+|[^ \t\"]+");
 
