@@ -193,8 +193,13 @@ int change_dir(char * path) {
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
 	node *n;
-	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
+	HRESULT ok = getNodeFromPath(path, currentNode, &n);
 	if (ok != S_OK) {
+		SetLastError(ERR_IO_PATH_NOEXIST);
+		return 1;
+	}
+	else if (n->type != TYPE_DIRECTORY) {
+		SetLastError(ERR_IO_FILE_ISFILE);
 		return 1;
 	}
 	
@@ -227,6 +232,7 @@ int change_dir(char * path) {
 				opened_files_table[currentInst->file]->node = n;
 			}
 		}
+
 		//zmena soucasne slozky volajicimu shellu
 		getPathFromNode(n, &(process_table[TIDtoPID[std::this_thread::get_id()]]->currentPath));
 	}

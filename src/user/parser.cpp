@@ -16,6 +16,7 @@ std::string Parser::get_error_message() {
 
 bool Parser::parse_commands(std::string line, std::vector<struct Parsed_command_params> * commands) {
 	
+	//zahodime konec znaky konce radky, pokud se na konci "line" nachazi
 	size_t cnt = line.length();
 	while (cnt > 0 && (line[cnt - 1] == '\n' || line[cnt - 1] == '\r')) {
 		cnt--;

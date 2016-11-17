@@ -40,7 +40,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			std::cout << parser.get_error_message() << std::endl;;
 		}
 		else {
-
+			
 			if (commands_parsed.size() == 0) {
 				continue;
 			}
@@ -63,7 +63,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 				if (current_params.com == "exit") {
 					if (i != 0) {
-						//na jiz spustene procesy se ceka na konci cyklu shelli
+						//na jiz spustene procesy se ceka na konci cyklu shellu
 						char * msg = "Waiting for processes to finish before exit.\n\0";
 						Write_File(STDOUT, msg, strlen(msg));
 					}		
@@ -90,10 +90,24 @@ size_t __stdcall shell(const CONTEXT &regs) {
 						Write_File(STDOUT, (char*)(*path).c_str(), (*path).length());
 					} else {
 						if (!Change_Dir((char*)current_params.params[0].c_str())) {
-							Write_File(STDOUT, "nope\0", 4);
-						}
-						else {
-							Write_File(STDOUT, "ok\0", 4);
+							switch (Get_Last_Error())
+							{
+							case ERR_IO_PATH_NOEXIST: {
+								char * err = "This path does not exist.\n\0";
+								Write_File(STDOUT, err, strlen(err));
+								break;
+							}
+							case ERR_IO_FILE_ISFILE: {
+								char * err = "Target is not a directory.\n\0";
+								Write_File(STDOUT, err, strlen(err));
+								break;
+							}
+							default: {
+								char * err = "Unspecified error occured.\n\0";
+								Write_File(STDOUT, err, strlen(err));
+								break;
+							}
+							}//end switch
 						}
 					}
 					continue;
