@@ -47,6 +47,7 @@ int open_file(char *path, int MODE, FDHandle * handle);
 int close_file(FDHandle handle);
 size_t read_file(FDHandle handle, size_t howMuch, char * buf);
 size_t write_file(FDHandle handle, size_t howMuch, char * buf);
+int remove_file(char * path);
 
 extern opened_file * opened_files_table[OPEN_FILES_TABLE_SIZE];
 extern opened_file_instance * opened_files_table_instances[OPEN_INSTANCES_TABLE_SIZE];

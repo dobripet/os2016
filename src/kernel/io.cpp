@@ -140,6 +140,11 @@ void HandleIO(CONTEXT &regs) {
 		Set_Error(regs.Rax != 0, regs);
 		break;
 	}
+	case scRemoveFile: {
+		regs.Rax = (decltype(regs.Rax))remove_file((char*)regs.Rbx);
+		Set_Error(regs.Rax != 0, regs);
+		break;
+	}
 
 	}//end switch
 }
@@ -518,6 +523,37 @@ int remove_dir(char * path) {
 	if (deleteNode(n) != S_OK) {
 		/*has children*/
 		SetLastError(ERR_IO_FILE_NOTEMPTY); //tuhle chybu bude nastavovat FS nejspi
+		return 1;
+	}
+	return 0;
+}
+int remove_file(char * path) {
+	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
+	node * currentNode = opened_files_table[currentInst->file]->node;
+
+	node *n;
+	HRESULT ok = getNodeFromPath(path, currentNode, &n);
+	if (ok != S_OK) {
+		/*not found*/
+		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
+		return 1;
+	}
+
+	if (n->type != TYPE_FILE) {
+		/*not file*/
+		SetLastError(ERR_IO_FILE_ISFOLDER);
+		return 1;
+	}
+	FDHandle openedHandle;
+	bool exists = findIfOpenedFileExists(n, &openedHandle);
+	if (exists) {
+		/*file in use*/
+		SetLastError(ERR_IO_FILE_ISOPENED);
+		return 1;
+	}
+	if (deleteNode(n) != S_OK) {
+		/*unexpected error*/
+		SetLastError(ERR_IO_FILE_NOTEMPTY); //kdyby zde nastala chyba tak neco nastavit ve FS
 		return 1;
 	}
 	return 0;
