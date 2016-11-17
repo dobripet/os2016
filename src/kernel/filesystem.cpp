@@ -132,9 +132,10 @@ HRESULT getPathFromNode(node *currentDir, std::string *path) {
 		pathStr.push_back(temp->name);
 		temp = temp->parent;
 	}
-
-	for (int i = pathStr.size() - 1; i >= 0; i--) {
-		absolutePath += pathStr[i] + "/";
+	if (pathStr.size() > 0) {
+		for (size_t i = pathStr.size() - 1; i >= 0; i--) {
+			absolutePath += pathStr[i] + "/";
+		}
 	}
 	//(*path) = (char*)malloc(sizeof(char)*(absolutePath.size()+1));
 	(*path) = absolutePath;
@@ -261,7 +262,7 @@ HRESULT deleteNode(struct node *toDelete) {
 		if (!(toDelete->children).empty()) {
 			return S_FALSE;
 			/* //rekurzivní mazání
-			size_t last = (toDelete->children).size();
+			size_t	 = (toDelete->children).size();
 			for (size_t i = 0; i < last; i++)
 			{
 				deleteFile(toDelete->children[0]);
@@ -345,7 +346,7 @@ HRESULT setData(struct node **file, size_t startPosition, size_t size, char* buf
 		}
 
 		if ((*file)->data.length() < startPosition + size) {
-			int fileSize = (*file)->data.length();
+			size_t fileSize = (*file)->data.length();
 			//doøešit
 			(*file)->data.append((buffer + (size - (startPosition - fileSize))));
 		}

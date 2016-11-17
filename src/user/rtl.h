@@ -48,6 +48,8 @@ bool Change_Dir(char *path);
 
 /*smaze slozku se zaslanou relativni nebo absolutni cestou*/
 bool Remove_Dir(char *path);
+/*smaze file se zaslanou relativni nebo absolutni cestou*/
+bool Remove_File(char *path);
 
 
 /*********************************************************************************************************

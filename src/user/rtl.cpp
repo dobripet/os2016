@@ -130,3 +130,8 @@ bool Remove_Dir(char *path) {
 	regs.Rbx = (decltype(regs.Rbx))path;
 	return Do_SysCall(regs);
 }
+bool Remove_File(char *path) {
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scRemoveFile);
+	regs.Rbx = (decltype(regs.Rbx))path;
+	return Do_SysCall(regs);
+}

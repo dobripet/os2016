@@ -65,6 +65,7 @@ const __int8 scPeekFile = 8;
 const __int8 scMakeDir = 9;
 const __int8 scChangeDir = 10;
 const __int8 scRemoveDir = 11;
+const __int8 scRemoveFile = 12;
 
 //al hodnoty pro scProcess
 const __int8 scCreateProcess = 1;
