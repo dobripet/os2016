@@ -7,11 +7,22 @@ size_t __stdcall type(const CONTEXT &regs) {
 
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
+
+	bool help = false, quietMode = false; 
+	char * switches = (char *)regs.R12;
+	for (int i = 0; i < strlen(switches); i++) {
+		switch (switches[i]) {
+		case 'h': help = true; break;
+		case 'q': quietMode = true; break;
+		}
+	}
+
+
 	size_t written; 
 	size_t size; 
 	bool success;
 	/*Flag handling*/
-	if (!strcmp((char *)regs.R12, "h\0")) {
+	if (help) {
 		char * msg = "Displays the contents of a text file or files.\n\n  TYPE[drive:][path]filename\n\0";
 		size = strlen(msg);
 		success = Write_File(STDOUT, msg, size, &written);
@@ -40,13 +51,15 @@ size_t __stdcall type(const CONTEXT &regs) {
 				}
 			}
 			else {
-				size_t written;
-				std::string header = "\n" + (std::string)path + "\n\n"; 
-				if (!Write_File(STDOUT, (char*) header.c_str(), header.length(), &written) || written != header.length()) {
-					/*Handle not all has been written*/
-					std::string msg = "Failed to write out text.\nError occurred while processing: " + (std::string)path + "\n";
-					Write_File(STDERR, (char *)msg.c_str(), msg.length());
-					continue;
+				if (!quietMode) {
+					size_t written;
+					std::string header = "\n" + (std::string)path + "\n\n";
+					if (!Write_File(STDOUT, (char*)header.c_str(), header.length(), &written) || written != header.length()) {
+						/*Handle not all has been written*/
+						std::string msg = "Failed to write out text.\nError occurred while processing: " + (std::string)path + "\n";
+						Write_File(STDERR, (char *)msg.c_str(), msg.length());
+						continue;
+					}
 				}
 				char buffer[1024];
 				size_t size = 1024;
