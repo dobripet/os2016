@@ -77,8 +77,20 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				*/
 
 				if (current_params.com == "exit") {
-					//join predchozi procesy napred?
-					//uzavrit dalsi roury atd?
+					if (i != 0) {
+						//na jiz spustene procesy se ceka na konci cyklu shelli
+						char * msg = "Waiting for processes to finish before exit.\n\0";
+						Write_File(STDOUT, msg, strlen(msg));
+					}		
+					//zavreme vsechny nasledujici roury (uz nebudou potreba, kdyz tedkonc exit)
+					for (size_t j = i; j <= lastCommand; j++) {
+						if (j != 0) {
+							Close_File(pipeRead[j - 1]);
+						}
+						if (j != lastCommand) {
+							Close_File(pipeWrite[j]);
+						}
+					}
 					run = false;
 					break;
 				}
@@ -115,8 +127,9 @@ size_t __stdcall shell(const CONTEXT &regs) {
 						Close_File(pipeRead[i - 1]); //TODO test - bude to fungovat????
 					}
 
-					bool fail = Open_File(&std_in, current_params.stdinpath.c_str(), F_MODE_READ);
+					bool fail = !Open_File(&std_in, current_params.stdinpath.c_str(), F_MODE_READ);
 					if (fail) {
+						std::cout << "DEBUG SHELL: redirecting stdin failed" << std::endl;
 						//TODO zavreni rour na obou stranach??
 						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
 						continue;
@@ -135,17 +148,19 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 					//neni to posledni prikaz, tj. ma presmerovani do souboru i do roury
 					if (i != lastCommand) {
+						
 						//Presmerovani do souboru ma prednost, takze to udelame tak, 
 						//ze tento proces producenta stejne dostane rouru do seznamu souboru..
 						//a normalne ji uzavre jako kazdy jiny soubor, az se bude ukoncovat.
-						if_pipe_and_stdout = pipeWrite[i]; //TODO test
-
-						//!!!!
-						//TODO asi taky muzu s klidem tu rouru zavrit. KDyz tedka shell ceka na vsecky, tak je jedno, kdo driv skonci
+						//if_pipe_and_stdout = pipeWrite[i]; //TODO test
+						
+						//Asi taky muzu s klidem tu rouru zavrit. Kdyz tedka shell ceka na vsechny procesy, tak je jedno, kdo driv skonci.
+						Close_File(pipeWrite[i]); //TODO test
 					}
 
-					bool fail = Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
+					bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
 					if (fail) {
+						std::cout << "DEBUG SHELL: redirecting stdout failed" << std::endl;
 						//TODO zavreni rour na obou stranach??
 						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
 						continue;

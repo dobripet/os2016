@@ -1,6 +1,0 @@
-dovolit/zakázat: 
-- smazání sloky, ve které nìco je
-- stejné jméno sloky jako souboru
-- pøidání souboru do sloky, která neexistuje
-- pøesmìrování dat do texáku, kterı u existuje - zakázat/pøepsat data?
-- zatím povolené cesty, ve kterıch se duplikuje /, napø. "C://aaa///bbb", ve win taky funguje
