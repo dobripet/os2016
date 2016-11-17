@@ -3,8 +3,8 @@
 #include <Windows.h>
 #include <vector>
 
-typedef HANDLE THandle;
-typedef int FDHandle;
+typedef HANDLE THandle; 
+typedef int FDHandle; //handle na nas soubor
 
 typedef size_t(__stdcall *TEntryPoint)(const CONTEXT syscall);		//vstupni bod uzivatelskeho programu
 typedef void(__stdcall *TSysCall)(CONTEXT &context);			//prototyp funkce, ktera realizuje syscall
@@ -22,14 +22,14 @@ const int ERR_IO_FILE_ISFOLDER = 0x203; //node je slozka (kdyz chceme neco delat
 const int ERR_IO_FILE_ISOPENED = 0x204; //node nekdo pouziva (nejde smazat)
 const int ERR_IO_FILE_NOTEMPTY = 0x206; //node neni prazdnej (slozka nejde smazat)
 
-/*IO constants*/
+/*IO konstanty*/
 const int F_MODE_READ = 7;
 const int F_MODE_WRITE = 8;
 const int F_MODE_BOTH = 9;
 const int F_MODE_CLEAR_WRITE = 10;
 const int F_MODE_CLEAR_BOTH = 11;
 
-/*structure for passing params to crate process*/
+/*struktura pro predani parametru spousteni procesu*/
 typedef struct create_process_params {
 	std::vector <FDHandle> handles; //0=STDIN, 1=STDOUT, 2=STDERR, 3=SLOZKA kde se proces nachazi
 	char * switches; //prepinace programu
