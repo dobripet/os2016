@@ -467,7 +467,7 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 	}
 
 	case F_TYPE_FILE: {
-		success = (setData(&(file->node), file_inst->pos, howMuch, buf) == S_OK);
+		if (success = (setData(&(file->node), file->node->data.length(), howMuch, buf) == S_OK)) { written = howMuch; }
 		break;
 	}
 
