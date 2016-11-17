@@ -23,6 +23,7 @@
     <ClCompile Include="..\..\src\user\c_echo.cpp" />
     <ClCompile Include="..\..\src\user\c_md.cpp" />
     <ClCompile Include="..\..\src\user\c_rd.cpp" />
+    <ClCompile Include="..\..\src\user\c_sort.cpp" />
     <ClCompile Include="..\..\src\user\c_type.cpp" />
     <ClCompile Include="..\..\src\user\c_wc.cpp" />
     <ClCompile Include="..\..\src\user\dllmain.cpp" />
@@ -36,6 +37,7 @@
     <ClInclude Include="..\..\src\user\c_echo.h" />
     <ClInclude Include="..\..\src\user\c_md.h" />
     <ClInclude Include="..\..\src\user\c_rd.h" />
+    <ClInclude Include="..\..\src\user\c_sort.h" />
     <ClInclude Include="..\..\src\user\c_type.h" />
     <ClInclude Include="..\..\src\user\c_wc.h" />
     <ClInclude Include="..\..\src\user\parser.hpp" />
