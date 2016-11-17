@@ -35,6 +35,7 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 
 	{
 		std::lock_guard<std::mutex> lock(process_table_mtx);
+		//namapujeme id tohoto vlakna na pid noveho procesu
 		TIDtoPID[std::this_thread::get_id()] = pid;
 	}
 
@@ -49,17 +50,15 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	regs.Rdx = (decltype(regs.Rdx))argv;
 	regs.R13 = (decltype(regs.R13))&(process_table[pid]->currentPath);
 
+	//zavolame vstupni bod kodu procesu
 	size_t ret = func(regs);
 
+	//Zavreme stdin/out/err, soucasnou slozku a dalsi soubory, ktere zlobivy proces otevrel, ale nezavrel.
 	for (int cnt = (int)process_table[pid]->IO_descriptors.size() - 1; cnt >= 0; cnt--) {
 		auto &handle = process_table[pid]->IO_descriptors[cnt];
 		int ret = close_file(handle);
 		//ret? nemusi se povest zavrit? 
-	}/*
-	for (auto &handle : process_table[pid]->IO_descriptors) {
-		int ret = close_file(handle);
-		//ret? nemusi se povest zavrit? 
-	}*/
+	}
 }
 
 int createProcess(command_params * par, int *proc_pid)
@@ -84,10 +83,14 @@ int createProcess(command_params * par, int *proc_pid)
 
 	{
 		std::lock_guard<std::mutex> lock(process_table_mtx);
+		//predame procesu handly na soubory
 		for (auto &handle : par->handles) {
 			process_table[pid]->IO_descriptors.push_back(handle);
 		}
+		//Kernel neni samostatny proces (nema zaznam v PCB), takze kdyz je vytvaren prvni proces shellu,
+		//je velikost process_table (a TIDtoPID) 0, a lze tam tezko nejaky PCB najit, abychom odtud odstranily handly.
 		if (TIDtoPID.size() > 0) {
+			//odstranime predane handly z PCB procesu, ktery pro nove vytvareny proces vyrabel soubory
 			std::vector<FDHandle> &handles = process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors;
 			for (auto &handle : par->handles) {
 				handles.erase(std::remove(handles.begin(), handles.end(), handle), handles.end());
@@ -95,8 +98,10 @@ int createProcess(command_params * par, int *proc_pid)
 		}
 	}
 	process_table[pid]->name = par->name;
+	//nastavime procesu jeho kontext - slozku, ve ktere byl spusten
 	getPathFromNode(opened_files_table[opened_files_table_instances[process_table[pid]->IO_descriptors[3]]->file]->node, &(process_table[pid]->currentPath));
 
+	//hledame v uzivatelskych programech vstupni bod
 	TEntryPoint func = (TEntryPoint)GetProcAddress(User_Programs, par->name);
 	if (!func) {
 		//vstupni bod se nepovedlo nalezt v uzivatelskych programech
@@ -115,8 +120,10 @@ int createProcess(command_params * par, int *proc_pid)
 
 int joinProcess(int pid) {
 	std::thread::id tid = process_table[pid]->thr.get_id();
+	//pockame si na ukonceni procesu
 	process_table[pid]->thr.join();
 	std::lock_guard<std::mutex> lock(process_table_mtx);
+	//smazeme jej z tabulek
 	TIDtoPID.erase(tid);
 	delete process_table[pid];
 	process_table[pid] = nullptr;
