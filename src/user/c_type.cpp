@@ -40,6 +40,14 @@ size_t __stdcall type(const CONTEXT &regs) {
 				}
 			}
 			else {
+				size_t written;
+				std::string header = "\n" + (std::string)path + "\n\n"; 
+				if (!Write_File(STDOUT, (char*) header.c_str(), header.length(), &written) || written != header.length()) {
+					/*Handle not all has been written*/
+					std::string msg = "Failed to write out text.\nError occurred while processing: " + (std::string)path + "\n";
+					Write_File(STDERR, (char *)msg.c_str(), msg.length());
+					continue;
+				}
 				char buffer[1024];
 				size_t size = 1024;
 				size_t filled;
@@ -54,16 +62,19 @@ size_t __stdcall type(const CONTEXT &regs) {
 							break;
 						}
 						}
+						continue;
 					}
-					s += ((std::string)buffer).substr(0,filled);
-				} while (size == filled);
-				std::string text = "\n" + (std::string)path + "\n\n" + s + "\n";
-				size_t written;
-				/*Handle not all has been written*/
-				if (!Write_File(STDOUT, (char *)text.c_str(), text.length(), &written) || written != text.length()) {
+					if (!Write_File(STDOUT, buffer, filled, &written) || written != filled) {
+						/*Handle not all has been written*/
+						std::string msg = "Failed to write out text.\nError occurred while processing: " + (std::string)path + "\n";
+						Write_File(STDERR, (char *)msg.c_str(), msg.length());
+						break;
+					}
+				} while (size == filled);	
+				if (!Write_File(STDOUT,"\n", strlen("\n"), &written) || written != strlen("\n")) {
+					/*Handle not all has been written*/
 					std::string msg = "Failed to write out text.\nError occurred while processing: " + (std::string)path + "\n";
 					Write_File(STDERR, (char *)msg.c_str(), msg.length());
-					break;
 				}
 			}
 		}
