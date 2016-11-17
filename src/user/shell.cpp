@@ -61,21 +61,6 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			for (size_t i = 0, lastCommand = commands_parsed.size() - 1; i < commands_parsed.size(); i++) {
 				Parsed_command_params &current_params = commands_parsed[i];
 
-				/*
-				TODO
-
-				1/ Zahrnout:
-				- paramz.stdinpath
-				- paramz.stdoutpath
-
-				2/ Do/ze souboru bude i kdyz bude roura. (presmerovani ma prednost pred rourou)
-				- Jak to vyresit s procesem, kterej na roure ceka na svuj vstup,
-				ale nic nedostane, protoze predchozi proces ma stdout do souboru?
-				- mozna by mohl shell na predchozi proces cekat a dalsimu pak dat pipu se zavrenym vstupem
-				(a analogicky se psanim, kdyz dalsi proces ma stdin ze souboru - i kdyz to se mozna resit nemusi -
-				proste dam procesu k zapisovani rouru, kterej rovnou zavru vystup, takze to proces pozna a nebude tam uz psat)
-				*/
-
 				if (current_params.com == "exit") {
 					if (i != 0) {
 						//na jiz spustene procesy se ceka na konci cyklu shelli

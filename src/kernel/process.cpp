@@ -51,10 +51,15 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 
 	size_t ret = func(regs);
 
+	for (int cnt = (int)process_table[pid]->IO_descriptors.size() - 1; cnt >= 0; cnt--) {
+		auto &handle = process_table[pid]->IO_descriptors[cnt];
+		int ret = close_file(handle);
+		//ret? nemusi se povest zavrit? 
+	}/*
 	for (auto &handle : process_table[pid]->IO_descriptors) {
 		int ret = close_file(handle);
 		//ret? nemusi se povest zavrit? 
-	}
+	}*/
 }
 
 int createProcess(command_params * par, int *proc_pid)
@@ -77,8 +82,17 @@ int createProcess(command_params * par, int *proc_pid)
 		return -1;
 	}
 
-	for (auto &handle : par->handles) {
-		process_table[pid]->IO_descriptors.push_back(handle);
+	{
+		std::lock_guard<std::mutex> lock(process_table_mtx);
+		for (auto &handle : par->handles) {
+			process_table[pid]->IO_descriptors.push_back(handle);
+		}
+		if (TIDtoPID.size() > 0) {
+			std::vector<FDHandle> &handles = process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors;
+			for (auto &handle : par->handles) {
+				handles.erase(std::remove(handles.begin(), handles.end(), handle), handles.end());
+			}
+		}
 	}
 	process_table[pid]->name = par->name;
 	getPathFromNode(opened_files_table[opened_files_table_instances[process_table[pid]->IO_descriptors[3]]->file]->node, &(process_table[pid]->currentPath));

@@ -227,7 +227,6 @@ int change_dir(char * path) {
 				opened_files_table[currentInst->file]->node = n;
 			}
 		}
-
 		//zmena soucasne slozky volajicimu shellu
 		getPathFromNode(n, &(process_table[TIDtoPID[std::this_thread::get_id()]]->currentPath));
 	}
@@ -275,6 +274,9 @@ int open_pipe(FDHandle * whandle, FDHandle * rhandle) {
 	*whandle = wh;
 	*rhandle = rh;
 
+	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(wh);
+	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(rh);
+
 	return 1;
 }
 
@@ -294,6 +296,7 @@ int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 		opened_files_table[opened_files_table_instances[orig_handle]->file]->openCount++;
 	}
 	*duplicated_handle = new_h;
+	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(new_h);
 	return 1;
 }
 
@@ -334,11 +337,14 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 	opened_files_table_instances[_h]->mode = MODE;
 	opened_files_table_instances[_h]->file = H;
 	*handle = _h;
-
+	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(_h);
 	return 1;
 }
 
 int close_file(FDHandle handle) {
+
+	std::vector<FDHandle> &handles = process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors;
+	handles.erase(std::remove(handles.begin(), handles.end(), handle), handles.end());
 	
 	FD_instance * inst = opened_files_table_instances[handle];
 	FD * fd = opened_files_table[inst->file];

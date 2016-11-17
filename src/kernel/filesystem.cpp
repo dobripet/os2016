@@ -132,10 +132,8 @@ HRESULT getPathFromNode(node *currentDir, std::string *path) {
 		pathStr.push_back(temp->name);
 		temp = temp->parent;
 	}
-	if (pathStr.size() > 0) {
-		for (size_t i = pathStr.size() - 1; i >= 0; i--) {
-			absolutePath += pathStr[i] + "/";
-		}
+	for (int i = (int)pathStr.size() - 1; i >= 0; i--) {
+		absolutePath += pathStr[i] + "/";
 	}
 	//(*path) = (char*)malloc(sizeof(char)*(absolutePath.size()+1));
 	(*path) = absolutePath;
