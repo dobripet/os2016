@@ -38,24 +38,24 @@ size_t __stdcall rd(const CONTEXT &regs) {
 			/*handle error*/
 			if (rmdir == false) {
 				switch (Get_Last_Error()) {
-					case ERR_IO_FILE_NOTEMPTY: {
-						char *msg = "The directory is not empty.\n\0";
-						Write_File(STDERR, msg, strlen(msg));
+					case (size_t)ERR_IO_FILE_NOTEMPTY: {
+						std::string msg = "The directory is not empty.\nError occurred while processing: " + (std::string)path + "\n";
+						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;
 					}
 					case (size_t)ERR_IO_FILE_ISOPENED: {
-						char *msg = "The directory is opened in another process.\n\0";
-						Write_File(STDERR, msg, strlen(msg));
+						std::string msg = "The directory is opened in another process.\nError occurred while processing: " + (std::string)path + "\n";
+						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;
 					}
 					case (size_t)ERR_IO_FILE_ISFILE: {
-						char *msg = "The directory name is invalid.\n\0";
-						Write_File(STDERR, msg, strlen(msg));
+						std::string msg = "The directory name is invalid.\nError occurred while processing: " + (std::string)path + "\n";
+						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;
 					}
 					case (size_t)ERR_IO_PATH_NOEXIST: {
-						char *msg = "The system cannot find the file specified.\n\0";
-						Write_File(STDERR, msg, strlen(msg));
+						std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
+						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;
 					}
 

@@ -46,7 +46,7 @@ size_t __stdcall md(const CONTEXT &regs) {
 			bool mkdir = Make_Dir(path);
 			/*handle error*/
 			if (mkdir == false) {
-				std::string msg = "A subdirectory or file test already exists.\nError occurred while processing: " + (std::string)path + "\n";
+				std::string msg = "A subdirectory or file already exists.\nError occurred while processing: " + (std::string)path + "\n";
 				Write_File(STDERR, (char *)msg.c_str(), msg.length());
 			}
 		}
