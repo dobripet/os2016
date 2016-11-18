@@ -49,6 +49,7 @@ bool pipe::read(size_t count, char *str, size_t *r)
 		char c = read();
 		str[pos++] = c;          
 		if (c == EOF) { 
+			//pos--; //sjednotit s getData.. tady je eof na pozici (filled-1) a tam na (filled)
 			break;
 		}
 	}

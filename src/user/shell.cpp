@@ -114,7 +114,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				}
 		
 				command_params par;
-				FDHandle std_in, std_out, std_err, if_pipe_and_stdout = -2;
+				FDHandle std_in, std_out, std_err;// , if_pipe_and_stdout = -2;
 				par.name = current_params.com.c_str();
 
 				if (current_params.redirectstdin) {
@@ -204,10 +204,11 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				/*bool ok = */Open_File(CURRENT_DIR, &h); //navratova hodnota muze bejt fail
 				par.handles.push_back(h);
 
+				/*
 				if (if_pipe_and_stdout != -2) {
 					par.handles.push_back(if_pipe_and_stdout);
 					if_pipe_and_stdout = -2;
-				}
+				}*/
 
 				int pid;
 				Create_Process(&par, &pid);
