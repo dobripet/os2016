@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <vector>
+#include <thread>
 
 typedef HANDLE THandle; 
 typedef int FDHandle; //handle na nas soubor
@@ -29,6 +30,14 @@ const int F_MODE_BOTH = 9;
 const int F_MODE_CLEAR_WRITE = 10;
 const int F_MODE_CLEAR_BOTH = 11;
 
+/*struktura pro predani vlastnosti procesu*/
+typedef struct get_process_info {
+	size_t pid; // pid procesu
+	std::thread::id threadID; //id threadu
+	std::string name; //jmeno programu
+	std::string workingDir;
+} process_info;
+
 /*struktura pro predani parametru spousteni procesu*/
 typedef struct create_process_params {
 	std::vector <FDHandle> handles; //0=STDIN, 1=STDOUT, 2=STDERR, 3=SLOZKA kde se proces nachazi
@@ -37,6 +46,10 @@ typedef struct create_process_params {
 	int argc; //pocet argumentu
 	const char * name; //jmeno programu
 } command_params;
+
+
+
+
 
 constexpr DWORD clc(const DWORD flags) {
 	return flags & (~CarryFlag);
@@ -70,6 +83,7 @@ const __int8 scRemoveFile = 12;
 //al hodnoty pro scProcess
 const __int8 scCreateProcess = 1;
 const __int8 scJoinProcess = 2;
+const __int8 scGetProcesses = 3;
 
 constexpr __int16 Compose_AX(const __int8 ah, const __int8 al) {
 	return (ah << 8) | al;

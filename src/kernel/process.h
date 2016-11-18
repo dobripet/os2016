@@ -20,7 +20,8 @@ typedef struct process_control_block {
 } PCB;
 
 
-int joinProcess(int pid);
+int joinProcess(int pid); 
+int getProcesses(std::vector<process_info*> *all_info);
 int createProcess(command_params * par, int *pid);
 
 extern PCB *process_table[PROCESS_TABLE_SIZE];

@@ -62,3 +62,5 @@ bool Create_Process(command_params * par, int * pid);
 
 //pocka na dokonceni procesu a uklidi po nem
 bool Join_and_Delete_Process(int pid);
+//Vrati seznam procesu
+bool Get_Processes(std::vector<process_info*> *all_info);

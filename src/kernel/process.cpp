@@ -25,6 +25,11 @@ void HandleProcess(CONTEXT & regs) {
 		Set_Error(regs.Rax != 0, regs);
 		break;
 	}
+	case scGetProcesses: {
+		regs.Rax = (decltype(regs.Rax))getProcesses((std::vector<process_info*>*)regs.Rbx);
+		Set_Error(regs.Rax != 0, regs);
+		break;
+	}
 	//default:
 		//gtfo
 	}
@@ -127,5 +132,19 @@ int joinProcess(int pid) {
 	TIDtoPID.erase(tid);
 	delete process_table[pid];
 	process_table[pid] = nullptr;
+	return 0;
+}
+int getProcesses(std::vector<process_info*> *all_info) {
+	std::lock_guard<std::mutex> lock(process_table_mtx);
+	for (size_t i = 0; i < PROCESS_TABLE_SIZE; i++) {
+		if (process_table[i] != nullptr) {
+			process_info *info = new process_info;
+			info->name = process_table[i]->name;
+			info->pid = i;
+			info->threadID = process_table[i]->thr.get_id();
+			info->workingDir = process_table[i]->currentPath;
+			all_info->push_back(info);
+		}
+	}
 	return 0;
 }

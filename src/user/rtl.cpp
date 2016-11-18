@@ -1,7 +1,6 @@
 #include "rtl.h"
 
 #include <atomic>
-
 extern "C" __declspec(dllimport) void __stdcall SysCall(CONTEXT &context);
 
 std::atomic<size_t> LastError;
@@ -133,5 +132,10 @@ bool Remove_Dir(char *path) {
 bool Remove_File(char *path) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scRemoveFile);
 	regs.Rbx = (decltype(regs.Rbx))path;
+	return Do_SysCall(regs);
+}
+bool Get_Processes(std::vector<process_info*> *all_info) {
+	CONTEXT regs = Prepare_SysCall_Context(scProcess, scGetProcesses);
+	regs.Rbx = (decltype(regs.Rbx))all_info;
 	return Do_SysCall(regs);
 }
