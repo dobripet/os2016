@@ -72,6 +72,8 @@ bool Parser::parse_commands(std::string line, std::vector<struct Parsed_command_
 		
 		Parsed_command_params par;
 
+		//TODO com to lower case
+
 		if (SET_valid_commands.count(com) > 0) {			
 			par = { "", false, false, false, "", "", "" };
 			par.com = com;

@@ -444,6 +444,7 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 	}
 	case F_TYPE_FILE: {
 		success = (S_OK == getData(&(file->node), file_inst->pos, howMuch, &buf, &read));
+		file_inst->pos += read;
 		break;
 	}
 
