@@ -59,11 +59,14 @@ HRESULT getNodeFromPath(char *path, node *currentDir, node **file) {
 		std::vector<std::string> absolutePath = split_string(pathString);
 		for (size_t j = 0; j < parent->children.size(); j++) //hledání souboru v aktuálním uzlu
 		{
+			
 			if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty nemùže být skok o úroveò výš
 				std::cout << "Path does not exist" << std::endl;
 				(*file) = nullptr;
+				//SetLastError(ERR_IO_PATH_NOEXIST);
 				return S_FALSE;
 			}
+			
 			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) { //nalezli jsme správného potomka
 				(*file) = parent->children[j];
 				return S_OK;
@@ -81,6 +84,7 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 	std::string absolutePathStr;
 	struct node *temp;
 	size_t i = 0;
+	(*node) = nullptr;
 	if (pathString.substr(0, 4) == "C://") {
 		i = 1;
 		temp = root;
@@ -99,7 +103,8 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 		if (absolutePath[i] == "..") { //skok o adresáø výše
 			if (temp->parent == nullptr) {
 				std::cout << "Path does not exist" << std::endl; //už jsme v céèku, výš skoèit nejde
-				(*node) = nullptr;
+				SetLastError(ERR_IO_PATH_NOEXIST); //TODO: upravit tuhle chybu
+				return S_FALSE;
 			}
 			else {
 				temp = temp->parent;
@@ -114,7 +119,7 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 			}
 		}
 		if (walker == temp) { //potomek nebyl nalezen
-			(*node) = nullptr;
+			SetLastError(ERR_IO_PATH_NOEXIST);
 			return S_FALSE;
 		}
 	}
@@ -135,7 +140,6 @@ HRESULT getPathFromNode(node *currentDir, std::string *path) {
 	for (int i = (int)pathStr.size() - 1; i >= 0; i--) {
 		absolutePath += pathStr[i] + "/";
 	}
-	//(*path) = (char*)malloc(sizeof(char)*(absolutePath.size()+1));
 	(*path) = absolutePath;
 	return S_OK;
 }
@@ -143,6 +147,7 @@ HRESULT getPathFromNode(node *currentDir, std::string *path) {
 HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *currentDir) {
 	node *parent;
 	getNodeFromPath(path, false, currentDir, &parent);
+	(*file) = nullptr;
 
 	if (parent != nullptr) {
 		std::string pathString(path);
@@ -151,10 +156,10 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 		{
 			if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty nemùže být skok o úroveò výš
 				std::cout << "Path does not exist" << std::endl;
-				(*file) = nullptr;
+				SetLastError(ERR_IO_FILE_ISFOLDER); //TODO: možná existuje pøípad, kdy to soubor neni, ale prostì neexistuje cesta?
 				return S_FALSE;
 			}
-			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) { //nalezli jsme správného potomka
+			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name && parent->children[j]->type == TYPE_FILE) { //nalezli jsme správného potomka
 				//soubor existuje
 				if (rewrite) {
 					//chceme pøepsat data
@@ -176,8 +181,8 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 			return S_OK;
 		}
 		else {
-			//nenašli jsme soubor a ani ho nechceme vytvoøit
-			(*file) = nullptr;
+			//nenašli jsme soubor (nebo cesta ukazovala na složku) a ani ho nechceme vytvoøit
+			SetLastError(ERR_IO_PATH_NOEXIST);
 			return S_FALSE;
 		}
 	}

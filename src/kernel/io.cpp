@@ -193,7 +193,7 @@ int change_dir(char * path) {
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
 	node *n;
-	HRESULT ok = getNodeFromPath(path, currentNode, &n);
+	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
 		SetLastError(ERR_IO_PATH_NOEXIST);
 		return 1;
@@ -317,7 +317,10 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 	node * current = opened_files_table[file_h]->node;
 
 	node *n;
-	openFile(&n, path, MODE != F_MODE_READ, MODE != F_MODE_READ, current);
+	HRESULT ok = openFile(&n, path, MODE != F_MODE_READ, MODE != F_MODE_READ, current);
+	if (ok == S_FALSE) {
+		return 0;
+	}
 
 	if (!findIfOpenedFileExists(n, &H)) {
 		int _h = takeFirstEmptyPlaceInFileTable();

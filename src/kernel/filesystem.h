@@ -3,6 +3,8 @@
 #define TYPE_FILE 1
 
 #include <Windows.h>
+#include "../common/api.h"
+#include "kernel.h"
 #include <string>
 #include <vector>
 #include <algorithm>
