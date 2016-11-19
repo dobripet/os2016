@@ -17,17 +17,17 @@ void HandleProcess(CONTEXT & regs) {
 		int pid = -1;
 		regs.Rax = (decltype(regs.Rax))createProcess((command_params *)regs.Rcx, &pid);
 		regs.Rdx = (decltype(regs.Rdx))pid;
-		Set_Error(regs.Rax != 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	} 
 	case scJoinProcess: {
 		regs.Rax = (decltype(regs.Rax))joinProcess((int)regs.Rbx);
-		Set_Error(regs.Rax != 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 	case scGetProcesses: {
 		regs.Rax = (decltype(regs.Rax))getProcesses((std::vector<process_info*>*)regs.Rbx);
-		Set_Error(regs.Rax != 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 	//default:
@@ -66,7 +66,7 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	}
 }
 
-int createProcess(command_params * par, int *proc_pid)
+HRESULT createProcess(command_params * par, int *proc_pid)
 {
 	int pid = -1;
 	{
@@ -83,7 +83,7 @@ int createProcess(command_params * par, int *proc_pid)
 	if (pid == -1) {
 		//v tabulce neni misto
 		SetLastError(ERR_PROCESS_CREATE);
-		return -1;
+		return S_FALSE;
 	}
 
 	{
@@ -114,16 +114,16 @@ int createProcess(command_params * par, int *proc_pid)
 		delete process_table[pid];
 		process_table[pid] = nullptr;
 		SetLastError(ERR_PROCESS_NOTFOUND);
-		return -1;
+		return S_FALSE;
 	}
 
 	//konecne spustime proces
 	process_table[pid]->thr = std::thread(runProcess, func, pid, par->argc, par->argv, par->switches);
 	*proc_pid = pid;
-	return 0;
+	return S_OK;
 }
 
-int joinProcess(int pid) {
+HRESULT joinProcess(int pid) {
 	std::thread::id tid = process_table[pid]->thr.get_id();
 	//pockame si na ukonceni procesu
 	process_table[pid]->thr.join();
@@ -132,9 +132,9 @@ int joinProcess(int pid) {
 	TIDtoPID.erase(tid);
 	delete process_table[pid];
 	process_table[pid] = nullptr;
-	return 0;
+	return S_OK;
 }
-int getProcesses(std::vector<process_info*> *all_info) {
+HRESULT getProcesses(std::vector<process_info*> *all_info) {
 	std::lock_guard<std::mutex> lock(process_table_mtx);
 	for (size_t i = 0; i < PROCESS_TABLE_SIZE; i++) {
 		if (process_table[i] != nullptr) {
@@ -146,5 +146,5 @@ int getProcesses(std::vector<process_info*> *all_info) {
 			all_info->push_back(info);
 		}
 	}
-	return 0;
+	return S_OK;
 }

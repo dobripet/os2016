@@ -28,7 +28,7 @@ bool Do_SysCall(CONTEXT &regs) {
 	return !failed;
 }
 
-bool Open_File(FDHandle old_handle, FDHandle * new_handle) {
+bool Duplicate_File(FDHandle old_handle, FDHandle * new_handle) {
 
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scDuplicateHandle);
 	regs.Rcx = (decltype(regs.Rcx))old_handle;

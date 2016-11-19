@@ -37,17 +37,17 @@ typedef struct opened_file_instance {
 
 //int peek_file(FDHandle handle, size_t *available);
 
-int change_dir(char * path);
-int remove_dir(char * path);
-int mkdir(char *path);
+HRESULT change_dir(char * path);
+HRESULT remove_dir(char * path);
+HRESULT mkdir(char *path);
 
-int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle);
-int open_pipe(FDHandle * whandle, FDHandle * rhandle);
-int open_file(char *path, int MODE, FDHandle * handle);
-int close_file(FDHandle handle);
+HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle);
+HRESULT open_pipe(FDHandle * whandle, FDHandle * rhandle);
+HRESULT open_file(char *path, int MODE, FDHandle * handle);
+HRESULT close_file(FDHandle handle);
 size_t read_file(FDHandle handle, size_t howMuch, char * buf);
 size_t write_file(FDHandle handle, size_t howMuch, char * buf);
-int remove_file(char * path);
+HRESULT remove_file(char * path);
 
 extern opened_file * opened_files_table[OPEN_FILES_TABLE_SIZE];
 extern opened_file_instance * opened_files_table_instances[OPEN_INSTANCES_TABLE_SIZE];

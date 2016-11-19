@@ -78,7 +78,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		char * buf = (char*)malloc(21 * sizeof(char));
 		size_t filled;
 		Read_File(STDIN, 20, buf, &filled);	
-		if (buf[filled - 1] == EOF) {
+		if (buf[filled - 1] == EOF || buf[filled] == EOF) {
 			buf[filled] = '\0';
 			aaa.lock();
 			std::cout << "pid=" << myPid << ", read=" << filled << ", text=" << buf << ", EOF" << std::endl;

@@ -31,7 +31,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 		size_t filled;
 		Read_File(STDIN, 1000, buf_command, &filled);
 		buf_command[filled] = '\0';
-		if (buf_command[filled - 1] == EOF) { //goodbye
+		if (buf_command[filled - 1] == EOF || buf_command[filled] == EOF) { //goodbye
 			break;
 		}
 		
@@ -114,7 +114,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				}
 		
 				command_params par;
-				FDHandle std_in, std_out, std_err;// , if_pipe_and_stdout = -2;
+				FDHandle std_in, std_out, std_err;
 				par.name = current_params.com.c_str();
 
 				if (current_params.redirectstdin) {
@@ -136,7 +136,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				}
 				else if (i == 0) {
 					//prvni prikaz, zdedime (duplikujeme handle) stdin od rodice.
-					Open_File(STDIN, &std_in);
+					Duplicate_File(STDIN, &std_in);
 				}
 				else {
 					//nemame presmerovani, ani to neni prvni prikaz - bude se cist z roury.
@@ -168,7 +168,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				}
 				else if (i == lastCommand) {
 					//posledni prikaz, zdedime (duplikujeme handle) stdout od rodice.
-					Open_File(STDOUT, &std_out);
+					Duplicate_File(STDOUT, &std_out);
 				}
 				else {
 					//nemame presmerovani, ani to neni posledni prikaz - bude se psat do roury.
@@ -196,19 +196,13 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				par.handles.push_back(std_out);
 
 				//duplicate stderr for current process
-				/*bool ok = */Open_File(STDOUT, &std_err); //navratova hodnota muze bejt fail
+				/*bool ok = */Duplicate_File(STDOUT, &std_err); //navratova hodnota muze bejt fail
 				par.handles.push_back(std_err);
 
 				//duplicate current dir for new process
 				FDHandle h;
-				/*bool ok = */Open_File(CURRENT_DIR, &h); //navratova hodnota muze bejt fail
+				/*bool ok = */Duplicate_File(CURRENT_DIR, &h); //navratova hodnota muze bejt fail
 				par.handles.push_back(h);
-
-				/*
-				if (if_pipe_and_stdout != -2) {
-					par.handles.push_back(if_pipe_and_stdout);
-					if_pipe_and_stdout = -2;
-				}*/
 
 				int pid;
 				Create_Process(&par, &pid);

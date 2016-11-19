@@ -78,7 +78,7 @@ void HandleIO(CONTEXT &regs) {
 		regs.Rax = (decltype(regs.Rax))open_pipe(&w, &r);
 		regs.Rbx = (decltype(regs.Rbx))w;
 		regs.Rcx = (decltype(regs.Rcx))r;
-		Set_Error(regs.Rax == 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
@@ -86,12 +86,13 @@ void HandleIO(CONTEXT &regs) {
 		FDHandle ho;
 		regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, &ho);
 		regs.Rbx = (decltype(regs.Rbx))ho;
-		Set_Error(regs.Rax == 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scCloseFile: {
-		Set_Error(close_file((FDHandle)regs.Rdx) == 0, regs);
+		regs.Rax = (decltype(regs.Rax))close_file((FDHandle)regs.Rdx);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
@@ -105,7 +106,7 @@ void HandleIO(CONTEXT &regs) {
 
 	case scReadFile: {
 		regs.Rax = (decltype(regs.Rax))read_file((FDHandle)regs.Rdx, (int)regs.Rcx, (char*)regs.Rbx);
-		Set_Error(regs.Rax == 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
@@ -113,36 +114,36 @@ void HandleIO(CONTEXT &regs) {
 		FDHandle hd;
 		regs.Rax = (decltype(regs.Rax))duplicate_handle((FDHandle)regs.Rcx, &hd);
 		regs.Rbx = (decltype(regs.Rbx))hd;
-		Set_Error(regs.Rax == 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scWriteFile: {
 		regs.Rax = (decltype(regs.Rax))write_file((FDHandle)regs.Rbx, (int)regs.Rdx, (char*)regs.Rcx);
-		Set_Error(regs.Rax == 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scMakeDir: {
 		regs.Rax = (decltype(regs.Rax))mkdir((char*)regs.Rbx);
-		Set_Error(regs.Rax != 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scChangeDir: {
 		regs.Rax = (decltype(regs.Rax))change_dir((char*)regs.Rbx);
-		Set_Error(regs.Rax != 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scRemoveDir: {
 		regs.Rax = (decltype(regs.Rax))remove_dir((char*)regs.Rbx);
-		Set_Error(regs.Rax != 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 	case scRemoveFile: {
 		regs.Rax = (decltype(regs.Rax))remove_file((char*)regs.Rbx);
-		Set_Error(regs.Rax != 0, regs);
+		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
@@ -187,7 +188,7 @@ int takeFirstEmptyPlaceInInstanceTable() {
 }
 
 
-int change_dir(char * path) {
+HRESULT change_dir(char * path) {
 
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
 	node * currentNode = opened_files_table[currentInst->file]->node;
@@ -196,11 +197,11 @@ int change_dir(char * path) {
 	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
 		SetLastError(ERR_IO_PATH_NOEXIST);
-		return 1;
+		return S_FALSE;
 	}
 	else if (n->type != TYPE_DIRECTORY) {
 		SetLastError(ERR_IO_FILE_ISFILE);
-		return 1;
+		return S_FALSE;
 	}
 	
 	else{
@@ -222,7 +223,8 @@ int change_dir(char * path) {
 			}
 			openedHandle = takeFirstEmptyPlaceInFileTable();
 			if (openedHandle < 0) {
-				//error
+				SetLastError(ERR_IO_FILE_CREATE);
+				return S_FALSE;
 			}
 			else {
 				std::lock_guard<std::mutex> lock(files_table_mtx);
@@ -236,17 +238,17 @@ int change_dir(char * path) {
 		//zmena soucasne slozky volajicimu shellu
 		getPathFromNode(n, &(process_table[TIDtoPID[std::this_thread::get_id()]]->currentPath));
 	}
-	return 0;
+	return S_OK;
 }
 
 
-int open_pipe(FDHandle * whandle, FDHandle * rhandle) {
+HRESULT open_pipe(FDHandle * whandle, FDHandle * rhandle) {
 
 	FDHandle _h;
 	int ih = takeFirstEmptyPlaceInFileTable();
 	if (ih < 0) {
-		return 0; 
-		//ERROR
+		SetLastError(ERR_IO_FILE_CREATE);
+		return S_FALSE;
 	}
 	_h = ih;
 
@@ -259,7 +261,7 @@ int open_pipe(FDHandle * whandle, FDHandle * rhandle) {
 		std::lock_guard<std::mutex> lock(files_table_mtx);
 		delete opened_files_table[_h];
 		opened_files_table[_h] = nullptr;
-		return 0;
+		return S_FALSE;
 	}
 
 	int rh = takeFirstEmptyPlaceInInstanceTable();
@@ -269,7 +271,7 @@ int open_pipe(FDHandle * whandle, FDHandle * rhandle) {
 		opened_files_table[_h] = nullptr;
 		delete opened_files_table_instances[wh];
 		opened_files_table_instances[wh] = nullptr;
-		return 0;
+		return S_FALSE;
 	}
 
 	opened_files_table_instances[wh]->file = _h;
@@ -283,16 +285,16 @@ int open_pipe(FDHandle * whandle, FDHandle * rhandle) {
 	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(wh);
 	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(rh);
 
-	return 1;
+	return S_OK;
 }
 
 
-int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
+HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 
 	int new_h = takeFirstEmptyPlaceInInstanceTable();
 	if (new_h < 0) {
-		//fail
-		return 0;
+		SetLastError(ERR_IO_FILE_CREATE);
+		return S_FALSE;
 	}
 	opened_files_table_instances[new_h]->file = opened_files_table_instances[orig_handle]->file;
 	opened_files_table_instances[new_h]->mode = opened_files_table_instances[orig_handle]->mode;
@@ -303,11 +305,11 @@ int duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 	}
 	*duplicated_handle = new_h;
 	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(new_h);
-	return 1;
+	return S_OK;
 }
 
 
-int open_file(char *path, int MODE, FDHandle * handle) {
+HRESULT open_file(char *path, int MODE, FDHandle * handle) {
 
 	FDHandle H;
 
@@ -319,14 +321,14 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 	node *n;
 	HRESULT ok = openFile(&n, path, MODE != F_MODE_READ, MODE != F_MODE_READ, current);
 	if (ok == S_FALSE) {
-		return 0;
+		return S_FALSE;
 	}
 
 	if (!findIfOpenedFileExists(n, &H)) {
 		int _h = takeFirstEmptyPlaceInFileTable();
 		if (_h < 0) {
-			return 0;
-			//ERROR
+			SetLastError(ERR_IO_FILE_CREATE);
+			return S_FALSE;
 		}
 		opened_files_table[_h]->FILE_TYPE = F_TYPE_FILE;
 		opened_files_table[_h]->node = n;
@@ -335,8 +337,8 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 
 	int _h = takeFirstEmptyPlaceInInstanceTable();
 	if (_h < 0) {
-		return 0;
-		//ERROR
+		SetLastError(ERR_IO_FILE_CREATE);
+		return S_FALSE;
 	}
 	{
 		std::lock_guard<std::mutex> lock(files_table_mtx);
@@ -347,13 +349,13 @@ int open_file(char *path, int MODE, FDHandle * handle) {
 	opened_files_table_instances[_h]->file = H;
 	*handle = _h;
 	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(_h);
-	return 1;
+	return S_OK;
 }
 
-int close_file(FDHandle handle) {
+HRESULT close_file(FDHandle handle) {
 
 	std::vector<FDHandle> &handles = process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors;
-	handles.erase(std::remove(handles.begin(), handles.end(), handle), handles.end());
+	handles.erase(std::remove(handles.begin(), handles.end(), handle), handles.end()); //smazat z PCB
 	
 	FD_instance * inst = opened_files_table_instances[handle];
 	FD * fd = opened_files_table[inst->file];
@@ -382,7 +384,7 @@ int close_file(FDHandle handle) {
 	delete opened_files_table_instances[handle];
 	opened_files_table_instances[handle] = nullptr;
 
-	return 1;
+	return S_OK;
 }
 
 /*
@@ -419,6 +421,7 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 	opened_file *file = opened_files_table[file_inst->file];
 	
 	if (file_inst->mode == F_MODE_WRITE) {
+		//TODO set error ze neni pro cteni
 		return 0;
 	}
 
@@ -447,11 +450,19 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 	}
 	case F_TYPE_FILE: {
 		success = (S_OK == getData(&(file->node), file_inst->pos, howMuch, &buf, &read));
-		file_inst->pos += read;
+		file_inst->pos += (int)read;
 		break;
 	}
 
 	}//end switch
+
+
+	/*
+	TODO
+	SJEDNOTIT:
+	Roura vraci false kdyz se nezapise vsechno (coz neni vylozene chyba, proste uz je zavrena pro cteni),
+	kdezto node vraci false jenom kdyz se to posere, ze se nezapise nic (ani EOF).
+	*/
 
 	if (success) return read;
 	else {
@@ -469,6 +480,7 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 	bool success = false;
 
 	if (file_inst->mode == F_MODE_READ) {
+		//TODO set error ze neni pro zapis
 		return 0;
 	}
 
@@ -503,7 +515,7 @@ size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
 	}	
 }
 
-int mkdir(char * path) {
+HRESULT mkdir(char * path) {
 	const int pid = TIDtoPID[std::this_thread::get_id()];
 	const FDHandle inst_h = process_table[pid]->IO_descriptors[3];
 	const FDHandle file_h = opened_files_table_instances[inst_h]->file;
@@ -512,7 +524,7 @@ int mkdir(char * path) {
 	return mkdir(&dir, path, current);
 }
 
-int remove_dir(char * path) {
+HRESULT remove_dir(char * path) {
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
@@ -521,29 +533,29 @@ int remove_dir(char * path) {
 	if (ok != S_OK) {
 		/*not found*/
 		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
-		return 1;
+		return S_FALSE;
 	}
 
 	if (n->type != TYPE_DIRECTORY) {
 		/*not directory*/
 		SetLastError(ERR_IO_FILE_ISFILE);
-		return 1;
+		return S_FALSE;
 	}
 	FDHandle openedHandle;
 	bool exists = findIfOpenedFileExists(n, &openedHandle);
 	if (exists) {
 		/*dir in use*/
 		SetLastError(ERR_IO_FILE_ISOPENED);
-		return 1;
+		return S_FALSE;
 	}
 	if (deleteNode(n) != S_OK) {
 		/*has children*/
 		SetLastError(ERR_IO_FILE_NOTEMPTY); //tuhle chybu bude nastavovat FS nejspi
-		return 1;
+		return S_FALSE;
 	}
-	return 0;
+	return S_OK;
 }
-int remove_file(char * path) {
+HRESULT remove_file(char * path) {
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
@@ -552,25 +564,25 @@ int remove_file(char * path) {
 	if (ok != S_OK) {
 		/*not found*/
 		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
-		return 1;
+		return S_FALSE;
 	}
 
 	if (n->type != TYPE_FILE) {
 		/*not file*/
 		SetLastError(ERR_IO_FILE_ISFOLDER);
-		return 1;
+		return S_FALSE;
 	}
 	FDHandle openedHandle;
 	bool exists = findIfOpenedFileExists(n, &openedHandle);
 	if (exists) {
 		/*file in use*/
 		SetLastError(ERR_IO_FILE_ISOPENED);
-		return 1;
+		return S_FALSE;
 	}
 	if (deleteNode(n) != S_OK) {
 		/*unexpected error*/
 		SetLastError(ERR_IO_FILE_NOTEMPTY); //kdyby zde nastala chyba tak neco nastavit ve FS
-		return 1;
+		return S_FALSE;
 	}
-	return 0;
+	return S_OK;
 }

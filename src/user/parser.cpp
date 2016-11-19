@@ -6,7 +6,7 @@
 
 const bool OK = true;
 const bool ERR = !OK;
-const std::set<std::string> SET_valid_commands = {"exit", "cd", "md", "wc", "rd", "echo", /*"dir",*/ "type", "freq", "rgen", "ps", "sort", "shell", "del"}; 
+const std::set<std::string> SET_valid_commands = { "exit", "cd", "md", "wc", "rd", "echo", /*"dir",*/ "type", "freq", "rgen", "ps", "sort", "shell", "del" };
 const std::regex RGX_nab("[^a-zA-z]");
 const std::regex RGX_command_params("<|>|\"|/[a-zA-z]+|[^ \t\"]+");
 
@@ -69,17 +69,8 @@ bool Parser::parse_commands(std::string line, std::vector<struct Parsed_command_
 		}				
 	}
 	for (std::string com : commandsStr) {
-		
+
 		Parsed_command_params par;
-
-		//TODO com to lower case
-
-		if (SET_valid_commands.count(com) > 0) {			
-			par = { "", false, false, false, "", "", "" };
-			par.com = com;
-			commands->push_back(par);
-			continue;
-		}
 
 		if (!parse_command(com, &par)) {
 			return ERR;
@@ -108,6 +99,13 @@ bool Parser::parse_command(std::string command, struct Parsed_command_params * p
 	std::regex_search(command, command_match, RGX_nab);
 	std::string command_keyword = command.substr(0, command_match.position());
 	command = command.substr(command_match.position(), std::string::npos);
+
+	//to lower case
+	for (int i = 0; i < command_keyword.length(); i++) {
+		if (command_keyword[i] >= 'A' && command_keyword[i] <= 'Z') {
+			command_keyword[i] = command_keyword[i] - ('Z' - 'z');
+		}
+	}
 	
 	//check whether command word is valid
 	if(SET_valid_commands.count(command_keyword) < 1) {

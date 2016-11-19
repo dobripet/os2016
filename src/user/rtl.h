@@ -12,7 +12,7 @@ IO
 */
 
 //duplikuje old_handle do new_handle
-bool Open_File(FDHandle old_handle, FDHandle * new_handle); //prejmenovat na duplicate
+bool Duplicate_File(FDHandle old_handle, FDHandle * new_handle); 
 
 //otevre soubor v nasem FS se zaslanou cestou fname  
 //return true kdyz vse OK
