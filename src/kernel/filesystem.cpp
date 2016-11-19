@@ -13,6 +13,7 @@ node *mkroot() {
 
 struct node *root = mkroot();
 
+//TODO nastavovani erroru
 HRESULT mkdir(node **dir, char *path, node *currentDir) {
 	node *parent;
 	getNodeFromPath(path, false, currentDir, &parent);
@@ -156,7 +157,7 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 		{
 			if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty nemùže být skok o úroveò výš
 				std::cout << "Path does not exist" << std::endl;
-				SetLastError(ERR_IO_FILE_ISFOLDER); //TODO: možná existuje pøípad, kdy to soubor neni, ale prostì neexistuje cesta?
+				SetLastError(ERR_IO_FILE_ISNOTFILE); //TODO: možná existuje pøípad, kdy to soubor neni, ale prostì neexistuje cesta?
 				return S_FALSE;
 			}
 			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name && parent->children[j]->type == TYPE_FILE) { //nalezli jsme správného potomka
@@ -329,20 +330,23 @@ HRESULT getData(struct node **file, size_t startPosition, size_t size, char** bu
 		(*filled)++;
 	}
 	if (*filled != size) {
-		(*buffer)[*filled] = '\0';
+		(*buffer)[*filled] = EOF;
 	}
 	return S_OK;
 }
 
-HRESULT setData(struct node **file, size_t startPosition, size_t size, char* buffer) {
-	if (!file) return S_FALSE;
-	if (size <= 0) return S_FALSE;
-	if ((*file)->type == TYPE_DIRECTORY) return S_FALSE;
-	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
-
-	if ((*file)->data.length() == startPosition) {
-		(*file)->data.append(buffer);
+HRESULT setData(struct node **file,/* size_t startPosition, size_t size, */char* buffer) {
+	/*if (!file) return S_FALSE;
+	if (size <= 0) return S_FALSE;*/
+	if ((*file)->type == TYPE_DIRECTORY) {
+		SetLastError(ERR_IO_FILE_ISNOTFOLDER);
+		return S_FALSE;
 	}
+//	if (startPosition < 0 || startPosition >(*file)->data.size()) return S_FALSE;
+
+	//if ((*file)->data.length() == startPosition) {
+		(*file)->data.append(buffer);
+	/*}
 	else {
 		for (size_t i = startPosition; i < startPosition + size && i < (*file)->data.length(); i++) {
 			(*file)->data[i] = buffer[i - startPosition];
@@ -354,6 +358,6 @@ HRESULT setData(struct node **file, size_t startPosition, size_t size, char* buf
 			(*file)->data.append((buffer + (size - (startPosition - fileSize))));
 		}
 	}
-
+	*/
 	return S_OK;
 }

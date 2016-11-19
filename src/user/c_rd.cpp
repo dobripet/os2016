@@ -48,7 +48,7 @@ size_t __stdcall rd(const CONTEXT &regs) {
 						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;
 					}
-					case (size_t)ERR_IO_FILE_ISFILE: {
+					case (size_t)ERR_IO_FILE_ISNOTFOLDER: {
 						std::string msg = "The directory name is invalid.\nError occurred while processing: " + (std::string)path + "\n";
 						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;

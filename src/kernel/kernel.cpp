@@ -52,11 +52,11 @@ void __stdcall Run_VM() {
 	mkdir(&a, "zcu", getRoot());
 	mkdir(&b, "zcu/prvak", getRoot());
 	openFile(&c, "aaa.txt", true, true, b);
-	setData(&c, 0, 10, "asdfghjklq");
+	setData(&c, /*0, 10,*/ "asdfghjklq");
 	char *buffer = (char*)malloc(sizeof(char) * 11);
 	size_t filled;
 	getData(&c, 0, 11, &buffer, &filled);
-	setData(&a, 0, filled, buffer);
+	setData(&a, /*0, filled,*/ buffer);
 	openFile(&d, "C://zcu/prvak/bbb.txt", true, true, a);
 
 
@@ -66,14 +66,10 @@ void __stdcall Run_VM() {
 	par.handles.push_back((FDHandle)1); 
 	par.handles.push_back((FDHandle)2); 
 	par.name = "shell";
-//	par.current_path = (char *)getRoot()->name.c_str();
 	par.handles.push_back((FDHandle)3);
-//	par.waitForProcess = true; //musime na nej pockat
 	int pid;
-	createProcess(&par/*, &t*/, &pid);
-	if (pid == - 1) {
-		std::cout << " nenalezen";
-		//oznamit error , ze nesel spustit shell
+	if (createProcess(&par, &pid) == S_FALSE) {
+		std::cout << "It was not possible to start shell. Shutting down..." << std::endl;
 	}
 	else {
 		joinProcess(pid);

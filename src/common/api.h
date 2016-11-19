@@ -18,24 +18,30 @@ const int ERR_PROCESS_CREATE = 0x101; //proces nejde vyrobit
 const int ERR_PROCESS_NOTFOUND = 0x102; //nenalezen vstupni bod procesu
 const int ERR_IO_FILE_CREATE = 0x205; //soubor nejde vyrobit
 const int ERR_IO_PATH_NOEXIST = 0x201; //cesta neexistuje
-const int ERR_IO_FILE_ISFILE = 0x202; //node je soubor (kdyz chceme neco delat se slozkou)
-const int ERR_IO_FILE_ISFOLDER = 0x203; //node je slozka (kdyz chceme neco delat se souborem)
+const int ERR_IO_FILE_ISNOTFOLDER = 0x202; //node je soubor (kdyz chceme neco delat se slozkou)
+const int ERR_IO_FILE_ISNOTFILE = 0x203; //node je slozka (kdyz chceme neco delat se souborem)
 const int ERR_IO_FILE_ISOPENED = 0x204; //node nekdo pouziva (nejde smazat)
 const int ERR_IO_FILE_NOTEMPTY = 0x206; //node neni prazdnej (slozka nejde smazat)
+const int ERR_IO_WRITE_STD = 0x207; //neslo zapsat na STDOUT (konzole).. neni nase chyba
+const int ERR_IO_PIPE_READCLOSED = 0x208; //roura je zavrena pro cteni (tj. nelze zapisovat)
+const int ERR_IO_READ_STD = 0x209; //nestlo cist ze STDIN (konzole).. neni nase chyba
+
 
 /*IO konstanty*/
 const int F_MODE_READ = 7;
 const int F_MODE_WRITE = 8;
 const int F_MODE_BOTH = 9;
-const int F_MODE_CLEAR_WRITE = 10;
-const int F_MODE_CLEAR_BOTH = 11;
+//const int F_MODE_CLEAR_WRITE = 10;
+//const int F_MODE_CLEAR_BOTH = 11;
+
+//const char EOF_CHAR = '\0';
 
 /*struktura pro predani vlastnosti procesu*/
 typedef struct get_process_info {
 	size_t pid; // pid procesu
 	std::thread::id threadID; //id threadu
 	std::string name; //jmeno programu
-	std::string workingDir;
+	std::string workingDir; //slozka kde je proces spusten
 } process_info;
 
 /*struktura pro predani parametru spousteni procesu*/
@@ -46,9 +52,6 @@ typedef struct create_process_params {
 	int argc; //pocet argumentu
 	const char * name; //jmeno programu
 } command_params;
-
-
-
 
 
 constexpr DWORD clc(const DWORD flags) {

@@ -77,17 +77,17 @@ bool Read_File(FDHandle handle, size_t len, char * buf, size_t * filled) {
 	regs.Rcx = (decltype(regs.Rcx))len;
 	regs.Rbx = (decltype(regs.Rbx))buf;
 	bool success = Do_SysCall(regs);
-	*filled = (size_t)regs.Rax;
+	*filled = (size_t)regs.Rbx;
 	return success;
 }
 
-bool Write_File( FDHandle file_handle, char *buffer, size_t buffer_size, size_t *written) {
+bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size, size_t *written) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scWriteFile);
 	regs.Rbx = (decltype(regs.Rbx))file_handle;
 	regs.Rcx = (decltype(regs.Rcx))buffer;
 	regs.Rdx = (decltype(regs.Rdx))buffer_size;
 	const bool success = Do_SysCall(regs);
-	*written = regs.Rax;
+	*written = (size_t)regs.Rbx;
 	return success;
 }
 bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size) {

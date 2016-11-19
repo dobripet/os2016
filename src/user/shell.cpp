@@ -30,10 +30,10 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 		size_t filled;
 		Read_File(STDIN, 1000, buf_command, &filled);
-		buf_command[filled] = '\0';
-		if (buf_command[filled - 1] == EOF || buf_command[filled] == EOF) { //goodbye
+		if (buf_command[filled] == EOF) { //goodbye
 			break;
 		}
+		buf_command[filled] = '\0';
 		
 		std::vector<Parsed_command_params> commands_parsed;
 		if (!parser.parse_commands(std::string(buf_command), &commands_parsed)) {
@@ -97,7 +97,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 								Write_File(STDOUT, err, strlen(err));
 								break;
 							}
-							case ERR_IO_FILE_ISFILE: {
+							case ERR_IO_FILE_ISNOTFOLDER: {
 								char * err = "Target is not a directory.\n\0";
 								Write_File(STDOUT, err, strlen(err));
 								break;

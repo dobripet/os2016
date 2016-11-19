@@ -3,6 +3,7 @@
 typedef void(__stdcall *TRun_VM)();
 
 int main() {
+
 	HMODULE kernel = LoadLibrary(L"kernel.dll");
 	if (!kernel) {
 		return 1;

@@ -61,7 +61,7 @@ you only the files that are deleted, not the ones it could not find.
 						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;
 					}
-					case (size_t)ERR_IO_FILE_ISFOLDER: {
+					case (size_t)ERR_IO_FILE_ISNOTFILE: {
 						std::string msg = "The file name is invalid.\nError occurred while processing: " + (std::string)path + "\n";
 						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;

@@ -1,4 +1,5 @@
 #include "pipe.h"
+#include "..\common\api.h"
 #include <iostream>
 
 pipe::pipe()
@@ -16,6 +17,7 @@ bool pipe::write(char * s, size_t len, size_t * written)
 	for (int i = 0; i < len; i++) {
 		if (!write(s[i])) {
 			*written = i;
+			SetLastError(ERR_IO_PIPE_READCLOSED);
 			return false;
 		}
 	}
@@ -45,13 +47,12 @@ bool pipe::read(size_t count, char *str, size_t *r)
 {
 	int pos = 0;
 	while (pos < count) {
-		
 		char c = read();
-		str[pos++] = c;          
+		str[pos] = c;          
 		if (c == EOF) { 
-			//pos--; //sjednotit s getData.. tady je eof na pozici (filled-1) a tam na (filled)
 			break;
 		}
+		pos++;
 	}
 	*r = pos;
 	return true;
@@ -73,6 +74,9 @@ bool pipe::peek(size_t * available)
 
 char pipe::read()
 {
+	if (closed_in && queue.size() < 1) {
+		return EOF;
+	}
 	while (queue.size() < 1 && !closed_in) {
 		SleepConditionVariableCS(&buffer_empty, &crit_sec, INFINITE);
 	}

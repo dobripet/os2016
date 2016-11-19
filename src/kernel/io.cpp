@@ -78,7 +78,7 @@ void HandleIO(CONTEXT &regs) {
 		regs.Rax = (decltype(regs.Rax))open_pipe(&w, &r);
 		regs.Rbx = (decltype(regs.Rbx))w;
 		regs.Rcx = (decltype(regs.Rcx))r;
-		Set_Error(regs.Rax == S_FALSE, regs);
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
@@ -86,13 +86,13 @@ void HandleIO(CONTEXT &regs) {
 		FDHandle ho;
 		regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, &ho);
 		regs.Rbx = (decltype(regs.Rbx))ho;
-		Set_Error(regs.Rax == S_FALSE, regs);
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scCloseFile: {
 		regs.Rax = (decltype(regs.Rax))close_file((FDHandle)regs.Rdx);
-		Set_Error(regs.Rax == S_FALSE, regs);
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
@@ -105,8 +105,10 @@ void HandleIO(CONTEXT &regs) {
 					  }*/
 
 	case scReadFile: {
-		regs.Rax = (decltype(regs.Rax))read_file((FDHandle)regs.Rdx, (int)regs.Rcx, (char*)regs.Rbx);
-		Set_Error(regs.Rax == S_FALSE, regs);
+		size_t read;
+		regs.Rax = (decltype(regs.Rax))read_file((FDHandle)regs.Rdx, (int)regs.Rcx, (char*)regs.Rbx, &read);
+		regs.Rbx = (decltype(regs.Rbx))read;
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
@@ -114,40 +116,45 @@ void HandleIO(CONTEXT &regs) {
 		FDHandle hd;
 		regs.Rax = (decltype(regs.Rax))duplicate_handle((FDHandle)regs.Rcx, &hd);
 		regs.Rbx = (decltype(regs.Rbx))hd;
-		Set_Error(regs.Rax == S_FALSE, regs);
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scWriteFile: {
-		regs.Rax = (decltype(regs.Rax))write_file((FDHandle)regs.Rbx, (int)regs.Rdx, (char*)regs.Rcx);
-		Set_Error(regs.Rax == S_FALSE, regs);
+		size_t written = 0;
+		regs.Rax = (decltype(regs.Rax))write_file((FDHandle)regs.Rbx, (int)regs.Rdx, (char*)regs.Rcx, &written);
+		regs.Rbx = (decltype(regs.Rbx))written;
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scMakeDir: {
 		regs.Rax = (decltype(regs.Rax))mkdir((char*)regs.Rbx);
-		Set_Error(regs.Rax == S_FALSE, regs);
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scChangeDir: {
 		regs.Rax = (decltype(regs.Rax))change_dir((char*)regs.Rbx);
-		Set_Error(regs.Rax == S_FALSE, regs);
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	case scRemoveDir: {
 		regs.Rax = (decltype(regs.Rax))remove_dir((char*)regs.Rbx);
-		Set_Error(regs.Rax == S_FALSE, regs);
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 	case scRemoveFile: {
 		regs.Rax = (decltype(regs.Rax))remove_file((char*)regs.Rbx);
-		Set_Error(regs.Rax == S_FALSE, regs);
+		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
 	}//end switch
+
+	//nastala chyba?
+	Set_Error(regs.Rax == S_FALSE, regs);
 }
 
 bool findIfOpenedFileExists(node * n, FDHandle * handle) {
@@ -200,7 +207,7 @@ HRESULT change_dir(char * path) {
 		return S_FALSE;
 	}
 	else if (n->type != TYPE_DIRECTORY) {
-		SetLastError(ERR_IO_FILE_ISFILE);
+		SetLastError(ERR_IO_FILE_ISNOTFOLDER);
 		return S_FALSE;
 	}
 	
@@ -309,6 +316,7 @@ HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 }
 
 
+//dycky jenom soubory??? tj kdyz to bude slozka tak je to chyba???
 HRESULT open_file(char *path, int MODE, FDHandle * handle) {
 
 	FDHandle H;
@@ -415,7 +423,10 @@ int peek_file(FDHandle handle, size_t *available) {
 }
 */
 
-size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
+//Pokud narazi na konec souboru (Ctrl+Z z konzole, roura zavrena pro zapis, konec dat v node),
+//tj. precte mene, nez bylo pozadovano (howMuch), bude EOF v buf[read].
+//Nedava na konec \0, to si musi uzivatelsky program pohlidat sam.
+HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read) {
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
 	opened_file *file = opened_files_table[file_inst->file];
@@ -425,94 +436,89 @@ size_t read_file(FDHandle handle, size_t howMuch, char * buf) {
 		return 0;
 	}
 
-	size_t read = 0;
-	bool success = false;
-
 	switch (file->FILE_TYPE) {
 
 	case F_TYPE_STD: {
 		unsigned long r;
-		success = (ReadFile(file->std, buf, (DWORD)howMuch, &r, nullptr) != FALSE);
+		bool success = (ReadFile(file->std, buf, (DWORD)howMuch, &r, nullptr) != FALSE);
 		if (r == 0 && success) {
-			r = 1;
 			buf[0] = EOF;
 		} else if (!success) {
-			//?
+			*read = 0;
+			SetLastError(ERR_IO_READ_STD);
+			return S_FALSE;
 		}
-		read = r;
+		*read = (size_t)r;
 		break;
-
 	}
 
 	case F_TYPE_PIPE: {
-		success = file->pipe->read(howMuch, buf, &read);
+		if (!(file->pipe->read(howMuch, buf, read))) {
+			//return S_FALSE;
+		}
 		break;
 	}
 	case F_TYPE_FILE: {
-		success = (S_OK == getData(&(file->node), file_inst->pos, howMuch, &buf, &read));
-		file_inst->pos += (int)read;
+		bool success = (S_OK == getData(&(file->node), file_inst->pos, howMuch, &buf, read));
+		file_inst->pos += *read;
 		break;
 	}
 
 	}//end switch
 
+	 /*
+	 TODO: Sjednotit. Roura vraci FALSE kdyz je EOF, ale soubor TRUE.
+	 */
 
-	/*
-	TODO
-	SJEDNOTIT:
-	Roura vraci false kdyz se nezapise vsechno (coz neni vylozene chyba, proste uz je zavrena pro cteni),
-	kdezto node vraci false jenom kdyz se to posere, ze se nezapise nic (ani EOF).
-	*/
-
-	if (success) return read;
-	else {
-		SetLastError(ERROR_READ_FAULT);
-		return 0;
-	}
+	return S_OK;
 }
 
-size_t write_file(FDHandle handle, size_t howMuch, char * buf) {
+HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written) {
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
 	opened_file *file = opened_files_table[file_inst->file];
 
-	size_t written = 0;
-	bool success = false;
-
 	if (file_inst->mode == F_MODE_READ) {
 		//TODO set error ze neni pro zapis
-		return 0;
+		return S_FALSE;
 	}
 
 	switch (file->FILE_TYPE) {
 
 	case F_TYPE_STD: {
-		success = (WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD)&written, nullptr) != FALSE);
-		if (!success) {
-			//?
+		//success = (WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD)written, nullptr) != FALSE);
+		if (WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD)written, nullptr) == FALSE) {
+			*written = 0;
+			SetLastError(ERR_IO_WRITE_STD);
+			return S_FALSE;
 		}
 		break;
 	}
 
 	case F_TYPE_PIPE: {
-		success = (file->pipe)->write(buf, howMuch, &written);
+		if (!((file->pipe)->write(buf, howMuch, written))) {
+			//return S_FALSE;
+		}
 		break;
 	}
 
 	case F_TYPE_FILE: {
-		if (success = (setData(&(file->node), file->node->data.length(), howMuch, buf) == S_OK)) { written = howMuch; }
+		if (setData(&(file->node), buf) == S_OK) {
+			*written = howMuch;
+		} else {
+			*written = 0;
+			return S_FALSE;
+		}
 		break;
 	}
 
 	} //end switch
 
-	if (success) {
-		return written;
-	}
-	else {
-		SetLastError(ERROR_WRITE_FAULT);
-		return 0;
-	}	
+	/*
+	TODO: Sjednotit. Roura vraci FALSE kdyz je EOF, ale soubor TRUE.
+	*/
+
+	return S_OK;
 }
 
 HRESULT mkdir(char * path) {
@@ -525,6 +531,7 @@ HRESULT mkdir(char * path) {
 }
 
 HRESULT remove_dir(char * path) {
+
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
@@ -532,13 +539,12 @@ HRESULT remove_dir(char * path) {
 	HRESULT ok = getNodeFromPath(path, currentNode, &n);
 	if (ok != S_OK) {
 		/*not found*/
-		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
+		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspis
 		return S_FALSE;
 	}
-
 	if (n->type != TYPE_DIRECTORY) {
 		/*not directory*/
-		SetLastError(ERR_IO_FILE_ISFILE);
+		SetLastError(ERR_IO_FILE_ISNOTFOLDER);
 		return S_FALSE;
 	}
 	FDHandle openedHandle;
@@ -550,12 +556,13 @@ HRESULT remove_dir(char * path) {
 	}
 	if (deleteNode(n) != S_OK) {
 		/*has children*/
-		SetLastError(ERR_IO_FILE_NOTEMPTY); //tuhle chybu bude nastavovat FS nejspi
+		SetLastError(ERR_IO_FILE_NOTEMPTY); //tuhle chybu bude nastavovat FS nejspis
 		return S_FALSE;
 	}
 	return S_OK;
 }
 HRESULT remove_file(char * path) {
+
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
@@ -566,10 +573,9 @@ HRESULT remove_file(char * path) {
 		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
 		return S_FALSE;
 	}
-
 	if (n->type != TYPE_FILE) {
 		/*not file*/
-		SetLastError(ERR_IO_FILE_ISFOLDER);
+		SetLastError(ERR_IO_FILE_ISNOTFILE);
 		return S_FALSE;
 	}
 	FDHandle openedHandle;
