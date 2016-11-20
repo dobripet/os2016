@@ -52,6 +52,7 @@ node *getRoot() {
 	return root;
 }
 
+/*
 HRESULT getNodeFromPath(char *path, node *currentDir, node **file) {
 	struct node *parent;
 	getNodeFromPath(path, false, currentDir, &parent);
@@ -61,10 +62,10 @@ HRESULT getNodeFromPath(char *path, node *currentDir, node **file) {
 		for (size_t j = 0; j < parent->children.size(); j++) //hledání souboru v aktuálním uzlu
 		{
 			
-			if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty nemùže být skok o úroveò výš
+			if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty nemùže být skok o úroveò výš //muze???? /kuba
 				std::cout << "Path does not exist" << std::endl;
 				(*file) = nullptr;
-				//SetLastError(ERR_IO_PATH_NOEXIST);
+				SetLastError(ERR_IO_PATH_NOEXIST);
 				return S_FALSE;
 			}
 			
@@ -78,7 +79,7 @@ HRESULT getNodeFromPath(char *path, node *currentDir, node **file) {
 	(*file) = nullptr;
 	return S_FALSE;
 }
-
+*/
 HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 	std::string pathString(path);
 	std::vector<std::string> absolutePath;
@@ -103,8 +104,7 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 		walker = temp;
 		if (absolutePath[i] == "..") { //skok o adresáø výše
 			if (temp->parent == nullptr) {
-				std::cout << "Path does not exist" << std::endl; //už jsme v céèku, výš skoèit nejde
-				SetLastError(ERR_IO_PATH_NOEXIST); //TODO: upravit tuhle chybu
+				SetLastError(ERR_IO_PATH_NOEXIST);
 				return S_FALSE;
 			}
 			else {
@@ -114,10 +114,12 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 
 		for (size_t j = 0; j < temp->children.size(); j++) //hledání potomka v aktuálním uzlu podle cesty [i]
 		{
-			if (absolutePath[i] == temp->children[j]->name && temp->children[j]->type == TYPE_DIRECTORY) { //nalezli jsme správného potomka
-				temp = temp->children[j];
-				break;
-			}
+			if (absolutePath[i] == temp->children[j]->name) { //nalezli jsme správného potomka
+				if (i == (absolutePath.size() - 1) || temp->children[j]->type == TYPE_DIRECTORY) { //pouze posledni nemusi byt slozka
+					temp = temp->children[j];
+					break;
+				}
+			} 
 		}
 		if (walker == temp) { //potomek nebyl nalezen
 			SetLastError(ERR_IO_PATH_NOEXIST);
@@ -264,6 +266,7 @@ HRESULT deleteNode(struct node *toDelete) {
 
 	if (toDelete->type == TYPE_DIRECTORY) {
 		if (!(toDelete->children).empty()) {
+			SetLastError(ERR_IO_FILE_NOTEMPTY);
 			return S_FALSE;
 			/* //rekurzivní mazání
 			size_t	 = (toDelete->children).size();
@@ -277,12 +280,12 @@ HRESULT deleteNode(struct node *toDelete) {
 		for (size_t i = 0; i < parent->children.size(); i++) {
 			if (parent->children[i] == toDelete) {
 				parent->children.erase(parent->children.begin() + i);
-				std::cout << "Folder \"" << toDelete->name << "\" deleted." << std::endl;
+				//std::cout << "Folder \"" << toDelete->name << "\" deleted." << std::endl;
 				//todo: delete node (free memory)
 				return S_OK;
 			}
 		}
-		std::cout << "Folder \"" << toDelete->name << "\" wasn't found." << std::endl;
+		//std::cout << "Folder \"" << toDelete->name << "\" wasn't found." << std::endl; //tohle se snad nikdy nemuze stat, ne? /kuba
 
 	}
 
@@ -292,14 +295,16 @@ HRESULT deleteNode(struct node *toDelete) {
 			if (parent->children[i] == toDelete) {
 
 				parent->children.erase(parent->children.begin() + i);
-				std::cout << "File \"" << toDelete->name << "\" deleted." << std::endl;
+				//std::cout << "File \"" << toDelete->name << "\" deleted." << std::endl;
 				//todo: delete node (free memory)
 				return S_OK;
 			}
 		}
-		std::cout << "File \"" << toDelete->name << "\" wasn't found." << std::endl;
+		//std::cout << "File \"" << toDelete->name << "\" wasn't found." << std::endl; // -||-
 	}
 
+	//sem to nikdy nedoleze?
+	SetLastError(ERR_IO_PATH_NOEXIST);
 	return S_FALSE;
 }
 

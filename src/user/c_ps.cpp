@@ -36,7 +36,7 @@ size_t __stdcall ps(const CONTEXT &regs) {
 		ss << "ThreadID";
 		text += ss.str();
 		ss.str("");
-		ss.width(20);
+		ss.width(15);
 		ss << "Working DIR";
 		text += ss.str() + "\n";
 		for (size_t i = 0; i < all_info.size(); i++) {
@@ -54,9 +54,9 @@ size_t __stdcall ps(const CONTEXT &regs) {
 			ss << all_info[i]->threadID;
 			line += ss.str();
 			ss.str("");
-			ss.width(20);
+			ss.width(15);
 			ss << all_info[i]->workingDir;
-			line += ss.str();
+			line += "  " + ss.str();
 			text += line + "\n";
 			delete all_info[i];
 		}

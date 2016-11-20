@@ -20,7 +20,7 @@ typedef struct node {
 node *getRoot();
 
 HRESULT mkdir(node **dir, char *path, node *currentDir);
-HRESULT getNodeFromPath(char *path, node *currentDir, node **file);
+//HRESULT getNodeFromPath(char *path, node *currentDir, node **file);
 HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node);
 HRESULT getPathFromNode(node *currentDir, std::string *path);
 HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *node);

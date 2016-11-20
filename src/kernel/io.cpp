@@ -536,10 +536,10 @@ HRESULT remove_dir(char * path) {
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
 	node *n;
-	HRESULT ok = getNodeFromPath(path, currentNode, &n);
+	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
 		/*not found*/
-		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspis
+		//SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspis
 		return S_FALSE;
 	}
 	if (n->type != TYPE_DIRECTORY) {
@@ -554,12 +554,14 @@ HRESULT remove_dir(char * path) {
 		SetLastError(ERR_IO_FILE_ISOPENED);
 		return S_FALSE;
 	}
+	/*
 	if (deleteNode(n) != S_OK) {
-		/*has children*/
-		SetLastError(ERR_IO_FILE_NOTEMPTY); //tuhle chybu bude nastavovat FS nejspis
+		//has children
+		//SetLastError(ERR_IO_FILE_NOTEMPTY); //tuhle chybu bude nastavovat FS nejspis
 		return S_FALSE;
 	}
-	return S_OK;
+	return S_OK;*/
+	return deleteNode(n);
 }
 HRESULT remove_file(char * path) {
 
@@ -567,10 +569,10 @@ HRESULT remove_file(char * path) {
 	node * currentNode = opened_files_table[currentInst->file]->node;
 
 	node *n;
-	HRESULT ok = getNodeFromPath(path, currentNode, &n);
+	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
 		/*not found*/
-		SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
+		//SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
 		return S_FALSE;
 	}
 	if (n->type != TYPE_FILE) {
@@ -585,10 +587,13 @@ HRESULT remove_file(char * path) {
 		SetLastError(ERR_IO_FILE_ISOPENED);
 		return S_FALSE;
 	}
+
+	/*
 	if (deleteNode(n) != S_OK) {
-		/*unexpected error*/
-		SetLastError(ERR_IO_FILE_NOTEMPTY); //kdyby zde nastala chyba tak neco nastavit ve FS
+		//unexpected error //muze se stat snad jedine kdyby jinej proces mu ho smazal pred nosem.
 		return S_FALSE;
 	}
-	return S_OK;
+	return S_OK;*/
+
+	return deleteNode(n);
 }
