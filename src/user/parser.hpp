@@ -22,6 +22,7 @@ typedef struct Parsed_command_params {
 //Command com;
 	std::string com;
 	bool redirectstdout;
+	bool appendstdout;
 	bool redirectstdin;
 	bool hasswitches;
 	std::string switches;

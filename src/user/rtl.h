@@ -18,6 +18,7 @@ bool Duplicate_File(FDHandle old_handle, FDHandle * new_handle);
 //return true kdyz vse OK
 //do handle ulozi handle na soubor
 bool Open_File(FDHandle * handle, const char * fname, int mode); //jeste chybi typ esi slozka nebo soubor
+bool Open_File(FDHandle * handle, const char * fname, int mode, bool rewrite);
 
 //vyrobi rouru
 //return true kdyz vse OK

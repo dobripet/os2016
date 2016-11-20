@@ -84,7 +84,7 @@ void HandleIO(CONTEXT &regs) {
 
 	case scOpenFile: {
 		FDHandle ho;
-		regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, &ho);
+		regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, *((bool*)(regs.Rbx)), &ho);
 		regs.Rbx = (decltype(regs.Rbx))ho;
 		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
@@ -317,7 +317,7 @@ HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 
 
 //dycky jenom soubory??? tj kdyz to bude slozka tak je to chyba???
-HRESULT open_file(char *path, int MODE, FDHandle * handle) {
+HRESULT open_file(char *path, int MODE, bool rewrite, FDHandle * handle) {
 
 	FDHandle H;
 
@@ -327,7 +327,7 @@ HRESULT open_file(char *path, int MODE, FDHandle * handle) {
 	node * current = opened_files_table[file_h]->node;
 
 	node *n;
-	HRESULT ok = openFile(&n, path, MODE != F_MODE_READ, MODE != F_MODE_READ, current);
+	HRESULT ok = openFile(&n, path, rewrite, MODE != F_MODE_READ, current);
 	if (ok == S_FALSE) {
 		return S_FALSE;
 	}

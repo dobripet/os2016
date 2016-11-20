@@ -147,17 +147,23 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 					//neni to posledni prikaz, tj. ma presmerovani do souboru i do roury
 					if (i != lastCommand) {
-						
+
 						//Presmerovani do souboru ma prednost, takze to udelame tak, 
 						//ze tento proces producenta stejne dostane rouru do seznamu souboru..
 						//a normalne ji uzavre jako kazdy jiny soubor, az se bude ukoncovat.
 						//if_pipe_and_stdout = pipeWrite[i]; //TODO test
-						
+
 						//Asi taky muzu s klidem tu rouru zavrit. Kdyz tedka shell ceka na vsechny procesy, tak je jedno, kdo driv skonci.
 						Close_File(pipeWrite[i]); //TODO test
 					}
 
-					bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
+					/*
+					TODO:
+					APPEND:	if(current_params.appendstdout) {}
+					bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE, !current_params.appendstdout);
+					*/
+					bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE, !current_params.appendstdout);
+					//bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
 					if (fail) {
 						std::cout << "DEBUG SHELL: redirecting stdout failed" << std::endl;
 						//TODO zavreni rour na obou stranach??

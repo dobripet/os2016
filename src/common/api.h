@@ -33,8 +33,8 @@ const int F_MODE_WRITE = 8;
 const int F_MODE_BOTH = 9;
 //const int F_MODE_CLEAR_WRITE = 10;
 //const int F_MODE_CLEAR_BOTH = 11;
-
-//const char EOF_CHAR = '\0';
+const bool F_OPEN_REWRITE = true;
+const bool F_OPEN_APPEND = false;
 
 /*struktura pro predani vlastnosti procesu*/
 typedef struct get_process_info {

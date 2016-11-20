@@ -46,7 +46,7 @@ HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle);
 //otevre rouru, vraci zapisovaci a cteci konec
 HRESULT open_pipe(FDHandle * whandle, FDHandle * rhandle);
 //otevre soubor, handle je soucasna slozka volajiciho procesu, path je relativni (muze byt i absolutni) cesta k teto slozce
-HRESULT open_file(char *path, int MODE, FDHandle * handle);
+HRESULT open_file(char *path, int MODE, bool rewrite, FDHandle * handle);
 //zavre soubour otevreny pod handle
 HRESULT close_file(FDHandle handle);
 //smaze soubor podle cesty v path

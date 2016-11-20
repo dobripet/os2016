@@ -84,7 +84,7 @@ bool Parser::parse_commands(std::string line, std::vector<struct Parsed_command_
 bool Parser::parse_command(std::string command, struct Parsed_command_params * paramz) {
 	
 	command += " ";
-	*paramz = {"", false, false, false, "", "", ""};
+	*paramz = {"", false, false, false, false, "", "", ""};
 	bool leftpending = false, rightpending = false;
 	int pos = 0;
 	
@@ -140,19 +140,25 @@ bool Parser::parse_command(std::string command, struct Parsed_command_params * p
 			}		
 			paramz->redirectstdin = true;
 			if (leftpending || rightpending) {
-				err_msg = "Two redirect symbols in a row.";
+				err_msg = "Multiple redirect symbols in a row.";
 				return ERR;
 			}
 			leftpending = true;
 		}
 		else if (str == ">") {
+			bool second = false;
 			if (paramz->redirectstdout) {
-				err_msg = "Attempting to redirect stdout twice.";
-				return ERR;
+				if (paramz->appendstdout) {
+					err_msg = "Attempting to redirect stdout twice.";
+					return ERR;
+				} else {
+					paramz->appendstdout = true;
+					second = true;
+				}
 			}		
 			paramz->redirectstdout = true;
-			if (rightpending || leftpending) {
-				err_msg = "Two redirect symbols in a row.";
+			if (!second && (rightpending || leftpending)) {
+				err_msg = "Multiple redirect symbols in a row.";
 				return ERR;
 			}
 			rightpending = true;			

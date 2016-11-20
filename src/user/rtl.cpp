@@ -38,12 +38,24 @@ bool Duplicate_File(FDHandle old_handle, FDHandle * new_handle) {
 }
 
 bool Open_File(FDHandle * handle, const char * fname, int mode) {
-
+	return Open_File(handle, fname, mode, false); //????? Defaultni nastaveni append nebo rewrite?
+	/*
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scOpenFile);
 	regs.Rdx = (decltype(regs.Rdx))fname;
 	regs.Rcx = (decltype(regs.Rcx))mode;
 	bool success = Do_SysCall(regs);
 	*handle =  (FDHandle)regs.Rbx;
+	return success;*/
+}
+
+bool Open_File(FDHandle * handle, const char * fname, int mode, bool rewrite) {
+
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scOpenFile);
+	regs.Rdx = (decltype(regs.Rdx))fname;
+	regs.Rcx = (decltype(regs.Rcx))mode;
+	regs.Rbx = (decltype(regs.Rbx))&rewrite;
+	bool success = Do_SysCall(regs);
+	*handle = (FDHandle)regs.Rbx;
 	return success;
 }
 
