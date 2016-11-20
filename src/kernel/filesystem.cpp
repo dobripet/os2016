@@ -2,6 +2,14 @@
 #include <iostream>
 #include <iterator>
 #include <regex>
+#include <cctype>
+
+bool char_equals_lowerCase(unsigned char a, unsigned char b) {
+	return std::tolower(a) == std::tolower(b);
+}
+bool str_equals(std::string const& a, std::string const& b) {
+	return a.length() == b.length() && std::equal(b.begin(), b.end(),a.begin(), char_equals_lowerCase);
+}
 
 node *mkroot() {
 	struct node *newFile = new node;
@@ -87,7 +95,8 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 	struct node *temp;
 	size_t i = 0;
 	(*node) = nullptr;
-	if (pathString.substr(0, 4) == "C://") {
+	if (str_equals(pathString.substr(0, 4), "C://")) {
+	//if (pathString.substr(0, 4) == "C://" || pathString.substr(0, 4) == "c://") {
 		i = 1;
 		temp = root;
 	}
@@ -216,6 +225,7 @@ HRESULT addChild(struct node **parent, struct node **child) {
 	return S_OK;
 }
 
+/*
 HRESULT deleteFile(std::string actualDirectory, std::string path) {
 	std::vector<std::string> absolutePath;
 	std::string absolutePathStr;
@@ -258,7 +268,7 @@ HRESULT deleteFile(std::string actualDirectory, std::string path) {
 	}
 
 	return S_OK;
-}
+}*/
 
 HRESULT deleteNode(struct node *toDelete) {
 
