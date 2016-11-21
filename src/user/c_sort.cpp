@@ -30,7 +30,7 @@ size_t __stdcall sort(const CONTEXT &regs) {
 		while (true){
 			Read_File(STDIN, 1024, buffer, &filled);
 			text += ((std::string)buffer).substr(0, filled);
-			if (buffer[filled - 1] == EOF) { //goodbye
+			if (buffer[filled] == EOF) { //goodbye
 				break;
 			}
 
@@ -44,8 +44,8 @@ size_t __stdcall sort(const CONTEXT &regs) {
 		FDHandle file;
 		char * path = ((char**)regs.Rdx)[0];
 		if (!Open_File(&file, path, F_MODE_READ)) {
-			std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
-			Write_File(STDERR, (char *)msg.c_str(), msg.length());
+		//	std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
+		//	Write_File(STDERR, (char *)msg.c_str(), msg.length());
 			switch (Get_Last_Error()) {
 			case ERR_IO_PATH_NOEXIST: {
 				std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
@@ -53,6 +53,7 @@ size_t __stdcall sort(const CONTEXT &regs) {
 				break;
 			}
 			}
+			return (size_t)1;
 		}
 		char buffer[1024];
 		size_t bsize = 1024;

@@ -45,11 +45,11 @@ HRESULT mkdir(char *path);
 HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle);
 //otevre rouru, vraci zapisovaci a cteci konec
 HRESULT open_pipe(FDHandle * whandle, FDHandle * rhandle);
-//otevre soubor, handle je soucasna slozka volajiciho procesu, path je relativni (muze byt i absolutni) cesta k teto slozce
+//otevre soubor, handle je soucasna slozka volajiciho procesu, path je relativni (muze byt i absolutni) cesta k teto slozce, rewrite jestli se maji data prepsat
 HRESULT open_file(char *path, int MODE, bool rewrite, FDHandle * handle);
 //zavre soubour otevreny pod handle
 HRESULT close_file(FDHandle handle);
-//smaze soubor podle cesty v path
+//smaze soubor podle scesty v path
 HRESULT remove_file(char * path);
 
 //int peek_file(FDHandle handle, size_t *available);
