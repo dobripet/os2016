@@ -32,6 +32,7 @@ size_t __stdcall echo(const CONTEXT &regs) {
 			text += (std::string)((char**)regs.Rdx)[i] + " ";
 		}
 		text.replace(text.length() - 1, 1, "\0");
+		text += "\n";
 		size = text.length();
 		std::cout << "DEBUG:echo text je " << text << "\n";
 		success = Write_File(STDOUT, (char *)text.c_str(), size, &written);	
