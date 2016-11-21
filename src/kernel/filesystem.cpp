@@ -110,6 +110,10 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 
 	for (; i < absolutePath.size() - (last ? 0 : 1); i++) //prolezení všech èástí [i] cesty
 	{
+		if (absolutePath[i] == ".") {
+			continue;
+		}
+
 		walker = temp;
 		if (absolutePath[i] == "..") { //skok o adresáø výše
 			if (temp->parent == nullptr) {
