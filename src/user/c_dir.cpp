@@ -4,7 +4,8 @@
 #include <iostream>
 #include <sstream>
 /*Prints directory*/
-HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR, bool *success, size_t *written, size_t *size);
+HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR);
+
 size_t __stdcall dir(const CONTEXT &regs) {
 
 	FDHandle STDIN = (FDHandle)regs.R8;
@@ -18,10 +19,14 @@ size_t __stdcall dir(const CONTEXT &regs) {
 		char * msg = "Displays list files and subdirectories in a directory.\n\n  DIR\n\0";
 		size = strlen(msg);
 		success = Write_File(STDOUT, msg, size, &written);
+		/*Handle not all has been written*/
+		if (check_write("DIR", STDERR, success, written, size) != S_OK) {
+			return (size_t)1;
+		}
 	}
 	/*No params, current dir*/
 	else if ((int)regs.Rcx == 0) {
-		if (handle_dir(nullptr, STDOUT, STDERR, &success, &written, &size) != S_OK) {
+		if (handle_dir(nullptr, STDOUT, STDERR) != S_OK) {
 			return (size_t)1;
 		}
 	}
@@ -29,21 +34,20 @@ size_t __stdcall dir(const CONTEXT &regs) {
 		/*multiple dirs*/
 		for (int i = 0; i < (int)regs.Rcx; i++) {
 			char * path = ((char**)regs.Rdx)[i];
-			if (handle_dir(path, STDOUT, STDERR, &success, &written, &size) != S_OK) {
+			if (handle_dir(path, STDOUT, STDERR) != S_OK) {
 				return (size_t)1;
 			}
 		}
 	}
-	/*Handle not all has been written*/
-	if (!success || written != size) {
-		char * msg = "DIR: error - not all data written(possibly closed file handle)\0";
-		Write_File(STDERR, msg, strlen(msg));
-		return (size_t)1;
-	}
+	
 	return (size_t)0;
 }
 
-HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR, bool *success, size_t *written, size_t *size) {
+
+HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR) {
+	bool success;
+	size_t written;
+	size_t size;
 	size_t sum = 0;
 	int dir_count = 0;
 	size_t file_count = 0;
@@ -127,7 +131,11 @@ HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR, bool *success, 
 	}
 	text << "\t\t" << file_count << " File(s) \t" << sum << " bytes\n";
 	text << "\t\t" << dir_count << " Dir(s) \n";
-	*size = text.str().length();
-	*success = Write_File(STDOUT, (char *)text.str().c_str(), *size, written);
+	size = text.str().length();
+	success = Write_File(STDOUT, (char *)text.str().c_str(), size, &written);
+	/*Handle not all has been written*/
+	if (check_write("DIR", STDERR, success, written, size) != S_OK) {
+		return S_FALSE;
+	}
 	return S_OK;
 }

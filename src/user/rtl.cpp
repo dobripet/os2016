@@ -157,3 +157,12 @@ bool Get_Dir_Nodes(std::vector<node_info*> *all_info, char *path) {
 	regs.Rcx = (decltype(regs.Rcx))path;
 	return Do_SysCall(regs);
 }
+
+HRESULT check_write(std::string name,  FDHandle STDERR, bool success, size_t written, size_t size) {
+	if (!success || written != size) {
+		std::string msg = name + ": error - not all data written(possibly closed file handle)\0";
+		Write_File(STDERR,(char *) msg.c_str(), msg.size());
+		return S_FALSE;
+	}
+	return S_OK;
+}

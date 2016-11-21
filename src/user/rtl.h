@@ -70,3 +70,7 @@ bool Get_Processes(std::vector<process_info*> *all_info);
 
 //Vrati seznam nodu
 bool Get_Dir_Nodes(std::vector<node_info*> *all_info, char *path);
+
+
+//helper
+HRESULT check_write(std::string name, FDHandle STDERR, bool success, size_t written, size_t size);
