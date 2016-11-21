@@ -150,6 +150,11 @@ void HandleIO(CONTEXT &regs) {
 		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
+	case scGetDirNodes: {
+		regs.Rax = (decltype(regs.Rax))getDirNodes((std::vector<node_info*>*)regs.Rbx, (char*)regs.Rcx);
+		Set_Error(regs.Rax == S_FALSE, regs);
+		break;
+	}
 
 	}//end switch
 
@@ -596,4 +601,38 @@ HRESULT remove_file(char * path) {
 	return S_OK;*/
 
 	return deleteNode(n);
+}
+/*On zero position is always current dir*/
+HRESULT getDirNodes(std::vector<node_info*> *all_info, char *path) {
+	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
+	node * currentNode = opened_files_table[currentInst->file]->node;
+	node *n; 
+	if (path == nullptr){
+		n = currentNode;
+	}
+	else {
+		if (getNodeFromPath(path, true, currentNode, &n) != S_OK) {
+			/*not found*/
+			return S_FALSE;
+		} ;
+	}
+	node_info *info = new node_info;
+	info->name = n->name;
+	info->type = n->type;
+	info->size = n->data.size();
+	getPathFromNode(n, &(info->path));
+	if (n->type == TYPE_FILE) {
+		getPathFromNode(n->parent, &(info->pathParent));
+	}
+	all_info->push_back(info);
+	for (size_t i = 0; i < n->children.size(); i++) {
+		if (n->children[i] != nullptr) {
+			node_info *info = new node_info;
+			info->name = n->children[i]->name;
+			info->type = n->children[i]->type;
+			info->size = n->children[i]->data.size();
+			all_info->push_back(info);
+		}
+	}
+	return S_OK;
 }

@@ -57,6 +57,8 @@ HRESULT remove_file(char * path);
 HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read);
 //zapis do souboru
 HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written);
+//listovani slozky
+HRESULT getDirNodes(std::vector<node_info*> *all_info, char *path);
 
 extern opened_file * opened_files_table[OPEN_FILES_TABLE_SIZE];
 extern opened_file_instance * opened_files_table_instances[OPEN_INSTANCES_TABLE_SIZE];

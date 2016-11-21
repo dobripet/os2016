@@ -36,6 +36,9 @@ const int F_MODE_BOTH = 9;
 const bool F_OPEN_REWRITE = true;
 const bool F_OPEN_APPEND = false;
 
+const int TYPE_DIRECTORY = 0;
+const int TYPE_FILE = 1;
+
 /*struktura pro predani vlastnosti procesu*/
 typedef struct get_process_info {
 	size_t pid; // pid procesu
@@ -43,6 +46,15 @@ typedef struct get_process_info {
 	std::string name; //jmeno programu
 	std::string workingDir; //slozka kde je proces spusten
 } process_info;
+
+/*struktura pro predani vlastnosti procesu*/
+typedef struct get_node_info {
+	std::string name; //jmeno nodu
+	size_t size; // velikost nodu
+	int type; //typ nodu
+	std::string path;//absolutni cesta
+	std::string pathParent;//absolutni cesta rodice
+} node_info;
 
 /*struktura pro predani parametru spousteni procesu*/
 typedef struct create_process_params {
@@ -82,6 +94,7 @@ const __int8 scMakeDir = 9;
 const __int8 scChangeDir = 10;
 const __int8 scRemoveDir = 11;
 const __int8 scRemoveFile = 12;
+const __int8 scGetDirNodes = 13;
 
 //al hodnoty pro scProcess
 const __int8 scCreateProcess = 1;

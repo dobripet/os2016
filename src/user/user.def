@@ -10,6 +10,7 @@ EXPORTS
 	sort
 	rgen
 	freq
+	dir
 	ps
 	del
 	

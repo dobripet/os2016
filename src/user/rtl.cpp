@@ -151,3 +151,9 @@ bool Get_Processes(std::vector<process_info*> *all_info) {
 	regs.Rbx = (decltype(regs.Rbx))all_info;
 	return Do_SysCall(regs);
 }
+bool Get_Dir_Nodes(std::vector<node_info*> *all_info, char *path) {
+	CONTEXT regs = Prepare_SysCall_Context(scIO, scGetDirNodes);
+	regs.Rbx = (decltype(regs.Rbx))all_info;
+	regs.Rcx = (decltype(regs.Rcx))path;
+	return Do_SysCall(regs);
+}

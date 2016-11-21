@@ -1,5 +1,5 @@
 ﻿#include "rtl.h"
-#include "c_echo.h"
+#include "c_type.h"
 #include <string>
 #include <iostream>
 /*Multiple params connect to one string and prints to stdout*/

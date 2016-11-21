@@ -1,5 +1,5 @@
 ﻿#include "rtl.h"
-#include "c_echo.h"
+#include "c_ps.h"
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -22,7 +22,7 @@ size_t __stdcall ps(const CONTEXT &regs) {
 	else if ((int)regs.Rcx == 0) {
 		std::vector<process_info*> all_info;
 		Get_Processes(&all_info);
-		std::string text;
+		std::string text = "";
 		std::stringstream ss;
 		ss.width(10);
 		ss << "Name";

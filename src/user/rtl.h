@@ -67,3 +67,6 @@ bool Create_Process(command_params * par, int * pid);
 bool Join_and_Delete_Process(int pid);
 //Vrati seznam procesu
 bool Get_Processes(std::vector<process_info*> *all_info);
+
+//Vrati seznam nodu
+bool Get_Dir_Nodes(std::vector<node_info*> *all_info, char *path);

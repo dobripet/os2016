@@ -1,5 +1,5 @@
 ﻿#include "rtl.h"
-#include "c_echo.h"
+#include "c_freq.h"
 #include <string>
 #include <iostream>
 #include <algorithm>

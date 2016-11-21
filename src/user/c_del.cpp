@@ -1,5 +1,5 @@
 ﻿#include "rtl.h"
-#include "c_rd.h"
+#include "c_del.h"
 #include <string>
 #include <iostream>
 /*Removes file*/

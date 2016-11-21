@@ -1,6 +1,4 @@
 #pragma once
-#define TYPE_DIRECTORY 0
-#define TYPE_FILE 1
 
 #include <Windows.h>
 #include "../common/api.h"
