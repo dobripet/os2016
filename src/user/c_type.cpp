@@ -23,7 +23,7 @@ size_t __stdcall type(const CONTEXT &regs) {
 	bool success;
 	/*Flag handling*/
 	if (help) {
-		char * msg = "Displays the contents of a text file or files.\n\n  TYPE[drive:][path]filename\n\0";
+		char * msg = "Displays the contents of a text file or files.\n\n  TYPE [/q] [drive:][path]filename\n\n  /q   Quiet mode, do not print filename\n\0";
 		size = strlen(msg);
 		success = Write_File(STDOUT, msg, size, &written);
 	}
@@ -42,6 +42,7 @@ size_t __stdcall type(const CONTEXT &regs) {
 			char * path = ((char**)regs.Rdx)[i];
 			FDHandle file;
 			if (!Open_File(&file, path, F_MODE_READ)) {
+				std::cout << "DEBUG:type err: " << Get_Last_Error() << "\n";
 				switch (Get_Last_Error()) {
 					case ERR_IO_PATH_NOEXIST: {
 						std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
@@ -49,6 +50,7 @@ size_t __stdcall type(const CONTEXT &regs) {
 						break;
 					}
 				}
+				continue;
 			}
 			else {
 				if (!quietMode) {
