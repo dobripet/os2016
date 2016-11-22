@@ -29,25 +29,15 @@ bool Do_SysCall(CONTEXT &regs) {
 }
 
 bool Duplicate_File(FDHandle old_handle, FDHandle * new_handle) {
-
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scDuplicateHandle);
 	regs.Rcx = (decltype(regs.Rcx))old_handle;
 	bool success = Do_SysCall(regs);
 	*new_handle = (FDHandle)regs.Rbx;
 	return success;
 }
-
 bool Open_File(FDHandle * handle, const char * fname, int mode) {
-	return Open_File(handle, fname, mode, false); //????? Defaultni nastaveni append nebo rewrite?
-	/*
-	CONTEXT regs = Prepare_SysCall_Context(scIO, scOpenFile);
-	regs.Rdx = (decltype(regs.Rdx))fname;
-	regs.Rcx = (decltype(regs.Rcx))mode;
-	bool success = Do_SysCall(regs);
-	*handle =  (FDHandle)regs.Rbx;
-	return success;*/
+	return Open_File(handle, fname, mode, false); 
 }
-
 bool Open_File(FDHandle * handle, const char * fname, int mode, bool rewrite) {
 
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scOpenFile);
@@ -58,7 +48,6 @@ bool Open_File(FDHandle * handle, const char * fname, int mode, bool rewrite) {
 	*handle = (FDHandle)regs.Rbx;
 	return success;
 }
-
 bool Open_Pipe(FDHandle * writeHandle, FDHandle * readHandle) {
 
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scCreatePipe);
@@ -67,7 +56,6 @@ bool Open_Pipe(FDHandle * writeHandle, FDHandle * readHandle) {
 	*readHandle = (FDHandle)regs.Rcx;
 	return success;
 }
-
 bool Close_File(FDHandle file_handle) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scCloseFile);
 	regs.Rdx = (decltype(regs.Rdx))file_handle;
@@ -92,7 +80,6 @@ bool Read_File(FDHandle handle, size_t len, char * buf, size_t * filled) {
 	*filled = (size_t)regs.Rbx;
 	return success;
 }
-
 bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size, size_t *written) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scWriteFile);
 	regs.Rbx = (decltype(regs.Rbx))file_handle;
@@ -109,7 +96,6 @@ bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size) {
 	regs.Rdx = (decltype(regs.Rdx))buffer_size;
 	return Do_SysCall(regs);
 }
-
 bool Create_Process(command_params * par, int * pid)
 {
 	CONTEXT regs = Prepare_SysCall_Context(scProcess, scCreateProcess);
@@ -118,19 +104,16 @@ bool Create_Process(command_params * par, int * pid)
 	*pid = (int)regs.Rdx;
 	return success;
 }
-
 bool Join_and_Delete_Process(int pid) {
 	CONTEXT regs = Prepare_SysCall_Context(scProcess, scJoinProcess);
 	regs.Rbx = (decltype(regs.Rbx))pid;
 	return Do_SysCall(regs);
 }
-
 bool Make_Dir(char *path) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scMakeDir);
 	regs.Rbx = (decltype(regs.Rbx))path;
 	return Do_SysCall(regs);
 }
-
 bool Change_Dir(char *path) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scChangeDir);
 	regs.Rbx = (decltype(regs.Rbx))path;

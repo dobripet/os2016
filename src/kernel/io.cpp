@@ -321,7 +321,7 @@ HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 }
 
 
-//dycky jenom soubory??? tj kdyz to bude slozka tak je to chyba???
+//jen pro soubory
 HRESULT open_file(char *path, int MODE, bool rewrite, FDHandle * handle) {
 
 	FDHandle H;

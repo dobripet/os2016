@@ -168,27 +168,31 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 	if (parent != nullptr) {
 		std::string pathString(path);
 		std::vector<std::string> absolutePath = split_string(pathString);
+		if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty k souboru nemùže být skok o úroveò výš
+			SetLastError(ERR_IO_FILE_ISNOTFILE);
+			return S_FALSE;
+		}
 		for (size_t j = 0; j < parent->children.size(); j++) //hledání souboru v aktuálním uzlu
 		{
-			if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty nemùže být skok o úroveò výš
-				std::cout << "Path does not exist" << std::endl;
-				SetLastError(ERR_IO_FILE_ISNOTFILE); //TODO: možná existuje pøípad, kdy to soubor neni, ale prostì neexistuje cesta?
-				return S_FALSE;
-			}
-			else if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name && parent->children[j]->type == TYPE_FILE) { //nalezli jsme správného potomka
-				//soubor existuje
-				if (rewrite) {
-					//chceme pøepsat data
-					parent->children[j]->data.clear();
+			
+			if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) { //nalezli jsme potomka správného jména
+				if (parent->children[j]->type == TYPE_FILE) { // je to soubor, to chceme
+					if (rewrite) {
+						//chceme pøepsat data
+						parent->children[j]->data.clear();
+					}
+					(*file) = parent->children[j];
+					return S_OK;
+				} else { //je to slozka, to nechceme
+					SetLastError(ERR_IO_FILE_ISNOTFILE);
+					return S_FALSE;
 				}
-				(*file) = parent->children[j];
-				return S_OK;
 			}
 		}
 
 		if (create) {
 			//našli jsme soubor a chceme ho vytvoøit
-			struct node *newFile = new node;
+			struct node *newFile = new node();
 			newFile->name = absolutePath[absolutePath.size() - 1];
 			newFile->type = TYPE_FILE;
 			newFile->parent = parent;
@@ -197,13 +201,14 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 			return S_OK;
 		}
 		else {
-			//nenašli jsme soubor (nebo cesta ukazovala na složku) a ani ho nechceme vytvoøit
+			//nenašli jsme soubor a ani ho nechceme vytvoøit
 			SetLastError(ERR_IO_PATH_NOEXIST);
 			return S_FALSE;
 		}
 	}
 
 	//cesta neexistuje
+	SetLastError(ERR_IO_PATH_NOEXIST);
 	(*file) = nullptr;
 	return S_FALSE;
 }
@@ -212,7 +217,7 @@ HRESULT addChild(struct node **parent, struct node **child) {
 	if (!*parent || !*child) return S_FALSE;
 	if ((*parent)->type == TYPE_FILE) return S_FALSE;
 
-
+	/*
 	//asi redundantní kód?? øeší nejspíš už openFile
 	for (size_t i = 0; i < (*parent)->children.size(); i++)
 	{
@@ -221,7 +226,7 @@ HRESULT addChild(struct node **parent, struct node **child) {
 			std::cout << "File \"" << (*child)->name << "\" already exists. Data were overwritten." << std::endl;
 			return S_FALSE;
 		}
-	}
+	}*/
 
 	((*parent)->children).push_back(*child);
 	(*child)->parent = *parent;

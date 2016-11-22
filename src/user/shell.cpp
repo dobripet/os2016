@@ -8,6 +8,21 @@
 
 #pragma warning(disable: 4996)
 
+void print_err(FDHandle out, std::string path) {
+	std::string err = "Redirecting was not possible: ";
+	switch (Get_Last_Error()) {
+	case ERR_IO_FILE_ISNOTFILE: {
+		err += "path \"" + path + "\" is a folder.\n";
+		break;
+	}
+	case ERR_IO_PATH_NOEXIST: {
+		err += "path \"" + path + "\" was not found.\n";
+		break;
+	}
+	}
+	Write_File(out, (char*)err.c_str(), err.length());
+}
+
 size_t __stdcall shell(const CONTEXT &regs) {
 
 
@@ -128,7 +143,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 					bool fail = !Open_File(&std_in, current_params.stdinpath.c_str(), F_MODE_READ);
 					if (fail) {
-						std::cout << "DEBUG SHELL: redirecting stdin failed" << std::endl;
+						print_err(STDOUT, current_params.stdinpath.c_str());
+						//std::cout << "DEBUG SHELL: redirecting stdin failed" << std::endl;
 						//TODO zavreni rour na obou stranach??
 						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
 						continue;
@@ -165,7 +181,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE, !current_params.appendstdout);
 					//bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
 					if (fail) {
-						std::cout << "DEBUG SHELL: redirecting stdout failed" << std::endl;
+						print_err(STDOUT, current_params.stdoutpath.c_str());
+						//std::cout << "DEBUG SHELL: redirecting stdout failed" << std::endl;
 						//TODO zavreni rour na obou stranach??
 						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
 						continue;
