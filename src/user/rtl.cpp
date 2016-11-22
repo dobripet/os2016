@@ -9,6 +9,33 @@ size_t Get_Last_Error() {
 	return LastError;
 }
 
+void Print_Last_Error(FDHandle out) {
+	Print_Last_Error(out, "");
+}
+void Print_Last_Error(FDHandle out, std::string prefix) {
+	std::string err = prefix + (prefix.length() > 0 ? " " : "");
+	switch (Get_Last_Error()) {
+	case ERR_IO_FILE_ISNOTFILE: {
+		err += "Specified file is a folder.\n";
+		break;
+	}
+	case ERR_IO_FILE_ISNOTFOLDER: {
+		err += "Specified file is NOT a folder.\n";
+		break;
+	}
+	case ERR_IO_PATH_NOEXIST: {
+		err += "Path was not found.\n";
+		break;
+	}
+	default: {
+		err += "Unspecified error occured.\n";
+	}
+	}
+	Write_File(out, (char*)err.c_str(), err.length());
+}
+
+
+
 CONTEXT Prepare_SysCall_Context(__int8 major, __int8 minor) {
 	CONTEXT regs;
 	regs.Rax = Compose_AX(major, minor);
@@ -62,14 +89,14 @@ bool Close_File(FDHandle file_handle) {
 	return Do_SysCall(regs);
 }
 
-/*bool Peek_File(FDHandle handle, size_t * available)
+bool Peek_File(FDHandle handle, size_t * available)
 {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scPeekFile);
 	regs.Rdx = (decltype(regs.Rdx))handle;
 	bool success = Do_SysCall(regs);
 	*available = (size_t)regs.Rbx;
 	return success;
-}*/
+}
 
 bool Read_File(FDHandle handle, size_t len, char * buf, size_t * filled) {
 	CONTEXT regs = Prepare_SysCall_Context(scIO, scReadFile);

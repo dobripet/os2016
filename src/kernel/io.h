@@ -52,7 +52,7 @@ HRESULT close_file(FDHandle handle);
 //smaze soubor podle scesty v path
 HRESULT remove_file(char * path);
 
-//int peek_file(FDHandle handle, size_t *available);
+HRESULT peek_file(FDHandle handle, size_t *available);
 //cteni ze souboru
 HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read);
 //zapis do souboru

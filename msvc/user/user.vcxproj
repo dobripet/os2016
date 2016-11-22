@@ -26,10 +26,12 @@
     <ClCompile Include="..\..\src\user\c_md.cpp" />
     <ClCompile Include="..\..\src\user\c_ps.cpp" />
     <ClCompile Include="..\..\src\user\c_rd.cpp" />
+    <ClCompile Include="..\..\src\user\c_rgen.cpp" />
     <ClCompile Include="..\..\src\user\c_sort.cpp" />
     <ClCompile Include="..\..\src\user\c_type.cpp" />
     <ClCompile Include="..\..\src\user\c_wc.cpp" />
     <ClCompile Include="..\..\src\user\dllmain.cpp" />
+    <ClCompile Include="..\..\src\user\dummy.cpp" />
     <ClCompile Include="..\..\src\user\parser.cpp" />
     <ClCompile Include="..\..\src\user\rtl.cpp" />
     <ClCompile Include="..\..\src\user\shell.cpp" />
@@ -43,9 +45,11 @@
     <ClInclude Include="..\..\src\user\c_md.h" />
     <ClInclude Include="..\..\src\user\c_ps.h" />
     <ClInclude Include="..\..\src\user\c_rd.h" />
+    <ClInclude Include="..\..\src\user\c_rgen.h" />
     <ClInclude Include="..\..\src\user\c_sort.h" />
     <ClInclude Include="..\..\src\user\c_type.h" />
     <ClInclude Include="..\..\src\user\c_wc.h" />
+    <ClInclude Include="..\..\src\user\dummy.h" />
     <ClInclude Include="..\..\src\user\parser.hpp" />
     <ClInclude Include="..\..\src\user\rtl.h" />
     <ClInclude Include="..\..\src\user\shell.h" />

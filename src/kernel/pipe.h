@@ -32,7 +32,7 @@ public:
 	pipe();
 	bool write(char * s, size_t len, size_t * written);
 	bool pipe::read(size_t count, char *str, size_t * read);
-	//bool pipe::peek(size_t * available);
+	bool pipe::peek(size_t * available);
 	void close_read();
 	void close_write();
 	~pipe();

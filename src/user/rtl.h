@@ -7,6 +7,13 @@
 
 size_t Get_Last_Error();
 
+//helper
+HRESULT check_write(std::string name, FDHandle STDERR, bool success, size_t written, size_t size);
+
+//do "out" souboru vypise chybovou hlasku podle LastErroru. Prilepi libovolny "prefix" pred tuto hlasku.
+void Print_Last_Error(FDHandle out, std::string prefix);
+void Print_Last_Error(FDHandle out);
+
 /*********************************************************************************************************
 IO
 */
@@ -18,9 +25,9 @@ bool Duplicate_File(FDHandle old_handle, FDHandle * new_handle);
 //return true kdyz vse OK
 //do handle ulozi handle na soubor
 //pokud soubor existuje, nesmaze data
-bool Open_File(FDHandle * handle, const char * fname, int mode); //jeste chybi typ esi slozka nebo soubor
-//rewrite - prepsat data ci nikoliv
+//bool rewrite - prepsat data ci nikoliv
 bool Open_File(FDHandle * handle, const char * fname, int mode, bool rewrite);
+bool Open_File(FDHandle * handle, const char * fname, int mode);
 
 //vyrobi rouru
 //return true kdyz vse OK
@@ -31,7 +38,7 @@ bool Open_Pipe(FDHandle * writeHandle, FDHandle * readHandle);
 //vraci true, kdyz vse OK
 bool Close_File(FDHandle file_handle);
 
-//bool Peek_File(FDHandle handle, size_t *available);
+bool Peek_File(FDHandle handle, size_t *available);
 
 //cteni souboru
 //len je delka buferu, do ktereho bude zapsano
@@ -51,8 +58,13 @@ bool Change_Dir(char *path);
 
 /*smaze slozku se zaslanou relativni nebo absolutni cestou*/
 bool Remove_Dir(char *path);
+
 /*smaze file se zaslanou relativni nebo absolutni cestou*/
 bool Remove_File(char *path);
+
+//Vrati seznam nodu
+bool Get_Dir_Nodes(std::vector<node_info*> *all_info, char *path);
+
 
 
 /*********************************************************************************************************
@@ -65,12 +77,6 @@ bool Create_Process(command_params * par, int * pid);
 
 //pocka na dokonceni procesu a uklidi po nem
 bool Join_and_Delete_Process(int pid);
+
 //Vrati seznam procesu
 bool Get_Processes(std::vector<process_info*> *all_info);
-
-//Vrati seznam nodu
-bool Get_Dir_Nodes(std::vector<node_info*> *all_info, char *path);
-
-
-//helper
-HRESULT check_write(std::string name, FDHandle STDERR, bool success, size_t written, size_t size);

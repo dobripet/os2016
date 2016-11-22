@@ -8,29 +8,6 @@
 
 #pragma warning(disable: 4996)
 
-void Print_Last_Error(FDHandle out, std::string prefix) {
-	std::string err = prefix + " ";
-	switch (Get_Last_Error()) {
-	case ERR_IO_FILE_ISNOTFILE: {
-		err += "Specified file is a folder.\n";
-		break;
-	}
-	case ERR_IO_FILE_ISNOTFOLDER: {
-		err += "Specified file is NOT a folder.\n";
-		break;
-	}
-	case ERR_IO_PATH_NOEXIST: {
-		err += "Path was not found.\n";
-		break;
-	}
-	}
-	Write_File(out, (char*)err.c_str(), err.length());
-}
-
-void Print_Last_Error(FDHandle out) {
-	Print_Last_Error(out, "");
-}
-
 size_t __stdcall shell(const CONTEXT &regs) {
 
 
@@ -39,12 +16,12 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	FDHandle STDERR = (FDHandle)regs.R10;
 	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
 	std::string *path = (std::string *) regs.R13;
-	
+
 	Parser parser;
 	char * buf_command = new char[1001];
 	buf_command[1000] = '\0';
 	bool run = true;
-	
+
 	while (run) {
 
 		std::string shell_ = "\n\n" + *path + ">";
@@ -57,17 +34,27 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			break;
 		}
 		buf_command[filled] = '\0';
-		
+
 		std::vector<Parsed_command_params> commands_parsed;
 		if (!parser.parse_commands(std::string(buf_command), &commands_parsed)) {
 			std::cout << parser.get_error_message() << std::endl;;
 		}
 		else {
-			
+
 			if (commands_parsed.size() == 0) {
 				continue;
 			}
 			
+			int pos = 0;
+			for (auto &p : commands_parsed) { //pred rgen je treba vyrobit dalsi proces na detekci EOF, protoze winapi ReadFile je blokujici (coz si rgen nemuze dovolit)
+				if (p.com == "rgen") {
+					Parsed_command_params paramz = {"dummy", false, false, false, false, "", "", "" };
+					commands_parsed.insert(commands_parsed.begin() + pos, paramz);
+					break;
+				}
+				pos++;
+			}
+
 			std::vector<FDHandle> pipeWrite;
 			std::vector<FDHandle> pipeRead;
 
@@ -90,7 +77,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 						//na jiz spustene procesy se ceka na konci cyklu shellu
 						char * msg = "Waiting for processes to finish before exit.\n\0";
 						Write_File(STDOUT, msg, strlen(msg));
-					}		
+					}
 					//zavreme vsechny nasledujici roury (uz nebudou potreba, kdyz tedkonc exit)
 					for (size_t j = i; j <= lastCommand; j++) {
 						if (j != 0) {
@@ -114,14 +101,15 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					}
 					if (current_params.params.size() != 1) {
 						Write_File(STDOUT, (char*)(*path).c_str(), (*path).length());
-					} else {
+					}
+					else {
 						if (!Change_Dir((char*)current_params.params[0].c_str())) {
 							Print_Last_Error(STDERR);
 						}
 					}
 					continue;
 				}
-		
+
 				command_params par;
 				FDHandle std_in, std_out, std_err, curr_dir;
 				par.name = current_params.com.c_str();
@@ -130,17 +118,22 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				if (current_params.redirectstdin) {
 					//neni to prvni prikaz, tj. ma presmerovani ze souboru i z roury
 					if (i != 0) {
-						//proste zavreme jeho rouru pro cteni - a producent (predchozi
-						//proces) by mel poznat, ze roura je pro cteni zavrena a ukoncit se.
-						Close_File(pipeRead[i - 1]); //TODO test - bude to fungovat????
+						//Stdin ze souboru ma prednost pred rourou, takze to udelame tak,
+						//ze zavreme vstupni rouru pro cteni - a producent (predchozi
+						//proces) by mel poznat, ze roura je pro cteni zavrena.
+						Close_File(pipeRead[i - 1]);
 					}
 
 					bool fail = !Open_File(&std_in, current_params.stdinpath.c_str(), F_MODE_READ);
 					if (fail) {
-						Print_Last_Error(STDERR, "Redirecting STDIN failed for path: \"" + (current_params.stdinpath)+"\". ");
-						//std::cout << "DEBUG SHELL: redirecting stdin failed" << std::endl;
-						//TODO zavreni rour na obou stranach??
-						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
+						Print_Last_Error(STDERR, "Redirecting STDIN failed for path: \"" + (current_params.stdinpath) + "\". ");
+						//presmerovani se nepovedlo. Proces se nebude vubec spustet. Zavreme tedy roury na obou stranach.
+						if (i != 0) {
+							Close_File(pipeRead[i - 1]);
+						}
+						if (i != lastCommand) {
+							Close_File(pipeWrite[i]);
+						}
 						continue;
 					}
 				}
@@ -157,28 +150,22 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				if (current_params.redirectstdout) {
 					//neni to posledni prikaz, tj. ma presmerovani do souboru i do roury
 					if (i != lastCommand) {
-
-						//Presmerovani do souboru ma prednost, takze to udelame tak, 
-						//ze tento proces producenta stejne dostane rouru do seznamu souboru..
-						//a normalne ji uzavre jako kazdy jiny soubor, az se bude ukoncovat.
-						//if_pipe_and_stdout = pipeWrite[i]; //TODO test
-
-						//Asi taky muzu s klidem tu rouru zavrit. Kdyz tedka shell ceka na vsechny procesy, tak je jedno, kdo driv skonci.
-						Close_File(pipeWrite[i]); //TODO test
+						//Presmerovani do souboru ma prednost pred rourou, takze
+						//to udelame tak, ze zavreme vystupni rouru pro zapis.
+						//Konzument to pozna a ukonci se, protoze nebude mit co cist.
+						Close_File(pipeWrite[i]);
 					}
 
-					/*
-					TODO:
-					APPEND:	if(current_params.appendstdout) {}
 					bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE, !current_params.appendstdout);
-					*/
-					bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE, !current_params.appendstdout);
-					//bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
 					if (fail) {
 						Print_Last_Error(STDERR, "Redirecting STDOUT failed for path: \"" + (current_params.stdoutpath) + "\". ");
-						//std::cout << "DEBUG SHELL: redirecting stdout failed" << std::endl;
-						//TODO zavreni rour na obou stranach??
-						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
+						//presmerovani se nepovedlo. Proces se nebude vubec spustet. Zavreme tedy roury na obou stranach.
+						if (i != 0) {
+							Close_File(pipeRead[i - 1]);
+						}
+						if (i != lastCommand) {
+							Close_File(pipeWrite[i]);
+						}
 						continue;
 					}
 
@@ -222,6 +209,9 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 				int pid;
 				Create_Process(&par, &pid);
+				if (pid < 0) {
+					Print_Last_Error(STDERR);
+				}
 				process_handles.push_back(pid);
 			}
 
@@ -230,82 +220,5 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			}
 		}
 	}
-
-
-
-	/*
-	THandle stdin = Create_File("CONOUT$", FILE_SHARE_WRITE);	//nahradte systemovym resenim, zatim viz Console u CreateFile na MSDN
-	const char* hello = "Hello world!\n";
-	size_t written;
-	Write_File(stdin, hello, strlen(hello), written);
-	Close_File(stdin);
-	*/
-
-	/*
-	const char* hello = "Test zapisu: Hello world!\n";
-	size_t written;
-	Write_File(STDOUT, hello, strlen(hello), written);
-	*/
-	/*
-	char* t = "Test zapisu do souboru!\n";
-	Write_File(STDOUT, t, strlen(t));
-	FDHandle h;
-	Open_File(&h, "C://testik.txt", F_MODE_WRITE);
-	char* t2 = "Tohle do souboru!\n";
-	Write_File(h, t2, strlen(t2));
-	Close_File(h);
-	Open_File(&h, "C://testik.txt", F_MODE_READ);
-	char r[256];
-	size_t filled;
-	Read_File(h, 50, r, &filled);
-	Close_File(h);
-	Write_File(STDOUT, r, filled);
-	*/
-
-	/*
-	char *c[] = {"cesticka"};
-	command_params *para =  new command_params;
-	para->argc = 1;
-	para->argv = c;
-	para->name = "echo";
-	std::vector <FDHandle> handles;
-	FDHandle stdindup;
-	Open_File(STDIN, &stdindup);
-	FDHandle stdoutdup;
-	Open_File(STDOUT, &stdoutdup);
-	FDHandle stderrdup;
-	Open_File(STDERR, &stderrdup);
-	FDHandle cdir;
-	Open_File(CURRENT_DIR, &cdir);
-	handles.push_back(stdindup);
-	handles.push_back(stdoutdup);
-	handles.push_back(stderrdup);
-	handles.push_back(cdir);
-	para->handles = handles;
-	std::cout << "volame\n";
-	int pidi;
-	Create_Process(para, &pidi);
-	std::cout << "pidi " << pidi << "\n";
-	Join_and_Delete_Process(pidi);
-	std::cout << "konec\n";
-	delete para;*/
-	
-	/*
-	tady to nejak bude bezet ve while(true) dokud nebude ctrl+z nebo tak neco
-	*/
-	/*
-	//std::cout << std::endl << "Ukazka parsovani" << std::endl;
-	Parser p;
-	//std::string pes = "type \"file.txt|\" > \"jinejfile/o k.txt\" nikdy nechci | dir bla bla  \"c://ppxx\"c://pp < soubor.txt|  wc /lv/a\"aaa|todle\" > xoxo.txt < pesss.txt /x";
-	std::string pes = "wc parametr1 parametr2  | wc parametr3 | wc p1 p2 p3 /n | wc a b c d /jp";
-	//pes = "wc";
-	//std::cout << "Prikaz: " << pes << std::endl;
-	std::vector<Parsed_command_params> commands_parsed;
-	if (!p.parse_commands(pes, &commands_parsed)) {
-		std::cout << p.get_error_message() << std::endl << std::endl;;
-	}
-	*/
-	//else *to samy jako nahore*
-
-	return 0;
+	return(size_t)0;
 }

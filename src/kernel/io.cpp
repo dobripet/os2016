@@ -96,13 +96,13 @@ void HandleIO(CONTEXT &regs) {
 		break;
 	}
 
-					  /*case scPeekFile: {
-						  size_t available;
-						  regs.Rax = (decltype(regs.Rax))peek_file((FDHandle)regs.Rdx, &available);
-						  regs.Rbx = (decltype(regs.Rax))available;
-						  Set_Error(regs.Rax != 0, regs);
-						  break;
-					  }*/
+	case scPeekFile: {
+		size_t available;
+		regs.Rax = (decltype(regs.Rax))peek_file((FDHandle)regs.Rdx, &available);
+		regs.Rbx = (decltype(regs.Rax))available;
+		Set_Error(regs.Rax != 0, regs);
+		break;
+	}
 
 	case scReadFile: {
 		size_t read;
@@ -400,8 +400,8 @@ HRESULT close_file(FDHandle handle) {
 	return S_OK;
 }
 
-/*
-int peek_file(FDHandle handle, size_t *available) {
+
+HRESULT peek_file(FDHandle handle, size_t *available) {
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
 	opened_file *file = opened_files_table[file_inst->file];
@@ -409,9 +409,10 @@ int peek_file(FDHandle handle, size_t *available) {
 	switch (file->FILE_TYPE) {
 
 	case F_TYPE_STD: {
-		DWORD lpTotalBytesAvail = 0;
+		/*DWORD lpTotalBytesAvail = 0;
 		PeekNamedPipe(file->std, NULL, 0, NULL, &lpTotalBytesAvail, NULL);
-		*available = lpTotalBytesAvail;
+		*available = lpTotalBytesAvail;*/
+		*available = 0;
 		break;
 	}
 	case F_TYPE_PIPE: {
@@ -419,14 +420,15 @@ int peek_file(FDHandle handle, size_t *available) {
 		break;
 	}
 	case F_TYPE_FILE: {
-		*available = 1 + file->node->data.length() - file_inst->pos;
+		int a = (int)file->node->data.length() - (int)file_inst->pos;
+		*available = a < 0 ? 1 : a + 1;
 		//+1 for EOF
 		break;
 	}
 	}
-	return 0;
+	return S_OK;
 }
-*/
+
 
 //Pokud narazi na konec souboru (Ctrl+Z z konzole, roura zavrena pro zapis, konec dat v node),
 //tj. precte mene, nez bylo pozadovano (howMuch), bude EOF v buf[read].
