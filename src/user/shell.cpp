@@ -8,19 +8,27 @@
 
 #pragma warning(disable: 4996)
 
-void print_err(FDHandle out, std::string path) {
-	std::string err = "Redirecting was not possible: ";
+void Print_Last_Error(FDHandle out, std::string prefix) {
+	std::string err = prefix + " ";
 	switch (Get_Last_Error()) {
 	case ERR_IO_FILE_ISNOTFILE: {
-		err += "path \"" + path + "\" is a folder.\n";
+		err += "Specified file is a folder.\n";
+		break;
+	}
+	case ERR_IO_FILE_ISNOTFOLDER: {
+		err += "Specified file is NOT a folder.\n";
 		break;
 	}
 	case ERR_IO_PATH_NOEXIST: {
-		err += "path \"" + path + "\" was not found.\n";
+		err += "Path was not found.\n";
 		break;
 	}
 	}
 	Write_File(out, (char*)err.c_str(), err.length());
+}
+
+void Print_Last_Error(FDHandle out) {
+	Print_Last_Error(out, "");
 }
 
 size_t __stdcall shell(const CONTEXT &regs) {
@@ -76,6 +84,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			for (size_t i = 0, lastCommand = commands_parsed.size() - 1; i < commands_parsed.size(); i++) {
 				Parsed_command_params &current_params = commands_parsed[i];
 
+				/* EXIT built-in command */
 				if (current_params.com == "exit") {
 					if (i != 0) {
 						//na jiz spustene procesy se ceka na konci cyklu shellu
@@ -94,6 +103,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					run = false;
 					break;
 				}
+
+				/* CD built-in command */
 				if (current_params.com == "cd") {
 					if (i != 0) {
 						Close_File(pipeRead[i - 1]);
@@ -105,35 +116,18 @@ size_t __stdcall shell(const CONTEXT &regs) {
 						Write_File(STDOUT, (char*)(*path).c_str(), (*path).length());
 					} else {
 						if (!Change_Dir((char*)current_params.params[0].c_str())) {
-							switch (Get_Last_Error())
-							{
-							case ERR_IO_PATH_NOEXIST: {
-								char * err = "This path does not exist.\n\0";
-								Write_File(STDOUT, err, strlen(err));
-								break;
-							}
-							case ERR_IO_FILE_ISNOTFOLDER: {
-								char * err = "Target is not a directory.\n\0";
-								Write_File(STDOUT, err, strlen(err));
-								break;
-							}
-							default: {
-								char * err = "Unspecified error occured.\n\0";
-								Write_File(STDOUT, err, strlen(err));
-								break;
-							}
-							}//end switch
+							Print_Last_Error(STDERR);
 						}
 					}
 					continue;
 				}
 		
 				command_params par;
-				FDHandle std_in, std_out, std_err;
+				FDHandle std_in, std_out, std_err, curr_dir;
 				par.name = current_params.com.c_str();
 
+				/* STDIN */
 				if (current_params.redirectstdin) {
-
 					//neni to prvni prikaz, tj. ma presmerovani ze souboru i z roury
 					if (i != 0) {
 						//proste zavreme jeho rouru pro cteni - a producent (predchozi
@@ -143,7 +137,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 					bool fail = !Open_File(&std_in, current_params.stdinpath.c_str(), F_MODE_READ);
 					if (fail) {
-						print_err(STDOUT, current_params.stdinpath.c_str());
+						Print_Last_Error(STDERR, "Redirecting STDIN failed for path: \"" + (current_params.stdinpath)+"\". ");
 						//std::cout << "DEBUG SHELL: redirecting stdin failed" << std::endl;
 						//TODO zavreni rour na obou stranach??
 						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
@@ -159,8 +153,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					std_in = pipeRead[i - 1];
 				}
 
+				/* STDOUT */
 				if (current_params.redirectstdout) {
-
 					//neni to posledni prikaz, tj. ma presmerovani do souboru i do roury
 					if (i != lastCommand) {
 
@@ -181,7 +175,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE, !current_params.appendstdout);
 					//bool fail = !Open_File(&std_out, current_params.stdoutpath.c_str(), F_MODE_WRITE);
 					if (fail) {
-						print_err(STDOUT, current_params.stdoutpath.c_str());
+						Print_Last_Error(STDERR, "Redirecting STDOUT failed for path: \"" + (current_params.stdoutpath) + "\". ");
 						//std::cout << "DEBUG SHELL: redirecting stdout failed" << std::endl;
 						//TODO zavreni rour na obou stranach??
 						//nutno resit, protoze se lehko muze stat, ze soubor nepujde otevrit (napr. blb uzivatel presmeruje ze slozky)
@@ -223,9 +217,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				par.handles.push_back(std_err);
 
 				//duplicate current dir for new process
-				FDHandle h;
-				/*bool ok = */Duplicate_File(CURRENT_DIR, &h); //navratova hodnota muze bejt fail
-				par.handles.push_back(h);
+				/*bool ok = */Duplicate_File(CURRENT_DIR, &curr_dir); //navratova hodnota muze bejt fail
+				par.handles.push_back(curr_dir);
 
 				int pid;
 				Create_Process(&par, &pid);
@@ -313,19 +306,6 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	}
 	*/
 	//else *to samy jako nahore*
-
-	/*
-	Shell pobezi ve while(true) {..}.
-	Ukoncen bude asi kdyz dostane EOF? (Ctrl+Z)
-	Musime nejak resit, aby kontroloval, jestli se nema ukoncit,
-	ale zaroven se nesmi tim ctenim zablokovat (coz se normalne pri cteni deje) - nejakej peek? timeout? nebo co?
-	plati i pro dalsi procesy jako je rgen
-	*/
-
-	/*
-	cd "path"
-	Asi bude nutny nejak posilat PID shellu, protoze v tabulce otevrenych souboru se musi zmenit pro shell. 
-	*/
 
 	return 0;
 }

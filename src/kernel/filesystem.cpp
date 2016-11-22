@@ -330,7 +330,7 @@ HRESULT deleteNode(struct node *toDelete) {
 
 std::vector<std::string> split_string(std::string s) {
 	std::vector<std::string> path;
-	std::string rgx_str = "/+";
+	std::string rgx_str = "[\\\\/]+";
 	std::regex rgx(rgx_str);
 	std::sregex_token_iterator iter(s.begin(), s.end(), rgx, -1);
 	std::sregex_token_iterator end;
