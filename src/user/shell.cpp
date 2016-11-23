@@ -8,12 +8,12 @@
 
 #pragma warning(disable: 4996) //std::string::copy
 
-void close_pipes(FDHandle in, FDHandle out, size_t i, size_t last) {
+void close_pipes(std::vector<FDHandle> in, std::vector<FDHandle> out, size_t i, size_t last) {
 	if (i != 0) {
-		Close_File(in);
+		Close_File(in[i - 1]);
 	}
 	if (i != last) {
-		Close_File(out);
+		Close_File(out[ i ]);
 	}
 }
 
@@ -86,7 +86,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					}
 					//zavreme vsechny nasledujici roury (uz nebudou potreba, kdyz tedkonc exit)
 					for (size_t j = i; j <= lastCommand; j++) {
-						close_pipes(pipeRead[j - 1], pipeWrite[j], j, lastCommand);
+						close_pipes(pipeRead, pipeWrite, j, lastCommand);
 					}
 					run = false;
 					break;
@@ -94,7 +94,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 				/* CD built-in command */
 				if (current_params.com == "cd") {
-					close_pipes(pipeRead[i - 1], pipeWrite[i], i, lastCommand);
+					close_pipes(pipeRead, pipeWrite, i, lastCommand);
 				
 					if (current_params.params.size() != 1) {
 						Write_File(STDOUT, (char*)(*path).c_str(), (*path).length());
@@ -125,7 +125,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					if (fail) {
 						Print_Last_Error(STDERR, "Redirecting STDIN failed for path: \"" + (current_params.stdinpath) + "\". ");
 						//presmerovani se nepovedlo. Proces se nebude vubec spustet. Zavreme tedy roury na obou stranach.
-						close_pipes(pipeRead[i - 1], pipeWrite[i], i, lastCommand);
+						close_pipes(pipeRead, pipeWrite, i, lastCommand);
 						continue;
 					}
 				}
@@ -152,7 +152,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					if (fail) {
 						Print_Last_Error(STDERR, "Redirecting STDOUT failed for path: \"" + (current_params.stdoutpath) + "\". ");
 						//presmerovani se nepovedlo. Proces se nebude vubec spustet. Zavreme tedy roury na obou stranach.
-						close_pipes(pipeRead[i - 1], pipeWrite[i], i, lastCommand);
+						close_pipes(pipeRead, pipeWrite, i, lastCommand);
 						continue;
 					}
 
