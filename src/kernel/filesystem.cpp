@@ -168,7 +168,7 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 	if (parent != nullptr) {
 		std::string pathString(path);
 		std::vector<std::string> absolutePath = split_string(pathString);
-		if (absolutePath[absolutePath.size() - 1] == "..") { //poslední kus cesty k souboru nemùže být skok o úroveò výš
+		if (absolutePath[absolutePath.size() - 1] == ".." || absolutePath[absolutePath.size() - 1] == ".") { //poslední kus cesty k souboru nemùže být skok o úroveò výš
 			SetLastError(ERR_IO_FILE_ISNOTFILE);
 			return S_FALSE;
 		}
