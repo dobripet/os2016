@@ -8,12 +8,14 @@
 
 #pragma warning(disable: 4996) //std::string::copy
 
+
+/* zavre roury procesy na obou stranach*/
 void close_pipes(std::vector<FDHandle> in, std::vector<FDHandle> out, size_t i, size_t last) {
 	if (i != 0) {
 		Close_File(in[i - 1]);
 	}
 	if (i != last) {
-		Close_File(out[ i ]);
+		Close_File(out[i]);
 	}
 }
 
@@ -31,6 +33,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 	buf_command[1000] = '\0';
 	bool run = true;
 
+	//cyklus shellu
 	while (run) {
 
 		std::string shell_ = "\n\n" + *path + ">";
@@ -74,6 +77,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 			std::vector<int> process_handles;
 
+			//spustime vsechny prikazy
 			for (size_t i = 0, lastCommand = commands_parsed.size() - 1; i < commands_parsed.size(); i++) {
 				Parsed_command_params &current_params = commands_parsed[i];
 
@@ -200,14 +204,16 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					Print_Last_Error(STDERR);
 				}
 				process_handles.push_back(pid);
-			}
+
+			}//konec cyklu spusteni prikazu
 
 			//pockame na vsechny spustene procesy, nez se kontrola vrati shellu
 			for (auto &pid : process_handles) {
 				Join_and_Delete_Process(pid);
 			}
 		}
-	}
+	} //konec cyklu shellu
+
 	delete[] buf_command;
 	return(size_t)0;
 }
