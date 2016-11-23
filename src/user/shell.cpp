@@ -46,8 +46,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			}
 			
 			int pos = 0;
-			for (auto &p : commands_parsed) { //pred rgen je treba vyrobit dalsi proces na detekci EOF, protoze winapi ReadFile je blokujici (coz si rgen nemuze dovolit)
-				if (p.com == "rgen") {
+			for (auto &p : commands_parsed) { //pred rgen je treba vyrobit dalsi proces na detekci EOF, protoze winapi ReadFile je blokujici (coz v rgenu nechceme)
+				if (p.com == "rgen" && !p.redirectstdin && pos == 0) { //ale vyrobime ho jen kdyz nema jiny vstup (roura nebo soubor)
 					Parsed_command_params paramz = {"dummy", false, false, false, false, "", "", "" };
 					commands_parsed.insert(commands_parsed.begin() + pos, paramz);
 					break;
@@ -220,5 +220,6 @@ size_t __stdcall shell(const CONTEXT &regs) {
 			}
 		}
 	}
+	delete[] buf_command;
 	return(size_t)0;
 }

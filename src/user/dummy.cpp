@@ -13,7 +13,10 @@ size_t __stdcall dummy(const CONTEXT &regs) {
 
 	while (true) {
 		//porad dokola cteme a kdyz narazime na EOF, tak ho preposleme dale..  a konec.
-		Read_File(STDIN, 1000, buf, &filled);
+		bool ok = Read_File(STDIN, 1000, buf, &filled);
+		if (!ok && Get_Last_Error() == ERR_IO_PIPE_READCLOSED) {
+			break;
+		}
 		if (buf[filled] == EOF) {
 			buf[0] = EOF;
 			Write_File(STDOUT, buf, 1);

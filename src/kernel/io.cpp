@@ -504,7 +504,7 @@ HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written)
 
 	case F_TYPE_PIPE: {
 		if (!((file->pipe)->write(buf, howMuch, written))) {
-			//return S_FALSE;
+			return S_FALSE;
 		}
 		break;
 	}
