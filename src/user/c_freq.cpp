@@ -18,7 +18,7 @@ size_t __stdcall freq(const CONTEXT &regs) {
 	bool success;
 	/*Flag handling*/
 	if (!strcmp((char *)regs.R12, "h\0")) {
-		char * msg = "*Count frequency of input bytes and print it.\n\n  FREQ\n\0";
+		char * msg = "*Counts and prints frequency table of all input bytes.\n\n  FREQ\n";
 		size = strlen(msg);
 		success = Write_File(STDOUT, msg, size, &written);
 	}
@@ -59,9 +59,10 @@ size_t __stdcall freq(const CONTEXT &regs) {
 	}
 	/*Handle not all has been written*/
 	if (!success || written != size) {
-		char * msg = "FREQ: error - not all data written(possibly closed file handle)\0";
-		Write_File(STDERR, msg, strlen(msg));
-		return (size_t)1;
+		if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+			Print_Last_Error(STDERR, "Rgen: writing to stdout failed.");
+			return (size_t)1;
+		}
 	}
 	return (size_t)0;
 }

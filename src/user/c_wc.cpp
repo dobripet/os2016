@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <mutex>
 #include "rtl.h"
@@ -7,98 +6,10 @@
 #include <sstream>
 #include <atomic>
 
-/*
-size_t __stdcall wc(const CONTEXT &regs) {
-	FDHandle STDIN = (FDHandle)regs.R8;
-	FDHandle STDOUT = (FDHandle)regs.R9;
-	FDHandle STDERR = (FDHandle)regs.R10;
-	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
-	char *switches = (char *)regs.R12;
-	char * myName = (char *)regs.Rax;
-	//int myPid = (int)regs.Rbx;
-	std::thread::id myPid = std::this_thread::get_id();
-	int argc = (int)regs.Rcx;
-	char ** argv = (char**)regs.Rdx;
-
-
-	//for each (open_file(cesta z parametru))
-
-	int charCnt = 0, wordCnt = 0, lineCnt = 1;
-
-
-	boolean hasEOF = false;
-	while (!hasEOF) {
-
-		char * buf = (char*)malloc(101 * sizeof(char));
-		size_t filled;
-		Read_File(STDIN, 100, buf, &filled); //TODO ze souboru podle parametru
-
-		charCnt += filled;
-
-		for (int i = 0; i < filled; i++) {
-			switch (buf[i]) {
-			case EOF: {
-				charCnt--;
-				hasEOF = !hasEOF;
-				break;
-			}
-			case '\n': {
-				lineCnt++;
-				break;
-			}
-
-			//TODO
-			}
-		}
-	}
-
-
-	//TODO pocty na stdout
-}
-*/
-
-
-std::mutex aaa;
-
-
 const int BUFFER_SIZE = 1024;
+
 size_t __stdcall wc(const CONTEXT &regs) {
-/*
-	FDHandle STDIN = (FDHandle)regs.R8;
-	FDHandle STDOUT = (FDHandle)regs.R9;
-	FDHandle STDERR = (FDHandle)regs.R10;
-	FDHandle CURRENT_DIR = (FDHandle)regs.R11;
-	char *switches = (char *)regs.R12;
-	char * myName = (char *)regs.Rax;
-	//int myPid = (int)regs.Rbx;
-	std::thread::id myPid = std::this_thread::get_id();
-	int argc = (int)regs.Rcx;
-	char ** argv = (char**)regs.Rdx;
 
-	while (true) {	
-
-		char * buf = (char*)malloc(21 * sizeof(char));
-		size_t filled;
-		Read_File(STDIN, 20, buf, &filled);	
-		if (buf[filled - 1] == EOF || buf[filled] == EOF) {
-			buf[filled] = '\0';
-			aaa.lock();
-			std::cout << "pid=" << myPid << ", read=" << filled << ", text=" << buf << ", EOF" << std::endl;
-			aaa.unlock();
-			Write_File(STDOUT, buf, filled);
-			break;
-		}
-		else {
-			buf[filled] = '\0';
-			aaa.lock();
-			std::cout << "pid=" << myPid << ", read=" << filled << ", text=" << buf << std::endl;
-			aaa.unlock();
-			Write_File(STDOUT, buf, filled);
-		}
-	}
-	
-	return (size_t)0;
-}*/
 	FDHandle STDIN = (FDHandle)regs.R8;
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
@@ -107,12 +18,16 @@ size_t __stdcall wc(const CONTEXT &regs) {
 	bool success;
 	/*Flag handling*/
 	if (!strcmp((char *)regs.R12, "h\0")) {
-		char * msg = "Count lines, words and bytes of an input.\n\n  WC[[drive:][path]]filename\n\0";
+		char * msg = "Count lines, words and bytes of an input.\n\n  WC[[drive:][path]]filename\n";
 		size = strlen(msg);
 		success = Write_File(STDOUT, msg, size, &written);
 		/*Handle not all has been written*/
-		if (check_write("WC", STDERR, success, written, size) != S_OK) {
-			return (size_t)1;
+		if (!success || written != size) {
+			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+				Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");
+				return (size_t)1;
+			}
+			return (size_t)0;
 		}
 	}
 	/*No params*/
@@ -212,8 +127,12 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		size = text.length();
 		success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
 		/*Handle not all has been written*/
-		if (check_write("WC", STDERR, success, written, size) != S_OK) {
-			return (size_t)1;
+		if (!success || written != size) {
+			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+				Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");
+				return (size_t)1;
+			}
+			return (size_t)0;
 		}
 		size_t sum_words = 0;
 		size_t sum_lines = 0;
@@ -223,15 +142,16 @@ size_t __stdcall wc(const CONTEXT &regs) {
 			char * path = ((char**)regs.Rdx)[i];
 			FDHandle file;
 			if (!Open_File(&file, path, F_MODE_READ)) {
+				Print_Last_Error(STDERR, "WC: An error occurred while reading from: " + std::string(path));
 				//	std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
 				//	Write_File(STDERR, (char *)msg.c_str(), msg.length());
-				switch (Get_Last_Error()) {
+				/*switch (Get_Last_Error()) {
 				case ERR_IO_PATH_NOEXIST: {
 					std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
 					Write_File(STDERR, (char *)msg.c_str(), msg.length());
 					break;
 				}
-				}
+				}*/
 				continue;//continue to next file
 			}
 			char buffer[BUFFER_SIZE];
@@ -244,14 +164,14 @@ size_t __stdcall wc(const CONTEXT &regs) {
 			/*read whole file*/
 			do {
 				if (!Read_File(file, BUFFER_SIZE, buffer, &filled)) {
-					/*TODO nejakej error, mozna zavrnej handle*/
-					switch (Get_Last_Error()) {
+					Print_Last_Error(STDERR, "WC: An error occurred while reading from: " + std::string(path));
+					/*switch (Get_Last_Error()) {
 					case ERR_IO_PATH_NOEXIST: {
 						std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
 						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;
 					}
-					}
+					}*/
 					break;
 				}
 				for (size_t i = 0; i < filled; i++) {
@@ -303,9 +223,16 @@ size_t __stdcall wc(const CONTEXT &regs) {
 			size = text.length();
 			success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
 			/*Handle not all has been written*/
-			if (check_write("WC", STDERR, success, written, size) != S_OK) {
-				return (size_t)1;
+			if (!success || written != size) {
+				if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+					Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");
+					return (size_t)1;
+				}
+				return (size_t)0;
 			}
+			/*if (check_write("WC", STDERR, success, written, size) != S_OK) {
+				return (size_t)1;
+			}*/
 		}
 		text = "";
 		ss.width(10);
@@ -327,10 +254,16 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		size = text.length();
 		success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
 		/*Handle not all has been written*/
-		if (check_write("WC", STDERR, success, written, size) != S_OK) {
+		/*if (check_write("WC", STDERR, success, written, size) != S_OK) {
 			return (size_t)1;
+		}*/
+		if (!success || written != size) {
+			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+				Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");
+				return (size_t)1;
+			}
+			return (size_t)0;
 		}
-
 	}
 	return (size_t)0;
 }

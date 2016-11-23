@@ -7,12 +7,12 @@ size_t __stdcall rd(const CONTEXT &regs) {
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
 
+	/*
 	std::cout << "DEBUG:rd volano s poctem parametru: " << regs.Rcx << "\n";
-
 
 	for (int i = 0; i < (int)regs.Rcx; i++) {
 		std::cout << "DEBUG:rd param " << i << ": " << ((char**)regs.Rdx)[i] << "\n";
-	}
+	}*/
 	/*Flag handling*/
 	if (!strcmp((char *)regs.R12, "h\0")) {
 		char * msg = "Removes (deletes) a directory.\n\n  RD [drive:]path\n\0";
@@ -27,7 +27,7 @@ size_t __stdcall rd(const CONTEXT &regs) {
 	}
 	/*Calling with zero params*/
 	else if ((int)regs.Rcx == 0) {
-		char * msg = "The syntax of the command is incorrect.\n\0";
+		char * msg = "The syntax of the RD command is incorrect.\n\0";
 		Write_File(STDERR, msg, strlen(msg));
 		return (size_t)1;
 	}
@@ -37,7 +37,8 @@ size_t __stdcall rd(const CONTEXT &regs) {
 			bool rmdir = Remove_Dir(path);
 			/*handle error*/
 			if (rmdir == false) {
-				switch (Get_Last_Error()) {
+				Print_Last_Error(STDERR, "An error occured while deleting folder: " + std::string(path) + ".\n");
+				/*switch (Get_Last_Error()) {
 					case (size_t)ERR_IO_FILE_NOTEMPTY: {
 						std::string msg = "The directory is not empty.\nError occurred while processing: " + (std::string)path + "\n";
 						Write_File(STDERR, (char *)msg.c_str(), msg.length());
@@ -59,7 +60,7 @@ size_t __stdcall rd(const CONTEXT &regs) {
 						break;
 					}
 
-				}
+				}*/
 			}
 		}
 	}

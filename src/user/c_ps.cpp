@@ -72,9 +72,10 @@ size_t __stdcall ps(const CONTEXT &regs) {
 	}
 	/*Handle not all has been written*/
 	if (!success || written != size) {
-		char * msg = "PS: error - not all data written(possibly closed file handle)\0";
-		Write_File(STDERR, msg, strlen(msg));
-		return (size_t)1;
+		if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+			Print_Last_Error(STDERR, "PS: writing to stdout failed.");
+			return (size_t)1;
+		}
 	}
 	return (size_t)0;
 }

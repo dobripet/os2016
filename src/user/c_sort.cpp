@@ -46,13 +46,14 @@ size_t __stdcall sort(const CONTEXT &regs) {
 		if (!Open_File(&file, path, F_MODE_READ)) {
 		//	std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
 		//	Write_File(STDERR, (char *)msg.c_str(), msg.length());
-			switch (Get_Last_Error()) {
+			Print_Last_Error(STDERR, "An error occurred while opening: " + std::string(path));
+			/*switch (Get_Last_Error()) {
 			case ERR_IO_PATH_NOEXIST: {
 				std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
 				Write_File(STDERR, (char *)msg.c_str(), msg.length());
 				break;
 			}
-			}
+			}*/
 			return (size_t)1;
 		}
 		char buffer[1024];
@@ -62,14 +63,14 @@ size_t __stdcall sort(const CONTEXT &regs) {
 		/*read whole file*/
 		do {
 			if (!Read_File(file, bsize, buffer, &filled)) {
-				/*TODO nejakej error, mozna zavrnej handle*/
-				switch (Get_Last_Error()) {
+				Print_Last_Error(STDERR, "An error occurred while reading from: " + std::string(path));
+				/*switch (Get_Last_Error()) {
 				case ERR_IO_PATH_NOEXIST: {
 					std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
 					Write_File(STDERR, (char *)msg.c_str(), msg.length());
 					break;
 				}
-				}
+				}*/
 				continue;
 			}
 			text += ((std::string)buffer).substr(0, filled);
@@ -86,9 +87,10 @@ size_t __stdcall sort(const CONTEXT &regs) {
 	}
 	/*Handle not all has been written*/
 	if (!success || written != size) {
-		char * msg = "SORT: error - not all data written(possibly closed file handle)\0";
-		Write_File(STDERR, msg, strlen(msg));
-		return (size_t)1;
+		if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+			Print_Last_Error(STDERR, "Rgen: writing to stdout failed.");
+			return (size_t)1;
+		}
 	}
 	return (size_t)0;
 }

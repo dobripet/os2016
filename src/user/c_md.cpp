@@ -5,13 +5,13 @@
 size_t __stdcall md(const CONTEXT &regs) {
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
-
+	/*
 	std::cout << "DEBUG:md volano s poctem parametru: " << regs.Rcx << "\n";
 	
 	
 	for (int i = 0; i < (int)regs.Rcx; i++) {
 		std::cout << "DEBUG:md param " << i << ": "<< ((char**)regs.Rdx)[i] << "\n";
-	}
+	}*/
 	/*Flag handling*/
 	if (!strcmp((char *)regs.R12, "h\0")) {
 		char * msg = "Creates a directory.\n\n  MD[drive:]path\n\0";
@@ -46,8 +46,9 @@ size_t __stdcall md(const CONTEXT &regs) {
 			bool mkdir = Make_Dir(path);
 			/*handle error*/
 			if (mkdir == false) {
-				std::string msg = "A subdirectory or file already exists.\nError occurred while processing: " + (std::string)path + "\n";
-				Write_File(STDERR, (char *)msg.c_str(), msg.length());
+				Print_Last_Error(STDERR, "An error occured while creating directory: " + std::string(path) + ".\n");
+				/*std::string msg = "A subdirectory or file already exists.\nError occurred while processing: " + (std::string)path + "\n";
+				Write_File(STDERR, (char *)msg.c_str(), msg.length());*/
 			}
 		}
 	}		

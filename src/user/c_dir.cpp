@@ -134,8 +134,11 @@ HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR) {
 	size = text.str().length();
 	success = Write_File(STDOUT, (char *)text.str().c_str(), size, &written);
 	/*Handle not all has been written*/
-	if (check_write("DIR", STDERR, success, written, size) != S_OK) {
-		return S_FALSE;
+	if (!success || written != size) {
+		if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+			Print_Last_Error(STDERR, "DIR: writing to stdout failed.\n");
+			return (size_t)1;
+		}
 	}
-	return S_OK;
+	return (size_t)0;
 }
