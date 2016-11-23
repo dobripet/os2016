@@ -7,16 +7,7 @@
 std::mutex files_table_mtx;
 opened_file * opened_files_table[OPEN_FILES_TABLE_SIZE] = { nullptr };
 opened_file_instance * opened_files_table_instances[OPEN_INSTANCES_TABLE_SIZE] = { nullptr };
-/*
-Ta druha tabulka by mozna mohla/mela byt nekde u procesu v PCB.
-Ale vznika tam trochu problem - takhle od procesu pro otevreni souburu potrebuju
-jenom cestu (a jestli chce slozku/soubor a pro cteni/zapis/oboje).
-Kdyby mìla obsluha otevirani souboru pridavat otevrenej soubor do PCB, bude se muset 
-do syscallu otevirani souboru poslat i PID a to nevim jestli neni lepsi bez toho.
 
-Dale je dobry, ze proces potrebuje znat (aby mohl zachazet s otevrenym souborem) jenom
-FDHandle (index to tabulky otevrenych instanci) a nic vic.
-*/
 
 void initSystemIO() {
 
@@ -72,82 +63,61 @@ void initSystemIO() {
 void HandleIO(CONTEXT &regs) {
 
 	switch (Get_AL((__int16)regs.Rax)) {
-
 	case scCreatePipe: {
 		FDHandle w, r;
 		regs.Rax = (decltype(regs.Rax))open_pipe(&w, &r);
 		regs.Rbx = (decltype(regs.Rbx))w;
 		regs.Rcx = (decltype(regs.Rcx))r;
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
-
 	case scOpenFile: {
 		FDHandle ho;
 		regs.Rax = (decltype(regs.Rax))open_file((char *)regs.Rdx, (int)regs.Rcx, *((bool*)(regs.Rbx)), &ho);
 		regs.Rbx = (decltype(regs.Rbx))ho;
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
-
 	case scCloseFile: {
 		regs.Rax = (decltype(regs.Rax))close_file((FDHandle)regs.Rdx);
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
-
 	case scPeekFile: {
 		size_t available;
 		regs.Rax = (decltype(regs.Rax))peek_file((FDHandle)regs.Rdx, &available);
 		regs.Rbx = (decltype(regs.Rax))available;
-		Set_Error(regs.Rax != 0, regs);
 		break;
 	}
-
 	case scReadFile: {
 		size_t read;
 		regs.Rax = (decltype(regs.Rax))read_file((FDHandle)regs.Rdx, (int)regs.Rcx, (char*)regs.Rbx, &read);
 		regs.Rbx = (decltype(regs.Rbx))read;
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
-
 	case scDuplicateHandle: {
 		FDHandle hd;
 		regs.Rax = (decltype(regs.Rax))duplicate_handle((FDHandle)regs.Rcx, &hd);
 		regs.Rbx = (decltype(regs.Rbx))hd;
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
-
 	case scWriteFile: {
 		size_t written = 0;
 		regs.Rax = (decltype(regs.Rax))write_file((FDHandle)regs.Rbx, (int)regs.Rdx, (char*)regs.Rcx, &written);
 		regs.Rbx = (decltype(regs.Rbx))written;
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
-
 	case scMakeDir: {
 		regs.Rax = (decltype(regs.Rax))mkdir((char*)regs.Rbx);
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
-
 	case scChangeDir: {
 		regs.Rax = (decltype(regs.Rax))change_dir((char*)regs.Rbx);
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
-
 	case scRemoveDir: {
 		regs.Rax = (decltype(regs.Rax))remove_dir((char*)regs.Rbx);
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 	case scRemoveFile: {
 		regs.Rax = (decltype(regs.Rax))remove_file((char*)regs.Rbx);
-		//Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 	case scGetDirNodes: {
@@ -430,7 +400,6 @@ HRESULT peek_file(FDHandle handle, size_t *available) {
 	return S_OK;
 }
 
-
 //Pokud narazi na konec souboru (Ctrl+Z z konzole, roura zavrena pro zapis, konec dat v node),
 //tj. precte mene, nez bylo pozadovano (howMuch), bude EOF v buf[read].
 //Nedava na konec \0, to si musi uzivatelsky program pohlidat sam.
@@ -443,9 +412,7 @@ HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read) {
 		//TODO set error ze neni pro cteni
 		return 0;
 	}
-
 	switch (file->FILE_TYPE) {
-
 	case F_TYPE_STD: {
 		unsigned long r;
 		bool success = (ReadFile(file->std, buf, (DWORD)howMuch, &r, nullptr) != FALSE);
@@ -459,11 +426,8 @@ HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read) {
 		*read = (size_t)r;
 		break;
 	}
-
 	case F_TYPE_PIPE: {
-		if (!(file->pipe->read(howMuch, buf, read))) {
-			//return S_FALSE;
-		}
+		file->pipe->read(howMuch, buf, read);
 		break;
 	}
 	case F_TYPE_FILE: {
@@ -471,13 +435,7 @@ HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read) {
 		file_inst->pos += *read;
 		break;
 	}
-
 	}//end switch
-
-	 /*
-	 TODO: Sjednotit. Roura vraci FALSE kdyz je EOF, ale soubor TRUE.
-	 */
-
 	return S_OK;
 }
 
@@ -490,11 +448,8 @@ HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written)
 		//TODO set error ze neni pro zapis
 		return S_FALSE;
 	}
-
 	switch (file->FILE_TYPE) {
-
 	case F_TYPE_STD: {
-		//success = (WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD)written, nullptr) != FALSE);
 		if (WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD)written, nullptr) == FALSE) {
 			*written = 0;
 			SetLastError(ERR_IO_WRITE_STD);
@@ -502,14 +457,12 @@ HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written)
 		}
 		break;
 	}
-
 	case F_TYPE_PIPE: {
 		if (!((file->pipe)->write(buf, howMuch, written))) {
 			return S_FALSE;
 		}
 		break;
 	}
-
 	case F_TYPE_FILE: {
 		if (setData(&(file->node), buf) == S_OK) {
 			*written = howMuch;
@@ -519,13 +472,7 @@ HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written)
 		}
 		break;
 	}
-
 	} //end switch
-
-	/*
-	TODO: Sjednotit. Roura vraci FALSE kdyz je EOF, ale soubor TRUE.
-	*/
-
 	return S_OK;
 }
 
@@ -534,7 +481,7 @@ HRESULT mkdir(char * path) {
 	const FDHandle inst_h = process_table[pid]->IO_descriptors[3];
 	const FDHandle file_h = opened_files_table_instances[inst_h]->file;
 	node * current = opened_files_table[file_h]->node;
-	node *dir; //zde uložena vytvoøená složka, pokud již existuje, uloží nullptr a vrátí false
+	node *dir; //zde uložena vytvoøená složka, pokud již existuje, FS uloží nullptr a vrátí false
 	return mkdir(&dir, path, current);
 }
 
@@ -546,8 +493,7 @@ HRESULT remove_dir(char * path) {
 	node *n;
 	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
-		/*not found*/
-		//SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspis
+		/*not found, chybu nastavuje FS*/
 		return S_FALSE;
 	}
 	if (n->type != TYPE_DIRECTORY) {
@@ -558,17 +504,10 @@ HRESULT remove_dir(char * path) {
 	FDHandle openedHandle;
 	bool exists = findIfOpenedFileExists(n, &openedHandle);
 	if (exists) {
-		/*dir in use*/
+		/*dir is being used by another process*/
 		SetLastError(ERR_IO_FILE_ISOPENED);
 		return S_FALSE;
 	}
-	/*
-	if (deleteNode(n) != S_OK) {
-		//has children
-		//SetLastError(ERR_IO_FILE_NOTEMPTY); //tuhle chybu bude nastavovat FS nejspis
-		return S_FALSE;
-	}
-	return S_OK;*/
 	return deleteNode(n);
 }
 HRESULT remove_file(char * path) {
@@ -579,8 +518,7 @@ HRESULT remove_file(char * path) {
 	node *n;
 	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
-		/*not found*/
-		//SetLastError(ERR_IO_PATH_NOEXIST); //tuhle chybu bude nastavovat FS nejspi
+		/*not found, chybu nastavuj FS*/
 		return S_FALSE;
 	}
 	if (n->type != TYPE_FILE) {
@@ -591,18 +529,10 @@ HRESULT remove_file(char * path) {
 	FDHandle openedHandle;
 	bool exists = findIfOpenedFileExists(n, &openedHandle);
 	if (exists) {
-		/*file in use*/
+		/*file is being used by another process*/
 		SetLastError(ERR_IO_FILE_ISOPENED);
 		return S_FALSE;
 	}
-
-	/*
-	if (deleteNode(n) != S_OK) {
-		//unexpected error //muze se stat snad jedine kdyby jinej proces mu ho smazal pred nosem.
-		return S_FALSE;
-	}
-	return S_OK;*/
-
 	return deleteNode(n);
 }
 /*On zero position is always current dir*/
@@ -615,7 +545,7 @@ HRESULT getDirNodes(std::vector<node_info*> *all_info, char *path) {
 	}
 	else {
 		if (getNodeFromPath(path, true, currentNode, &n) != S_OK) {
-			/*not found*/
+			/*not found, erro nastavuje FS*/
 			return S_FALSE;
 		} ;
 	}
