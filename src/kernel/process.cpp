@@ -95,7 +95,7 @@ HRESULT createProcess(command_params * par, int *proc_pid)
 		//Kernel neni samostatny proces (nema zaznam v PCB), takze kdyz je vytvaren prvni proces shellu,
 		//je velikost process_table (a TIDtoPID) 0, a lze tam tezko nejaky PCB najit, abychom odtud odstranily handly.
 		if (TIDtoPID.size() > 0) {
-			//odstranime predane handly z PCB procesu, ktery pro nove vytvareny proces vyrabel soubory
+			//odstranime predane handly z PCB procesu (shell), ktery pro nove vytvareny proces vyrabel soubory.
 			std::vector<FDHandle> &handles = process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors;
 			for (auto &handle : par->handles) {
 				handles.erase(std::remove(handles.begin(), handles.end(), handle), handles.end());
@@ -109,7 +109,7 @@ HRESULT createProcess(command_params * par, int *proc_pid)
 	//hledame v uzivatelskych programech vstupni bod
 	TEntryPoint func = (TEntryPoint)GetProcAddress(User_Programs, par->name);
 	if (!func) {
-		//vstupni bod se nepovedlo nalezt v uzivatelskych programech
+		//vstupni bod se nepovedlo nalezt 
 		std::lock_guard<std::mutex> lock(process_table_mtx);
 		delete process_table[pid];
 		process_table[pid] = nullptr;

@@ -17,7 +17,6 @@ size_t __stdcall type(const CONTEXT &regs) {
 		}
 	}
 
-
 	size_t written; 
 	size_t size; 
 	bool success;
