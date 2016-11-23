@@ -421,9 +421,9 @@ HRESULT peek_file(FDHandle handle, size_t *available) {
 	}
 	case F_TYPE_FILE: {
 		int a = (int)file->node->data.length() - (int)file_inst->pos;
-		*available = a < 0 ? 1 : a + 1;
-		*available = *available > 1000 ? 1000 : *available; //nechceme aby nam cetl celej velkej soubor naraz
 		//+1 for EOF
+		*available = a < 0 ? 1 : a + 1; //kdyby nahodou... do size_t nesmime dat nic zapornyho
+		*available = *available > 1000 ? 1000 : *available; //nechceme aby nam proces cetl celej velkej soubor naraz
 		break;
 	}
 	}

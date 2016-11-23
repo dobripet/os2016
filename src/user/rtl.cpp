@@ -15,22 +15,54 @@ void Print_Last_Error(FDHandle out) {
 void Print_Last_Error(FDHandle out, std::string prefix) {
 	std::string err = prefix + (prefix.length() > 0 ? " " : "");
 	switch (Get_Last_Error()) {
-	case ERR_IO_FILE_ISNOTFILE: {
-		err += "Specified file is a folder.\n";
+	case ERR_PROCESS_CREATE: {
+		err += "It was not possible to create new process.\n";
 		break;
 	}
-	case ERR_IO_FILE_ISNOTFOLDER: {
-		err += "Specified file is NOT a folder.\n";
+	case ERR_PROCESS_NOTFOUND: {
+		err += "Process entry point was not found.\n";
+		break;
+	}
+	case ERR_IO_FILE_CREATE: {
+		err += "It was not possible to create new file.\n";
 		break;
 	}
 	case ERR_IO_PATH_NOEXIST: {
 		err += "Path was not found.\n";
 		break;
 	}
+	case ERR_IO_FILE_ISNOTFOLDER: {
+		err += "Specified file is NOT a folder.\n";
+		break;
+	}
+	case ERR_IO_FILE_ISNOTFILE: {
+		err += "Specified file is a folder.\n";
+		break;
+	}
+	case ERR_IO_FILE_ISOPENED: {
+		err += "Specified file is used by another process.\n";
+		break;
+	}
+	case ERR_IO_FILE_NOTEMPTY: {
+		err += "Specified folder is not empty.\n";
+		break;	
+	}
+	case ERR_IO_WRITE_STD: {
+		err += "Windows error: it was not possible to write to console STDOUT.\n";
+		break;
+	}
+	case ERR_IO_READ_STD: {
+		err += "Windows error: it was not possible to read from console STDIN.\n";
+		break;
+	}
+	case ERR_IO_PIPE_READCLOSED: {
+		err += "Can't write to pipe. It is closed for reading.\n";
+		break;
+	}
 	default: {
 		err += "Unspecified error occured.\n";
 	}
-	}
+	} //end switch
 	Write_File(out, (char*)err.c_str(), err.length());
 }
 

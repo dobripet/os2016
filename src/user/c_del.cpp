@@ -7,15 +7,15 @@ size_t __stdcall del(const CONTEXT &regs) {
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
 
-	std::cout << "DEBUG:del volano s poctem parametru: " << regs.Rcx << "\n";
+//	std::cout << "DEBUG:del volano s poctem parametru: " << regs.Rcx << "\n";
 
 
-	for (int i = 0; i < (int)regs.Rcx; i++) {
+	/*for (int i = 0; i < (int)regs.Rcx; i++) {
 		std::cout << "DEBUG:del param " << i << ": " << ((char**)regs.Rdx)[i] << "\n";
-	}
+	}*/
 	/*Flag handling*/
 	if (!strcmp((char *)regs.R12, "h\0")) {
-		char * msg = "Deletes one or more files.\n\n  DEL names\n\nnames Specifies a list of one or more files.\n\0";
+		char * msg = "Deletes one or more files.\n\n  DEL names\n\nnames Specifies a list of one or more files.\n";
 			/*
 
 DEL [/P] [/F] [/S] [/Q] [/A[[:]attributes]] names
@@ -41,7 +41,14 @@ If Command Extensions are enabled DEL and ERASE change as follows:
 The display semantics of the /S switch are reversed in that it shows
 you only the files that are deleted, not the ones it could not find.
 */
-		Write_File(STDOUT, (char *)msg, strlen(msg));
+		if (!Write_File(STDOUT, (char *)msg, strlen(msg))) {
+			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+				std::string msg = "An error occurred while writing to STDOUT\n";
+				Print_Last_Error(STDERR, msg);
+				return (size_t)1;
+			}
+			return (size_t)0;
+		}
 	}
 	/*Calling with zero params*/
 	else if ((int)regs.Rcx == 0) {
@@ -55,24 +62,8 @@ you only the files that are deleted, not the ones it could not find.
 			bool del = Remove_File(path);
 			/*handle error*/
 			if (del == false) {
-				switch (Get_Last_Error()) {
-					case (size_t)ERR_IO_FILE_ISOPENED: {
-						std::string msg = "The file is opened in another process.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						break;
-					}
-					case (size_t)ERR_IO_FILE_ISNOTFILE: {
-						std::string msg = "The file name is invalid.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						break;
-					}
-					case (size_t)ERR_IO_PATH_NOEXIST: {
-						std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						break;
-					}
-
-				}
+				std::string msg = "An error occurred while deleting: " + (std::string)path + "\n";
+				Print_Last_Error(STDERR, msg);
 			}
 		}
 	}

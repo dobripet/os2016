@@ -29,27 +29,28 @@ size_t __stdcall type(const CONTEXT &regs) {
 	}
 	/*No params*/
 	else if ((int)regs.Rcx == 0) {
-		char * msg = "The syntax of the command is incorrect.\n\0";
+		char * msg = "The syntax of the TYPE command is incorrect.\n";
 		Write_File(STDERR, msg, strlen(msg));
 		return (size_t)1;
 	}
 	else {
-		std::cout << "DEBUG:type volano s poctem parametru: " << regs.Rcx << "\n";
+		/*std::cout << "DEBUG:type volano s poctem parametru: " << regs.Rcx << "\n";
 		for (int i = 0; i < (int)regs.Rcx; i++) {
 			std::cout << "DEBUG:type param " << i << ": " << ((char**)regs.Rdx)[i] << "\n";
-		}
+		}*/
 		for (int i = 0; i < (int)regs.Rcx; i++) {
 			char * path = ((char**)regs.Rdx)[i];
 			FDHandle file;
 			if (!Open_File(&file, path, F_MODE_READ)) {
-				std::cout << "DEBUG:type err: " << Get_Last_Error() << "\n";
-				switch (Get_Last_Error()) {
+			//	std::cout << "DEBUG:type err: " << Get_Last_Error() << "\n";
+				Print_Last_Error(STDERR);
+				/*switch (Get_Last_Error()) {
 					case ERR_IO_PATH_NOEXIST: {
 						std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
 						Write_File(STDERR, (char *)msg.c_str(), msg.length());
 						break;
 					}
-				}
+				}*/
 				continue;
 			}
 			else {
@@ -58,9 +59,11 @@ size_t __stdcall type(const CONTEXT &regs) {
 					std::string header = "\n" + (std::string)path + "\n\n";
 					if (!Write_File(STDOUT, (char*)header.c_str(), header.length(), &written) || written != header.length()) {
 						/*Handle not all has been written*/
-						std::string msg = "Failed to write out text.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						continue;
+						if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+							std::string msg = "An error occurred while writing to: " + (std::string)path + "\n";
+							Print_Last_Error(STDERR, msg);
+							continue;
+						}
 					}
 				}
 				char buffer[1024];
@@ -70,26 +73,25 @@ size_t __stdcall type(const CONTEXT &regs) {
 				do {
 					if (!Read_File(file, size, buffer, &filled)) {
 						/*TODO nejakej error, mozna zavrnej handle*/
-						switch (Get_Last_Error()) {
-						case ERR_IO_PATH_NOEXIST: {
-							std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
-							Write_File(STDERR, (char *)msg.c_str(), msg.length());
-							break;
-						}
-						}
-						continue;
+						std::string msg = "An error occurred while reading from: " + (std::string)path + "\n";
+						Print_Last_Error(STDERR, msg);
+						break;
 					}
 					if (!Write_File(STDOUT, buffer, filled, &written) || written != filled) {
 						/*Handle not all has been written*/
-						std::string msg = "Failed to write out text.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
+						if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+							std::string msg = "An error occurred while writing to: " + (std::string)path + "\n";
+							Print_Last_Error(STDERR, msg);
+						}
 						break;
 					}
 				} while (size == filled);	
 				if (!Write_File(STDOUT,"\n", strlen("\n"), &written) || written != strlen("\n")) {
 					/*Handle not all has been written*/
-					std::string msg = "Failed to write out text.\nError occurred while processing: " + (std::string)path + "\n";
-					Write_File(STDERR, (char *)msg.c_str(), msg.length());
+					if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+						std::string msg = "An error occurred while writing to: " + (std::string)path + "\n";
+						Print_Last_Error(STDERR, msg);
+					}
 				}
 			}
 		}
