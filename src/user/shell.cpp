@@ -6,7 +6,7 @@
 #include <thread>
 #include <chrono>
 
-#pragma warning(disable: 4996)
+#pragma warning(disable: 4996) //std::string::copy
 
 void close_pipes(FDHandle in, FDHandle out, size_t i, size_t last) {
 	if (i != 0) {
