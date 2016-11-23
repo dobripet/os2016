@@ -25,6 +25,7 @@ const int ERR_IO_FILE_NOTEMPTY = 0x206; //node neni prazdnej (slozka nejde smaza
 const int ERR_IO_WRITE_STD = 0x207; //neslo zapsat na STDOUT (konzole).. neni nase chyba
 const int ERR_IO_PIPE_READCLOSED = 0x208; //roura je zavrena pro cteni (tj. nelze zapisovat)
 const int ERR_IO_READ_STD = 0x209; //nestlo cist ze STDIN (konzole).. neni nase chyba
+const int ERR_IO_FOLDER_EXISTS = 0x210; //slozka uz existuje (prikaz md)
 
 
 /*IO konstanty*/
