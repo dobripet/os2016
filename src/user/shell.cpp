@@ -8,6 +8,15 @@
 
 #pragma warning(disable: 4996)
 
+void close_pipes(FDHandle in, FDHandle out, size_t i, size_t last) {
+	if (i != 0) {
+		Close_File(in);
+	}
+	if (i != last) {
+		Close_File(out);
+	}
+}
+
 size_t __stdcall shell(const CONTEXT &regs) {
 
 
@@ -77,12 +86,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					}
 					//zavreme vsechny nasledujici roury (uz nebudou potreba, kdyz tedkonc exit)
 					for (size_t j = i; j <= lastCommand; j++) {
-						if (j != 0) {
-							Close_File(pipeRead[j - 1]);
-						}
-						if (j != lastCommand) {
-							Close_File(pipeWrite[j]);
-						}
+						close_pipes(pipeRead[j - 1], pipeWrite[j], j, lastCommand);
 					}
 					run = false;
 					break;
@@ -90,12 +94,8 @@ size_t __stdcall shell(const CONTEXT &regs) {
 
 				/* CD built-in command */
 				if (current_params.com == "cd") {
-					if (i != 0) {
-						Close_File(pipeRead[i - 1]);
-					}
-					if (i != lastCommand) {
-						Close_File(pipeWrite[i]);
-					}
+					close_pipes(pipeRead[i - 1], pipeWrite[i], i, lastCommand);
+				
 					if (current_params.params.size() != 1) {
 						Write_File(STDOUT, (char*)(*path).c_str(), (*path).length());
 					}
@@ -125,12 +125,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					if (fail) {
 						Print_Last_Error(STDERR, "Redirecting STDIN failed for path: \"" + (current_params.stdinpath) + "\". ");
 						//presmerovani se nepovedlo. Proces se nebude vubec spustet. Zavreme tedy roury na obou stranach.
-						if (i != 0) {
-							Close_File(pipeRead[i - 1]);
-						}
-						if (i != lastCommand) {
-							Close_File(pipeWrite[i]);
-						}
+						close_pipes(pipeRead[i - 1], pipeWrite[i], i, lastCommand);
 						continue;
 					}
 				}
@@ -157,12 +152,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 					if (fail) {
 						Print_Last_Error(STDERR, "Redirecting STDOUT failed for path: \"" + (current_params.stdoutpath) + "\". ");
 						//presmerovani se nepovedlo. Proces se nebude vubec spustet. Zavreme tedy roury na obou stranach.
-						if (i != 0) {
-							Close_File(pipeRead[i - 1]);
-						}
-						if (i != lastCommand) {
-							Close_File(pipeWrite[i]);
-						}
+						close_pipes(pipeRead[i - 1], pipeWrite[i], i, lastCommand);
 						continue;
 					}
 
@@ -196,12 +186,12 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				par.handles.push_back(std_in);
 				par.handles.push_back(std_out);
 
-				//duplicate stderr for current process
-				/*bool ok = */Duplicate_File(STDOUT, &std_err); //navratova hodnota muze bejt fail
+				/*STDERR - zduplikujeme od shellu*/
+				/*bool ok = */Duplicate_File(STDOUT, &std_err);
 				par.handles.push_back(std_err);
 
-				//duplicate current dir for new process
-				/*bool ok = */Duplicate_File(CURRENT_DIR, &curr_dir); //navratova hodnota muze bejt fail
+				/*CURRENT DIR - zduplikujeme od shellu*/
+				/*bool ok = */Duplicate_File(CURRENT_DIR, &curr_dir); 
 				par.handles.push_back(curr_dir);
 
 				int pid;
@@ -212,6 +202,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				process_handles.push_back(pid);
 			}
 
+			//pockame na vsechny spustene procesy, nez se kontrola vrati shellu
 			for (auto &pid : process_handles) {
 				Join_and_Delete_Process(pid);
 			}
