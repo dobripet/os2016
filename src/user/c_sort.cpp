@@ -101,13 +101,19 @@ std::string sortText(std::string text) {
 	size_t from = 0;
 	std::vector<std::string> lines;
 	/*split by lines*/
+	int offset = 2;
 	while (true) {
+		offset = 2;
 		position = text.find("\r\n", from);
 		if (position == std::string::npos) {
-			lines.push_back(text.substr(from));
-			break;
+			offset = 1;
+			position = text.find("\n", from);
+			if (position == std::string::npos) {
+				lines.push_back(text.substr(from));
+				break;
+			}
 		}
-		position += 2;
+		position += offset;
 		lines.push_back(text.substr(from, position-from));
 		from = position;
 	}
