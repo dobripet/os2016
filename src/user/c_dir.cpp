@@ -20,8 +20,12 @@ size_t __stdcall dir(const CONTEXT &regs) {
 		size = strlen(msg);
 		success = Write_File(STDOUT, msg, size, &written);
 		/*Handle not all has been written*/
-		if (check_write("DIR", STDERR, success, written, size) != S_OK) {
-			return (size_t)1;
+		if (!success || written != size) {
+			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+				Print_Last_Error(STDERR, "DIR: writing to stdout failed.\n");
+				return (size_t)1;
+			}
+			return (size_t)0;
 		}
 	}
 	/*No params, current dir*/

@@ -7,9 +7,6 @@
 
 size_t Get_Last_Error();
 
-//helper
-HRESULT check_write(std::string name, FDHandle STDERR, bool success, size_t written, size_t size);
-
 //do "out" souboru vypise chybovou hlasku podle LastErroru. Prilepi libovolny "prefix" pred tuto hlasku.
 void Print_Last_Error(FDHandle out, std::string prefix);
 void Print_Last_Error(FDHandle out);

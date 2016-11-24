@@ -101,8 +101,12 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		size = text.length();
 		success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
 		/*Handle not all has been written*/
-		if (check_write("WC", STDERR, success, written, size) != S_OK) {
-			return (size_t)1;
+		if (!success || written != size) {
+			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+				Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");
+				return (size_t)1;
+			}
+			return (size_t)0;
 		}
 	}
 	else {
