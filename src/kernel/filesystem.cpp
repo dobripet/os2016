@@ -3,6 +3,10 @@
 #include <iterator>
 #include <regex>
 #include <cctype>
+#include <mutex>
+
+
+std::mutex FS_mtx;
 
 bool char_equals_lowerCase(unsigned char a, unsigned char b) {
 	return std::tolower(a) == std::tolower(b);
@@ -22,6 +26,7 @@ node *mkroot() {
 struct node *root = mkroot();
 
 HRESULT mkdir(node **dir, char *path, node *currentDir) {
+	std::lock_guard<std::mutex> lock(FS_mtx);
 	node *parent;
 	getNodeFromPath(path, false, currentDir, &parent);
 	(*dir) = nullptr;
@@ -130,6 +135,7 @@ HRESULT getPathFromNode(node *currentDir, std::string *path) {
 }
 
 HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *currentDir) {
+	std::lock_guard<std::mutex> lock(FS_mtx);
 	node *parent;
 	getNodeFromPath(path, false, currentDir, &parent);
 	(*file) = nullptr;
@@ -182,6 +188,7 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 }
 
 HRESULT addChild(struct node **parent, struct node **child) {
+
 	if (!*parent || !*child) return S_FALSE;
 	if ((*parent)->type == TYPE_FILE) return S_FALSE;
 
@@ -193,6 +200,7 @@ HRESULT addChild(struct node **parent, struct node **child) {
 
 HRESULT deleteNode(struct node *toDelete) {
 
+	std::lock_guard<std::mutex> lock(FS_mtx);
 	struct node *parent = toDelete->parent;
 
 	if (toDelete->type == TYPE_DIRECTORY) {
@@ -248,6 +256,7 @@ std::vector<std::string> split_string(std::string s) {
 }
 
 HRESULT getData(struct node **file, size_t startPosition, size_t size, char** buffer, size_t *filled) {
+	std::lock_guard<std::mutex> lock(FS_mtx);
 	*filled = 0;
 	if (!file) return S_FALSE; 
 	if (size <= 0) return S_FALSE;
@@ -265,6 +274,8 @@ HRESULT getData(struct node **file, size_t startPosition, size_t size, char** bu
 }
 
 HRESULT setData(struct node **file, char* buffer) {
+
+	std::lock_guard<std::mutex> lock(FS_mtx);
 
 	if ((*file)->type == TYPE_DIRECTORY) {
 		SetLastError(ERR_IO_FILE_ISNOTFOLDER);

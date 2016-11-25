@@ -4,11 +4,11 @@
 
 #include <iostream>
 
-std::mutex files_table_mtx;
-opened_file * opened_files_table[OPEN_FILES_TABLE_SIZE] = { nullptr };
-opened_file_instance * opened_files_table_instances[OPEN_INSTANCES_TABLE_SIZE] = { nullptr };
+std::mutex files_table_mtx; //mutex pro operace s tabulkami souboru
+opened_file * opened_files_table[OPEN_FILES_TABLE_SIZE] = { nullptr }; //tabulka otevrenych souboru
+opened_file_instance * opened_files_table_instances[OPEN_INSTANCES_TABLE_SIZE] = { nullptr }; //tabulka instanci otevrenych souboru (kazy muze mit jit mod (cteni/zapis) a pozici pri cteni)
 
-
+//inicializace souboru pro prvni automaticky spousteny shell
 void initSystemIO() {
 
 	/*
@@ -132,6 +132,8 @@ void HandleIO(CONTEXT &regs) {
 	Set_Error(regs.Rax == S_FALSE, regs);
 }
 
+//vyzkouma, jestli je soubor "n" uz nekde otevreny
+//pokud ano, ulozi jej do "handle"
 bool findIfOpenedFileExists(node * n, FDHandle * handle) {
 	std::lock_guard<std::mutex> lock(files_table_mtx);
 	for (int i = 0; i < OPEN_FILES_TABLE_SIZE; i++) {
@@ -143,6 +145,8 @@ bool findIfOpenedFileExists(node * n, FDHandle * handle) {
 	return false;
 }
 
+//vyzkouma, jestli uz nekdo jiny ma otevrenou rouru "pipeToFind" v modu "openMode" 
+//"instanceToExclude" je preskocena - to je instance procesu, ktery se dotazuje, tu vyhledat nechceme
 bool findIfSomeoneElseHasPipeOpened(FDHandle instanceToExclude, FDHandle pipeToFind, int openMode) {
 	std::lock_guard<std::mutex> lock(files_table_mtx);
 	for (int i = 0; i < OPEN_INSTANCES_TABLE_SIZE; i++) {
@@ -152,20 +156,26 @@ bool findIfSomeoneElseHasPipeOpened(FDHandle instanceToExclude, FDHandle pipeToF
 			opened_files_table_instances[i]->file == pipeToFind &&
 			opened_files_table_instances[i]->mode == openMode) 
 		{
-
 			return true;
 		}
 	}
 	return false;
 }
 
+
+//vyzkouma, jestli uz nekdo jiny ma otevrenou rouru "pipeToFind" v modu pro cteni
+//"instanceToExclude" je preskocena - to je instance procesu, ktery se dotazuje, tu vyhledat nechceme
 bool findIfSomeoneElseHasPipeOpenedForReading(FDHandle instanceToExclude, FDHandle pipeToFind) {
 	return findIfSomeoneElseHasPipeOpened(instanceToExclude, pipeToFind, F_MODE_READ);
 }
+
+//vyzkouma, jestli uz nekdo jiny ma otevrenou rouru "pipeToFind" v modu pro zapis
+//"instanceToExclude" je preskocena - to je instance procesu, ktery se dotazuje, tu vyhledat nechceme
 bool findIfSomeoneElseHasPipeOpenedForWriting(FDHandle instanceToExclude, FDHandle pipeToFind) {
 	return findIfSomeoneElseHasPipeOpened(instanceToExclude, pipeToFind, F_MODE_WRITE);
 }
 
+//najde prvni volnou pozici v tabulce otevrenych souboru. Vytvori tam novy otevreny soubor a vrati na nej handle
 int takeFirstEmptyPlaceInFileTable() {
 	int _h = -1;
 	std::lock_guard<std::mutex> lock(files_table_mtx);
@@ -179,6 +189,7 @@ int takeFirstEmptyPlaceInFileTable() {
 	return _h;
 }
 
+//najde prvni volnou pozici v tabulce instanci otevrenych souboru. Vytvori tam novou instanci a vrati na ni handle
 int takeFirstEmptyPlaceInInstanceTable() {
 	int _h = -1;
 	std::lock_guard<std::mutex> lock(files_table_mtx);
@@ -192,7 +203,7 @@ int takeFirstEmptyPlaceInInstanceTable() {
 	return _h;
 }
 
-
+//zmena kontextu (pracovni slozky) volajicimu procesu podle "path"
 HRESULT change_dir(char * path) {
 
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
@@ -246,7 +257,7 @@ HRESULT change_dir(char * path) {
 	return S_OK;
 }
 
-
+//otevre novou rouru, vrati deskriptory pro cteni a zapis ve "whandle" a "rhandle"
 HRESULT open_pipe(FDHandle * whandle, FDHandle * rhandle) {
 
 	FDHandle _h;
@@ -293,7 +304,7 @@ HRESULT open_pipe(FDHandle * whandle, FDHandle * rhandle) {
 	return S_OK;
 }
 
-
+//zduplikuje deskriptor otevrene instance souboru "orig_handle" do "duplicated_handle"
 HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 
 	int new_h = takeFirstEmptyPlaceInInstanceTable();
@@ -314,7 +325,7 @@ HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 }
 
 
-//jen pro soubory
+//jen pro soubory (node) - otevre soubor ve FS a vrati na nej deskriptor v "handle"
 HRESULT open_file(char *path, int MODE, bool rewrite, FDHandle * handle) {
 
 	FDHandle H;
@@ -358,6 +369,7 @@ HRESULT open_file(char *path, int MODE, bool rewrite, FDHandle * handle) {
 	return S_OK;
 }
 
+//uzavre soubor identifikovany v "handle". Pokud to byl posledni ukazatel na otevreny soubor, bude tento i smazan z tabulky otevrenych souboru
 HRESULT close_file(FDHandle handle) {
 
 	std::vector<FDHandle> &handles = process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors;
@@ -394,7 +406,8 @@ HRESULT close_file(FDHandle handle) {
 	return S_OK;
 }
 
-
+//podiva se bez blokovani do souboru nebo roury, kolik bytu je v nem pristupno pro cteni 
+//nefunguje pro system STDIN
 HRESULT peek_file(FDHandle handle, size_t *available) {
 
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
