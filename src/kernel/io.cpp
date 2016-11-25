@@ -143,6 +143,29 @@ bool findIfOpenedFileExists(node * n, FDHandle * handle) {
 	return false;
 }
 
+bool findIfSomeoneElseHasPipeOpened(FDHandle instanceToExclude, FDHandle pipeToFind, int openMode) {
+	std::lock_guard<std::mutex> lock(files_table_mtx);
+	for (int i = 0; i < OPEN_INSTANCES_TABLE_SIZE; i++) {
+
+		if (i != instanceToExclude &&
+			opened_files_table_instances[i] != nullptr &&
+			opened_files_table_instances[i]->file == pipeToFind &&
+			opened_files_table_instances[i]->mode == openMode) 
+		{
+
+			return true;
+		}
+	}
+	return false;
+}
+
+bool findIfSomeoneElseHasPipeOpenedForReading(FDHandle instanceToExclude, FDHandle pipeToFind) {
+	return findIfSomeoneElseHasPipeOpened(instanceToExclude, pipeToFind, F_MODE_READ);
+}
+bool findIfSomeoneElseHasPipeOpenedForWriting(FDHandle instanceToExclude, FDHandle pipeToFind) {
+	return findIfSomeoneElseHasPipeOpened(instanceToExclude, pipeToFind, F_MODE_WRITE);
+}
+
 int takeFirstEmptyPlaceInFileTable() {
 	int _h = -1;
 	std::lock_guard<std::mutex> lock(files_table_mtx);
@@ -349,9 +372,10 @@ HRESULT close_file(FDHandle handle) {
 	}
 
 	if (fd->FILE_TYPE == F_TYPE_PIPE) {
-		if (inst->mode == F_MODE_WRITE) {
+		if (inst->mode == F_MODE_WRITE && !findIfSomeoneElseHasPipeOpenedForWriting(handle, inst->file)) {
 			fd->pipe->close_write();
-		} else {
+		}
+		else if (!findIfSomeoneElseHasPipeOpenedForReading(handle, inst->file)) {
 			fd->pipe->close_read();
 		}
 	}
@@ -518,11 +542,11 @@ HRESULT remove_file(char * path) {
 	node *n;
 	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
-		/*not found, chybu nastavuj FS*/
+		/*not found, chybu nastavuje FS*/
 		return S_FALSE;
 	}
 	if (n->type != TYPE_FILE) {
-		/*not file*/
+		/*it's not a file*/
 		SetLastError(ERR_IO_FILE_ISNOTFILE);
 		return S_FALSE;
 	}
