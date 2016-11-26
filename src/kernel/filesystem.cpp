@@ -273,7 +273,7 @@ HRESULT getData(struct node **file, size_t startPosition, size_t size, char** bu
 	return S_OK;
 }
 
-HRESULT setData(struct node **file, char* buffer) {
+HRESULT setData(struct node **file, char* buffer, size_t write) {
 
 	std::lock_guard<std::mutex> lock(FS_mtx);
 
@@ -281,8 +281,12 @@ HRESULT setData(struct node **file, char* buffer) {
 		SetLastError(ERR_IO_FILE_ISNOTFOLDER);
 		return S_FALSE;
 	}
+	std::string tw("");
+	for (size_t w = 0; w < write; w++) {
+		tw += buffer[w];
+	}
 
-	(*file)->data.append(buffer);
+	(*file)->data.append(tw);
 	
 	return S_OK;
 }

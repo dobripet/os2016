@@ -46,19 +46,19 @@ void __stdcall Run_VM() {
 
 	Initialize_Kernel();
 
-
 	std::cout << std::endl;
 	struct node *a, *b, *c, *d;
 	mkdir(&a, "zcu", getRoot());
 	mkdir(&b, "zcu/prvak", getRoot());
-	openFile(&c, "aaa.txt", true, true, b);
-	setData(&c, /*0, 10,*/ "asdfghjklq");
-	char *buffer = (char*)malloc(sizeof(char) * 11);
+	openFile(&c, "aaa", true, true, b);
+	mkdir(&b, "zcu/druhak", getRoot());
+	setData(&c,"nejaky text\0", strlen("nejaky text\0"));
+	char *buffer = (char*)malloc(sizeof(char) * (strlen("nejaky text\0") + 1));
+	buffer[strlen("nejaky text\0")] = '\0';
 	size_t filled;
-	getData(&c, 0, 11, &buffer, &filled);
-	setData(&a, /*0, filled,*/ buffer);
-	openFile(&d, "C://zcu/prvak/bbb.txt", true, true, a);
-
+	getData(&c, 0, strlen("nejaky text\0"), &buffer, &filled);
+	openFile(&d, "C://zcu/prvak/bbb", true, true, a);
+	setData(&d, buffer, filled);
 
 	//run shell
 	command_params par;

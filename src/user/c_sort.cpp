@@ -1,9 +1,11 @@
 ﻿#include "rtl.h"
 #include "c_sort.h"
+
 #include <string>
 #include <iostream>
 #include <algorithm>
-/*Sorts lines of input and print them*/
+
+/*Sorts lines of input and prints them*/
 
 std::string sortText(std::string text);
 
@@ -12,21 +14,49 @@ size_t __stdcall sort(const CONTEXT &regs) {
 	FDHandle STDIN = (FDHandle)regs.R8;
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
-	size_t written; 
+	char * arg = (char*)regs.Rcx;
+
+	//parse arg
+	std::string switches;
+	std::vector<std::string> args;
+	if (!parseCommandParams(arg, &switches, &args)) {
+		char * errTxt = (char*)(("SORT: " + get_error_message() + '\n').c_str());
+		Write_File(STDOUT, errTxt, strlen(errTxt));
+		return (size_t)1;
+	}
+
+	//switches
+	for (size_t s = 0; s < switches.length(); s++) {
+		if (tolower(switches[s]) == 'h') {
+			char * msg = "Sorts input lines.\n\n  SORT[[drive:][path]]filename\n\0";
+			if (!Write_File(STDOUT, msg, strlen(msg))) {
+				if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+					std::string msg = "SORT: An error occurred while writing to STDOUT\n";
+					Print_Last_Error(STDERR, msg);
+					return (size_t)1;
+				}
+			}
+			return (size_t)0;
+		}
+		else {
+			std::string msg("SORT: Invalid switch: ");
+			msg += switches[s];
+			msg += " \n";
+			Write_File(STDERR, (char*)msg.c_str(), strlen(msg.c_str()));
+			return (size_t)1;
+		}
+	}
+
+	size_t written;
 	size_t size;
 	bool success;
-	/*Flag handling*/
-	if (!strcmp((char *)regs.R12, "h\0")) {
-		char * msg = "Sorts input lines.\n\n  SORT[[drive:][path]]filename\n\0";
-		size = strlen(msg);
-		success = Write_File(STDOUT, msg, size, &written);
-	}
+
 	/*No params*/
-	else if ((int)regs.Rcx == 0) {
+	if (args.size() == 0) {
 		/*Read from stdin until EOF*/
 		size_t filled;
 		std::string text = "";
-		char buffer[1024];
+		char buffer[1025];
 		while (true){
 			Read_File(STDIN, 1024, buffer, &filled);
 			text += ((std::string)buffer).substr(0, filled);
@@ -39,38 +69,22 @@ size_t __stdcall sort(const CONTEXT &regs) {
 		size = sorted.length();
 		success = Write_File(STDOUT, (char *)sorted.c_str(), size, &written);		
 	}
-	else if((int)regs.Rcx == 1){
+	else if (args.size() == 1) {
 		/*read from file*/
 		FDHandle file;
-		char * path = ((char**)regs.Rdx)[0];
+		char * path = (char*)args[0].c_str();
 		if (!Open_File(&file, path, F_MODE_READ)) {
-		//	std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
-		//	Write_File(STDERR, (char *)msg.c_str(), msg.length());
-			Print_Last_Error(STDERR, "An error occurred while opening: " + std::string(path));
-			/*switch (Get_Last_Error()) {
-			case ERR_IO_PATH_NOEXIST: {
-				std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
-				Write_File(STDERR, (char *)msg.c_str(), msg.length());
-				break;
-			}
-			}*/
+			Print_Last_Error(STDERR, "SORT: An error occurred while opening: " + std::string(path));
 			return (size_t)1;
 		}
-		char buffer[1024];
+		char buffer[1025];
 		size_t bsize = 1024;
 		size_t filled;
 		std::string text = "";
 		/*read whole file*/
 		do {
 			if (!Read_File(file, bsize, buffer, &filled)) {
-				Print_Last_Error(STDERR, "An error occurred while reading from: " + std::string(path));
-				/*switch (Get_Last_Error()) {
-				case ERR_IO_PATH_NOEXIST: {
-					std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
-					Write_File(STDERR, (char *)msg.c_str(), msg.length());
-					break;
-				}
-				}*/
+				Print_Last_Error(STDERR, "SORT: An error occurred while reading from: " + std::string(path));
 				continue;
 			}
 			text += ((std::string)buffer).substr(0, filled);
@@ -81,14 +95,14 @@ size_t __stdcall sort(const CONTEXT &regs) {
 	}
 	else {
 		/*wrong number of params*/
-		char * msg = "The syntax of the command is incorrect.\n\0";
+		char * msg = "SORT: The syntax of the command is incorrect.\n\0";
 		Write_File(STDERR, msg, strlen(msg));
 		return (size_t)1;
 	}
 	/*Handle not all has been written*/
 	if (!success || written != size) {
 		if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
-			Print_Last_Error(STDERR, "Rgen: writing to stdout failed.");
+			Print_Last_Error(STDERR, "SORT: writing to stdout failed.");
 			return (size_t)1;
 		}
 	}

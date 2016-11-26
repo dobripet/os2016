@@ -26,5 +26,5 @@ HRESULT addChild(node **parent, struct node **child);
 //HRESULT deleteFile(std::string actualDirectory, std::string path);
 HRESULT deleteNode(node *toDelete);
 HRESULT getData(node **file, size_t startPosition, size_t size, char** buffer, size_t *filled);
-HRESULT setData(node **file, char* buffer);
+HRESULT setData(node **file, char* buffer, size_t write);
 std::vector<std::string> split_string(std::string s);

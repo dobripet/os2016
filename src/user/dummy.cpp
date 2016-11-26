@@ -25,6 +25,6 @@ size_t __stdcall dummy(const CONTEXT &regs) {
 		//nebudeme to delat zbytecne moc casto..
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
-	delete buf;
+	delete[] buf;
 	return (size_t)0;
 }

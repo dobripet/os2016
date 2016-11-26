@@ -32,8 +32,8 @@
     <ClCompile Include="..\..\src\user\c_wc.cpp" />
     <ClCompile Include="..\..\src\user\dllmain.cpp" />
     <ClCompile Include="..\..\src\user\dummy.cpp" />
-    <ClCompile Include="..\..\src\user\parser.cpp" />
     <ClCompile Include="..\..\src\user\rtl.cpp" />
+    <ClCompile Include="..\..\src\user\rtl_parser.cpp" />
     <ClCompile Include="..\..\src\user\shell.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -50,7 +50,6 @@
     <ClInclude Include="..\..\src\user\c_type.h" />
     <ClInclude Include="..\..\src\user\c_wc.h" />
     <ClInclude Include="..\..\src\user\dummy.h" />
-    <ClInclude Include="..\..\src\user\parser.hpp" />
     <ClInclude Include="..\..\src\user\rtl.h" />
     <ClInclude Include="..\..\src\user\shell.h" />
   </ItemGroup>

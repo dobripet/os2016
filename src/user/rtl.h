@@ -5,11 +5,31 @@
 #include <vector>
 #include <string>
 
+//vrati posledni chybu, ktera nastala v kernelu
 size_t Get_Last_Error();
 
 //do "out" souboru vypise chybovou hlasku podle LastErroru. Prilepi libovolny "prefix" pred tuto hlasku.
 void Print_Last_Error(FDHandle out, std::string prefix);
 void Print_Last_Error(FDHandle out);
+
+//pro parsovani prikazu - implementace v souboru rtl_parser.cpp
+bool splitByPipes(std::string line, std::vector<std::string> * commandsStr);
+bool parseCommandRedirects(std::string commandStr, struct Parsed_command * parsedCommand);
+bool parseCommandParams(std::string command, std::string *switches, std::vector<std::string> *args);
+std::string get_error_message();
+
+typedef struct Parsed_command {
+	std::string com;
+	bool redirectstdout;
+	bool appendstdout;
+	bool redirectstdin;
+	std::string stdoutpath;
+	std::string stdinpath;
+	std::string arg;
+} parsed_command;
+
+//konec parsovani
+
 
 /*********************************************************************************************************
 IO
@@ -21,10 +41,10 @@ bool Duplicate_File(FDHandle old_handle, FDHandle * new_handle);
 //otevre soubor v nasem FS se zaslanou cestou fname  
 //return true kdyz vse OK
 //do handle ulozi handle na soubor
-//pokud soubor existuje, nesmaze data
-//bool rewrite - prepsat data ci nikoliv
-bool Open_File(FDHandle * handle, const char * fname, int mode, bool rewrite);
+//pokud soubor existuje, nesmaze data (vychozi chovani)
 bool Open_File(FDHandle * handle, const char * fname, int mode);
+//bool rewrite - prepsat data ci nikoliv 
+bool Open_File(FDHandle * handle, const char * fname, int mode, bool rewrite);
 
 //vyrobi rouru
 //return true kdyz vse OK
@@ -35,6 +55,8 @@ bool Open_Pipe(FDHandle * writeHandle, FDHandle * readHandle);
 //vraci true, kdyz vse OK
 bool Close_File(FDHandle file_handle);
 
+//nahlednuti (neblokujici!) do souboru, kolik je toho v nem ke cteni
+//funguje pro rouru a FS, ne pro konzoli
 bool Peek_File(FDHandle handle, size_t *available);
 
 //cteni souboru
@@ -42,10 +64,11 @@ bool Peek_File(FDHandle handle, size_t *available);
 //do filled bude ulozen pocet, kolik se zapsalo
 bool Read_File(FDHandle handle, size_t len, char * buf, size_t *filled);
 
-//zapise do souboru identifikovaneho deskriptor data z buffer o velikosti buffer_size a vrati pocet zapsanych dat ve written
+//zapise do souboru identifikovaneho deskriptor data z buffer o velikosti buffer_size a
 //vraci true, kdyz vse OK
-bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size, size_t *written);
 bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size);
+//navic ulozi pocet zapsanych dat ve written
+bool Write_File(FDHandle file_handle, char *buffer, size_t buffer_size, size_t *written);
 
 /*Vytvori slozku podle dane absolutni nebo relativni cesty*/
 bool Make_Dir(char *path);
@@ -62,7 +85,7 @@ bool Remove_File(char *path);
 //Vrati seznam nodu
 bool Get_Dir_Nodes(std::vector<node_info*> *all_info, char *path);
 
-
+//konec IO
 
 /*********************************************************************************************************
 PROCES
@@ -77,3 +100,5 @@ bool Join_and_Delete_Process(int pid);
 
 //Vrati seznam procesu
 bool Get_Processes(std::vector<process_info*> *all_info);
+
+//konec PROCES

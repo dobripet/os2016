@@ -7,49 +7,57 @@ size_t __stdcall type(const CONTEXT &regs) {
 
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
+	char * arg = (char*)regs.Rcx;
+	bool quietMode = false;
+	size_t written;
 
-	bool help = false, quietMode = false; 
-	char * switches = (char *)regs.R12;
-	for (int i = 0; i < strlen(switches); i++) {
-		switch (switches[i]) {
-		case 'h': help = true; break;
-		case 'q': quietMode = true; break;
+	//parse arg
+	std::string switches;
+	std::vector<std::string> args;
+	if (!parseCommandParams(arg, &switches, &args)) {
+		char * errTxt = (char*)(("TYPE: " + get_error_message() + '\n').c_str());
+		Write_File(STDOUT, errTxt, strlen(errTxt));
+		return (size_t)1;
+	}
+
+	//switches
+	for (size_t s = 0; s < switches.length(); s++) {
+		if (tolower(switches[s]) == 'h') {
+			char * msg = "Displays the contents of a text file or files.\n\n  TYPE [/q] [drive:][path]filename\n\n  /q   Quiet mode - do not print filenames\n\0";
+			if (!Write_File(STDOUT, msg, strlen(msg))) {
+				if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+					std::string msg = "TYPE: An error occurred while writing to STDOUT\n";
+					Print_Last_Error(STDERR, msg);
+					return (size_t)1;
+				}
+			}
+			return (size_t)0;
+		}
+		else if(tolower(switches[s]) == 'q') {
+			quietMode = true;
+		}
+		else {
+			std::string msg("TYPE: Invalid switch: ");
+			msg += switches[s];
+			msg += " \n";
+			Write_File(STDERR, (char*)msg.c_str(), strlen(msg.c_str()));
+			return (size_t)1;
 		}
 	}
 
-	size_t written; 
-	size_t size; 
-	bool success;
-	/*Flag handling*/
-	if (help) {
-		char * msg = "Displays the contents of a text file or files.\n\n  TYPE [/q] [drive:][path]filename\n\n  /q   Quiet mode, do not print filename\n\0";
-		size = strlen(msg);
-		success = Write_File(STDOUT, msg, size, &written);
-	}
 	/*No params*/
-	else if ((int)regs.Rcx == 0) {
-		char * msg = "The syntax of the TYPE command is incorrect.\n";
+	if (args.size() == 0) {
+		char * msg = "The syntax of the TYPE command is incorrect.\n\0";
 		Write_File(STDERR, msg, strlen(msg));
 		return (size_t)1;
 	}
 	else {
-		/*std::cout << "DEBUG:type volano s poctem parametru: " << regs.Rcx << "\n";
-		for (int i = 0; i < (int)regs.Rcx; i++) {
-			std::cout << "DEBUG:type param " << i << ": " << ((char**)regs.Rdx)[i] << "\n";
-		}*/
-		for (int i = 0; i < (int)regs.Rcx; i++) {
-			char * path = ((char**)regs.Rdx)[i];
+		for (int i = 0; i < args.size(); i++) {
+			char * path = (char*)args[i].c_str();
 			FDHandle file;
 			if (!Open_File(&file, path, F_MODE_READ)) {
-			//	std::cout << "DEBUG:type err: " << Get_Last_Error() << "\n";
-				Print_Last_Error(STDERR);
-				/*switch (Get_Last_Error()) {
-					case ERR_IO_PATH_NOEXIST: {
-						std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						break;
-					}
-				}*/
+				std::string msg = "TYPE: An error occurred while opening file: " + (std::string)path + "\n";
+				Print_Last_Error(STDERR, msg);
 				continue;
 			}
 			else {
@@ -59,7 +67,7 @@ size_t __stdcall type(const CONTEXT &regs) {
 					if (!Write_File(STDOUT, (char*)header.c_str(), header.length(), &written) || written != header.length()) {
 						/*Handle not all has been written*/
 						if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
-							std::string msg = "An error occurred while writing to: " + (std::string)path + "\n";
+							std::string msg = "TYPE: An error occurred while writing to: " + (std::string)path + "\n";
 							Print_Last_Error(STDERR, msg);
 							continue;
 						}
@@ -71,15 +79,14 @@ size_t __stdcall type(const CONTEXT &regs) {
 				std::string s = "";
 				do {
 					if (!Read_File(file, size, buffer, &filled)) {
-						/*TODO nejakej error, mozna zavrnej handle*/
-						std::string msg = "An error occurred while reading from: " + (std::string)path + "\n";
+						std::string msg = "TYPE: An error occurred while reading from: " + (std::string)path + "\n";
 						Print_Last_Error(STDERR, msg);
 						break;
 					}
 					if (!Write_File(STDOUT, buffer, filled, &written) || written != filled) {
 						/*Handle not all has been written*/
 						if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
-							std::string msg = "An error occurred while writing to: " + (std::string)path + "\n";
+							std::string msg = "TYPE: An error occurred while writing to: " + (std::string)path + "\n";
 							Print_Last_Error(STDERR, msg);
 						}
 						break;
@@ -88,7 +95,7 @@ size_t __stdcall type(const CONTEXT &regs) {
 				if (!Write_File(STDOUT,"\n", strlen("\n"), &written) || written != strlen("\n")) {
 					/*Handle not all has been written*/
 					if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
-						std::string msg = "An error occurred while writing to: " + (std::string)path + "\n";
+						std::string msg = "TYPE: An error occurred while writing to STDOUT\n";
 						Print_Last_Error(STDERR, msg);
 					}
 				}

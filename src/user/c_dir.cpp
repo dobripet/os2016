@@ -1,9 +1,11 @@
 ﻿#include "rtl.h"
 #include "c_dir.h"
+
 #include <string>
 #include <iostream>
 #include <sstream>
-/*Prints directory*/
+
+/*Prints contents of a directory*/
 HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR);
 
 size_t __stdcall dir(const CONTEXT &regs) {
@@ -11,39 +13,55 @@ size_t __stdcall dir(const CONTEXT &regs) {
 	FDHandle STDIN = (FDHandle)regs.R8;
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
-	size_t written; 
-	size_t size;
-	bool success;
-	/*Flag handling*/
-	if (!strcmp((char *)regs.R12, "h\0")) {
-		char * msg = "Displays list files and subdirectories in a directory.\n\n  DIR\n\0";
-		size = strlen(msg);
-		success = Write_File(STDOUT, msg, size, &written);
-		/*Handle not all has been written*/
-		if (!success || written != size) {
-			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
-				Print_Last_Error(STDERR, "DIR: writing to stdout failed.\n");
-				return (size_t)1;
+	char * arg = (char*)regs.Rcx;
+
+	//parse arg
+	std::string switches;
+	std::vector<std::string> args;
+	if (!parseCommandParams(arg, &switches, &args)) {
+		char * errTxt = (char*)(("DIR: " + get_error_message() + '\n').c_str());
+		Write_File(STDOUT, errTxt, strlen(errTxt));
+		return (size_t)1;
+	}
+
+	//switches
+	for (size_t s = 0; s < switches.length(); s++) {
+		if (tolower(switches[s]) == 'h') {
+			char * msg = "Print list of files and subdirectories in a directory.\n\n  DIR [path]\n\0";
+			if (!Write_File(STDOUT, msg, strlen(msg))) {
+				if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+					std::string msg = "DIR: An error occurred while writing to STDOUT\n";
+					Print_Last_Error(STDERR, msg);
+					return (size_t)1;
+				}
 			}
 			return (size_t)0;
 		}
+		else {
+			std::string msg("DIR: Invalid switch: ");
+			msg += switches[s];
+			msg += " \n";
+			Write_File(STDERR, (char*)(msg.c_str()), strlen(msg.c_str()));
+			return (size_t)1;
+		}
 	}
+
+
 	/*No params, current dir*/
-	else if ((int)regs.Rcx == 0) {
+	if (args.size() == 0) {
 		if (handle_dir(nullptr, STDOUT, STDERR) != S_OK) {
 			return (size_t)1;
 		}
 	}
 	else {
 		/*multiple dirs*/
-		for (int i = 0; i < (int)regs.Rcx; i++) {
-			char * path = ((char**)regs.Rdx)[i];
+		for (size_t i = 0; i < args.size(); i++) {
+			char * path = (char*)(args[i].c_str());
 			if (handle_dir(path, STDOUT, STDERR) != S_OK) {
 				return (size_t)1;
 			}
 		}
 	}
-	
 	return (size_t)0;
 }
 
@@ -58,9 +76,7 @@ HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR) {
 	std::vector<node_info*> all_info;
 	Get_Dir_Nodes(&all_info, path);
 	if (all_info.size() < 1) {
-		/*Internal kernel error, no nodes returned*/
-		char * msg = "Internal kernel error.\n\0";
-		Write_File(STDERR, msg, strlen(msg));
+		Print_Last_Error(STDERR, "DIR: an error occured while processing: " + std::string(path)+ "\n");
 		return S_FALSE;
 	}
 	std::stringstream ss;

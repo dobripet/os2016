@@ -13,7 +13,11 @@ void Print_Last_Error(FDHandle out) {
 	Print_Last_Error(out, "");
 }
 void Print_Last_Error(FDHandle out, std::string prefix) {
-	std::string err = prefix + (prefix.length() > 0 ? " " : "");
+	std::string err = prefix;
+	if (!((prefix.length() > 0 && prefix[prefix.length() - 1] == '\n') ||
+		(prefix.length() > 1 && prefix[prefix.length() - 2] == '\n'))) {
+		err += "\n";
+	}
 	switch (Get_Last_Error()) {
 	case ERR_PROCESS_CREATE: {
 		err += "It was not possible to create new process.\n";
@@ -57,6 +61,10 @@ void Print_Last_Error(FDHandle out, std::string prefix) {
 	}
 	case ERR_IO_PIPE_READCLOSED: {
 		err += "Can't write to pipe. It is closed for reading.\n";
+		break;
+	}
+	case ERR_IO_FOLDER_EXISTS: {
+		err += "File of given name already exists.\n";
 		break;
 	}
 	default: {

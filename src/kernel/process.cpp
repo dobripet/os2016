@@ -36,7 +36,7 @@ void HandleProcess(CONTEXT & regs) {
 }
 
 
-void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switches) {
+void runProcess(TEntryPoint func, int pid, char * arg) {
 
 	{
 		std::lock_guard<std::mutex> lock(process_table_mtx);
@@ -49,10 +49,8 @@ void runProcess(TEntryPoint func, int pid, int argc, char ** argv, char * switch
 	regs.R9 = (decltype(regs.R9))process_table[pid]->IO_descriptors[1]; //stdout
 	regs.R10 = (decltype(regs.R10))process_table[pid]->IO_descriptors[2]; //stderr
 	regs.R11 = (decltype(regs.R11))process_table[pid]->IO_descriptors[3]; //current dir
-	regs.R12 = (decltype(regs.R12))switches;
 	regs.Rax = (decltype(regs.Rax))process_table[pid]->name;
-	regs.Rcx = (decltype(regs.Rcx))argc;
-	regs.Rdx = (decltype(regs.Rdx))argv;
+	regs.Rcx = (decltype(regs.Rcx))arg;
 	regs.R13 = (decltype(regs.R13))&(process_table[pid]->currentPath);
 
 	//zavolame vstupni bod kodu procesu
@@ -118,7 +116,7 @@ HRESULT createProcess(command_params * par, int *proc_pid)
 	}
 
 	//konecne spustime proces
-	process_table[pid]->thr = std::thread(runProcess, func, pid, par->argc, par->argv, par->switches);
+	process_table[pid]->thr = std::thread(runProcess, func, pid, par->arg);
 	*proc_pid = pid;
 	return S_OK;
 }

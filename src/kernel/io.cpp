@@ -122,7 +122,6 @@ void HandleIO(CONTEXT &regs) {
 	}
 	case scGetDirNodes: {
 		regs.Rax = (decltype(regs.Rax))getDirNodes((std::vector<node_info*>*)regs.Rbx, (char*)regs.Rcx);
-		Set_Error(regs.Rax == S_FALSE, regs);
 		break;
 	}
 
@@ -374,8 +373,11 @@ HRESULT close_file(FDHandle handle) {
 
 	std::vector<FDHandle> &handles = process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors;
 	handles.erase(std::remove(handles.begin(), handles.end(), handle), handles.end()); //smazat z PCB
-	
+
 	FD_instance * inst = opened_files_table_instances[handle];
+	if (inst == nullptr) {
+		return S_FALSE;
+	}
 	FD * fd = opened_files_table[inst->file];
 
 	{
@@ -501,7 +503,7 @@ HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written)
 		break;
 	}
 	case F_TYPE_FILE: {
-		if (setData(&(file->node), buf) == S_OK) {
+		if (setData(&(file->node), buf, howMuch) == S_OK) {
 			*written = howMuch;
 		} else {
 			*written = 0;
@@ -582,9 +584,9 @@ HRESULT getDirNodes(std::vector<node_info*> *all_info, char *path) {
 	}
 	else {
 		if (getNodeFromPath(path, true, currentNode, &n) != S_OK) {
-			/*not found, erro nastavuje FS*/
+			/*not found, error nastavuje FS*/
 			return S_FALSE;
-		} ;
+		}
 	}
 	node_info *info = new node_info;
 	info->name = n->name;

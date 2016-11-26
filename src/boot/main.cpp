@@ -1,5 +1,8 @@
 #include <Windows.h>
 
+//C4191: 'type cast': unsafe conversion from 'FARPROC' to 'TRun_VM' 
+#pragma warning( disable : 4191 )
+
 typedef void(__stdcall *TRun_VM)();
 
 int main() {

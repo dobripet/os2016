@@ -3,52 +3,53 @@
 #include <iostream>
 
 size_t __stdcall md(const CONTEXT &regs) {
+
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
-	/*
-	std::cout << "DEBUG:md volano s poctem parametru: " << regs.Rcx << "\n";
-	
-	
-	for (int i = 0; i < (int)regs.Rcx; i++) {
-		std::cout << "DEBUG:md param " << i << ": "<< ((char**)regs.Rdx)[i] << "\n";
-	}*/
-	/*Flag handling*/
-	if (!strcmp((char *)regs.R12, "h\0")) {
-		char * msg = "Creates a directory.\n\n  MD[drive:]path\n\0";
-			/*MD creates any intermediate directories in the path, if needed.
-			For example, assume \a does not exist then :
+	char * arg = (char*)regs.Rcx;
 
-		mkdir \a\b\c\d
-
-			is the same as :
-
-		mkdir \a
-			chdir \a
-			mkdir b
-			chdir b
-			mkdir c
-			chdir c
-			mkdir d
-
-			which is what you would have to type if extensions were disabled.*/
-			
-		Write_File(STDOUT, (char *)msg, strlen(msg));
+	//parse arg
+	std::string switches;
+	std::vector<std::string> args;
+	if (!parseCommandParams(arg, &switches, &args)) {
+		char * errTxt = (char*)(("MD: " + get_error_message() + '\n').c_str());
+		Write_File(STDOUT, errTxt, strlen(errTxt));
+		return (size_t)1;
 	}
+
+	//switches
+	for (size_t s = 0; s < switches.length(); s++) {
+		if (tolower(switches[s]) == 'h') {
+			char * msg = "Creates a directory.\n\n  MD[drive:]path\n\0";
+			if (!Write_File(STDOUT, msg, strlen(msg))) {
+				if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+					std::string msg = "MD: An error occurred while writing to STDOUT\n";
+					Print_Last_Error(STDERR, msg);
+					return (size_t)1;
+				}
+			}
+			return (size_t)0;
+		}
+		else {
+			std::string msg("MD: Invalid switch: ");
+			msg += switches[s];
+			msg += " \n";
+			Write_File(STDERR, (char*)msg.c_str(), strlen(msg.c_str()));
+			return (size_t)1;
+		}
+	}
+
 	/*Calling with zero params*/
-	else if ((int)regs.Rcx == 0) {
-		char * msg = "The syntax of the command is incorrect.\n\0";
+	if (args.size() == 0) {
+		char * msg = "MD: The syntax of the command is incorrect. Missing parameters.\n\0";
 		Write_File(STDERR, msg, strlen(msg)); 
 		return (size_t)1;
 	}
 	else {
-		for (int i = 0; i < (int)regs.Rcx; i++) {
-			char * path = ((char**)regs.Rdx)[i];
-			bool mkdir = Make_Dir(path);
-			/*handle error*/
-			if (mkdir == false) {
-				Print_Last_Error(STDERR, "An error occured while creating directory: " + std::string(path) + ".\n");
-				/*std::string msg = "A subdirectory or file already exists.\nError occurred while processing: " + (std::string)path + "\n";
-				Write_File(STDERR, (char *)msg.c_str(), msg.length());*/
+		for (int i = 0; i < args.size(); i++) {
+			char * path = (char*)args[i].c_str();
+			if (!Make_Dir(path)) {
+				Print_Last_Error(STDERR, "MD: An error occured while creating directory: " + std::string(path) + ".\n");
 			}
 		}
 	}		

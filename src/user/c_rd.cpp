@@ -1,66 +1,58 @@
 ﻿#include "rtl.h"
 #include "c_rd.h"
+
 #include <string>
 #include <iostream>
-/*Removes directory*/
+
+/*Removes an empty directory*/
 size_t __stdcall rd(const CONTEXT &regs) {
+
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
+	char * arg = (char*)regs.Rcx;
 
-	/*
-	std::cout << "DEBUG:rd volano s poctem parametru: " << regs.Rcx << "\n";
-
-	for (int i = 0; i < (int)regs.Rcx; i++) {
-		std::cout << "DEBUG:rd param " << i << ": " << ((char**)regs.Rdx)[i] << "\n";
-	}*/
-	/*Flag handling*/
-	if (!strcmp((char *)regs.R12, "h\0")) {
-		char * msg = "Removes (deletes) a directory.\n\n  RD [drive:]path\n\0";
-			/*RD[/ S][/ Q][drive:]path
-
-			/ S      Removes all directories and files in the specified directory
-			in addition to the directory itself.Used to remove a directory
-			tree.
-
-			/ Q      Quiet mode, do not ask if ok to remove a directory tree with / S*/
-		Write_File(STDOUT, (char *)msg, strlen(msg));
+	//parse arg
+	std::string switches;
+	std::vector<std::string> args;
+	if (!parseCommandParams(arg, &switches, &args)) {
+		char * errTxt = (char*)(("RD: " + get_error_message() + '\n').c_str());
+		Write_File(STDOUT, errTxt, strlen(errTxt));
+		return (size_t)1;
 	}
+
+	//switches
+	for (size_t s = 0; s < switches.length(); s++) {
+		if (tolower(switches[s]) == 'h') {
+			char * msg = "Removes (deletes) an empty directory.\n\n  RD [drive:]path\n\0";
+			if (!Write_File(STDOUT, msg, strlen(msg))) {
+				if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
+					std::string msg = "RD: An error occurred while writing to STDOUT\n";
+					Print_Last_Error(STDERR, msg);
+					return (size_t)1;
+				}
+			}
+			return (size_t)0;
+		}
+		else {
+			std::string msg("RD: Invalid switch: ");
+			msg += switches[s];
+			msg += " \n";
+			Write_File(STDERR, (char*)msg.c_str(), strlen(msg.c_str()));
+			return (size_t)1;
+		}
+	}
+
 	/*Calling with zero params*/
-	else if ((int)regs.Rcx == 0) {
+	if (args.size() == 0) {
 		char * msg = "The syntax of the RD command is incorrect.\n\0";
 		Write_File(STDERR, msg, strlen(msg));
 		return (size_t)1;
 	}
 	else {
-		for (int i = 0; i < (int)regs.Rcx; i++) {
-			char * path = ((char**)regs.Rdx)[i];
-			bool rmdir = Remove_Dir(path);
-			/*handle error*/
-			if (rmdir == false) {
-				Print_Last_Error(STDERR, "An error occured while deleting folder: " + std::string(path) + ".\n");
-				/*switch (Get_Last_Error()) {
-					case (size_t)ERR_IO_FILE_NOTEMPTY: {
-						std::string msg = "The directory is not empty.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						break;
-					}
-					case (size_t)ERR_IO_FILE_ISOPENED: {
-						std::string msg = "The directory is opened in another process.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						break;
-					}
-					case (size_t)ERR_IO_FILE_ISNOTFOLDER: {
-						std::string msg = "The directory name is invalid.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						break;
-					}
-					case (size_t)ERR_IO_PATH_NOEXIST: {
-						std::string msg = "The system cannot find the file specified.\nError occurred while processing: " + (std::string)path + "\n";
-						Write_File(STDERR, (char *)msg.c_str(), msg.length());
-						break;
-					}
-
-				}*/
+		for (int i = 0; i < args.size(); i++) {
+			char * path = (char*)args[i].c_str();
+			if (!Remove_Dir(path)) {
+				Print_Last_Error(STDERR, "RD: An error occured while deleting folder: " + std::string(path) + ".\n");
 			}
 		}
 	}
