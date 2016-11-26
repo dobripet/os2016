@@ -1,0 +1,41 @@
+Kernel
+Filesystem
+Jeho implementace se v kernelu nachází v souborech filesystem.h a filesystem.cpp. Filesystem je pouze v RAM a modelován stromovou strukturou pomocí uzlù, které pøedstavuje struktura node, která v sobì uchovává odkaz na rodièe a seznam svıch potomkù. Dále nese informaci o jeho jménu, typu (zda se jedná o sloku nebo soubor) a datech. Data ukládáme jako string. Obsahuje obsluné funkce viditelné pouze pro jádro, které umoòují pøímoèarou manipulaci.
+
+IO operace
+Jejich implementace se nachází v souborech io.h a io.cpp. Nachází se zde dvì tabulky. První tabulka v sobì uchovává struktury opened_file, které v sobì mají informaci o typu souboru (stdio, roura a uzel), ukazatel na nìj a poètu otevøení. V druhé tabulce se nachází struktury open_file_instance, které v sobì uchovávají handle(index do tabulky otevøenıch souborù), typ otevøení(zápis, ètení a oboje) a pozici pro ètení a zápis. Také  se  zde obsluhují systémová volání tıkající se IO. Implementovali jsme jich 12.
+scWriteFile – zapíše na vıstup urèenı FDHandlem danı poèet znakù z bufferu a vrátí poèet úspìšnì zapsanıch
+ScOpenFile – otevøe soubor dané cesty a vrátí na nìj FDHandle, s vyuitím flagu lze jen kontrolovat existenci souboru
+scCreatePipe – vytvoøí rouru v systému a vrátí FDHandly na její konce
+scCloseFile – zavøe otevøenı soubor urèenı FDHandlem
+scReadFile – pøeète poèet bitù ze souboru urèeného FDHandlem do pøedaného bufferu a vrátí poèet úspìšnì pøeètenıch znakù
+scDuplicateHandle 
+scPeekFile
+scMakeDir – vytvoøí ve filesystému sloku daného jména(cesty)
+scChangeDir – zmìní pracovní sloku daného procesu
+scRemoveDir – smae danou sloku ze systému, pokud je prázdná nebo není domovská jinému procesu
+scRemoveFile – smae danı soubor ze systému pokud , pokud není ještì nìkde otevøenı
+scGetDirNodes – vrátí seznam struktur node_info, které obsahují informace o uzlu, jako jsou jeho jméno, velikost, typ, absolutní cestu a pøípadnì absolutní cestu rodièe
+
+
+Boot Systému
+Pøi bootu se vytvoøí první tøi poloky v tabulce otevøenıch souborù, které pøedstavují standardní vstup, vıstup a chybovı vıstup celého systému. Dále se vytvoøí koøenovı node filesystemu C://. Poté je ji moné spustit shell jako první proces s pøedanımi handly na STDIO a C://.
+
+Uivatelská pøíruèka
+Pøíkazy shellu
+Všechny pøíkazy fungují s relativní nebo absolutní cestou k souboru nebo sloce. Pro zobrazení nápovìdy se pouívá pøepínaè /h. Pracují se standardním vstupem a vıstupem, které lze pomocí rour(znak |) propojovat. Také je lze pøesmìrovat pomocí znaku >. Hranaté závorky znamenají volitelnı parametr nebo parametry a kulaté znamenají povinnı parametr.
+cd  [jméno adresáøe]: Zmìní aktuální pracovní adresáø shellu na adresáø z parametru, pokud je to validní adresáø.
+md (jména adresáøù): Vytvoøí nové adresáøe, pokud je k nim existující cesta.
+rd (jména adresáøù): Smae adresáøe, pokud jsou prázdné a ádnı proces je nemá otevøené jako aktuální.
+del (jména souborù): Smae soubory, pokud  je ádnı proces nemá otevøené.
+dir [jména adresáøù]: Vypíše obsah adresáøe do tabulky s pouitím jména a velikosti souboru. Kdy se jedná o adresáø, je místo velikosti vypsán typ <DIR>. Dále je vypsán poèet a velikost souborù a poèet podadresáøù, funguje i pokud je parametr soubor.
+ps : Vypíše seznam jmen, PID, aktuálních pracovích adresáøù a ID vláken všech bìících procesù.
+type [/q] (jména souborù): Vypíše obsah souboru. Pøepínaè /q umoòuje vıpis v tichém reimu tzn. bez názvu souborù.
+sort [jméno souboru]: Naète celı soubor nebo vstup a vypíše abecednì seøazené øádky. 
+wc [jméno souboru]: Poèítá øádky, slova a znaky vstupu a vısledky vypíše. 
+ rgen
+freq [jméno souboru]: Poèítá vıskyty jednotlivıch bytù ve vstupu a vısledné nenulové frekvence vypíše. 
+echo [text]: vypíše pøedanı text 
+
+
+TODO: uvolnit handly IO pøi shutdownu 
