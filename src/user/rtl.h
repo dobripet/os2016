@@ -13,6 +13,7 @@ void Print_Last_Error(FDHandle out, std::string prefix);
 void Print_Last_Error(FDHandle out);
 
 //pro parsovani prikazu - implementace v souboru rtl_parser.cpp
+bool splitByLines(std::string whole, std::vector<std::string> * lines);
 bool splitByPipes(std::string line, std::vector<std::string> * commandsStr);
 bool parseCommandRedirects(std::string commandStr, struct Parsed_command * parsedCommand);
 bool parseCommandParams(std::string command, std::string *switches, std::vector<std::string> *args);

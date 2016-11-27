@@ -179,10 +179,12 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				}
 				else if (i == 0) {
 					//prvni prikaz, zdedime (duplikujeme handle) stdin od rodice.
+					par.stdinIsConsole = stdinIsConsole;
 					Duplicate_File(STDIN, &std_in);
 				}
 				else {
 					//nemame presmerovani, ani to neni prvni prikaz - bude se cist z roury.
+					par.stdinIsConsole = false;
 					std_in = pipeRead[i - 1];
 					stdinIsPipe = true;
 				}
