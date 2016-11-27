@@ -1,11 +1,8 @@
-#include <iostream>
-#include <sstream>
-#include <random>
-
 #include "rtl.h"
 #include "c_rgen.h"
+#include <random>
 
-//prints random float numbers to stdout
+//vypisuje nahodna float cisla na vystup dokud neprijde EOF ze vstupu
 size_t __stdcall rgen(const CONTEXT &regs) {
 
 	FDHandle STDIN = (FDHandle)regs.R8;
@@ -14,7 +11,7 @@ size_t __stdcall rgen(const CONTEXT &regs) {
 
 	char * arg = (char*)regs.Rcx;
 
-	//parse arg
+	//parsovani argumentu
 	std::string switches;
 	std::vector<std::string> args;
 	if (!parseCommandParams(arg, &switches, &args)) {
@@ -23,7 +20,7 @@ size_t __stdcall rgen(const CONTEXT &regs) {
 		return (size_t)1;
 	}
 
-	//switches
+	//zpracovani prepinacu
 	for (size_t s = 0; s < switches.length(); s++) {
 		if (tolower(switches[s]) == 'h') {
 			char * msg = "Continuously prints random float numbers in range <0,1) to STDOUT.\n\n  RGEN\n\0";
@@ -44,7 +41,7 @@ size_t __stdcall rgen(const CONTEXT &regs) {
 			return (size_t)1;
 		}
 	}
-
+	//prilis mnoho parametru
 	if (args.size() > 0) {
 		std::string msg("Error: RGEN does not take parameters.\n");
 		Write_File(STDERR, (char*)msg.c_str(), strlen(msg.c_str()));

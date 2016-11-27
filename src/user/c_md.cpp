@@ -1,14 +1,14 @@
 ﻿#include "rtl.h"
 #include "c_md.h"
-#include <iostream>
 
+//vytvori adresar/e, cesta musi existovat
 size_t __stdcall md(const CONTEXT &regs) {
 
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
 	char * arg = (char*)regs.Rcx;
 
-	//parse arg
+	//parsovani argumentu
 	std::string switches;
 	std::vector<std::string> args;
 	if (!parseCommandParams(arg, &switches, &args)) {
@@ -17,7 +17,7 @@ size_t __stdcall md(const CONTEXT &regs) {
 		return (size_t)1;
 	}
 
-	//switches
+	//zpracovani prepinacu
 	for (size_t s = 0; s < switches.length(); s++) {
 		if (tolower(switches[s]) == 'h') {
 			char * msg = "Creates a directory.\n\n  MD[drive:]path\n\0";
@@ -39,13 +39,14 @@ size_t __stdcall md(const CONTEXT &regs) {
 		}
 	}
 
-	/*Calling with zero params*/
+	//zpracovani bez parametru
 	if (args.size() == 0) {
 		char * msg = "MD: The syntax of the command is incorrect. Missing parameters.\n\0";
 		Write_File(STDERR, msg, strlen(msg)); 
 		return (size_t)1;
 	}
 	else {
+		//postupne zpracovani kazdeho adresare
 		for (int i = 0; i < args.size(); i++) {
 			char * path = (char*)args[i].c_str();
 			if (!Make_Dir(path)) {

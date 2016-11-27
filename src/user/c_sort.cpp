@@ -1,14 +1,10 @@
 ﻿#include "rtl.h"
 #include "c_sort.h"
-
-#include <string>
-#include <iostream>
 #include <algorithm>
-
-/*Sorts lines of input and prints them*/
 
 std::string sortText(std::string text);
 
+//seradi radky vstupu abecedne a vypise je
 size_t __stdcall sort(const CONTEXT &regs) {
 
 	FDHandle STDIN = (FDHandle)regs.R8;
@@ -16,7 +12,7 @@ size_t __stdcall sort(const CONTEXT &regs) {
 	FDHandle STDERR = (FDHandle)regs.R10;
 	char * arg = (char*)regs.Rcx;
 
-	//parse arg
+	//parsovani argumentu
 	std::string switches;
 	std::vector<std::string> args;
 	if (!parseCommandParams(arg, &switches, &args)) {
@@ -25,7 +21,7 @@ size_t __stdcall sort(const CONTEXT &regs) {
 		return (size_t)1;
 	}
 
-	//switches
+	//zpracovani prepinacu
 	for (size_t s = 0; s < switches.length(); s++) {
 		if (tolower(switches[s]) == 'h') {
 			char * msg = "Sorts input lines.\n\n  SORT[[drive:][path]]filename\n\0";
@@ -51,16 +47,16 @@ size_t __stdcall sort(const CONTEXT &regs) {
 	size_t size;
 	bool success;
 
-	/*No params*/
+	//zpracovani bez parametru
 	if (args.size() == 0) {
-		/*Read from stdin until EOF*/
+		//cte ze vstupu dokud neni EOF
 		size_t filled;
 		std::string text = "";
 		char buffer[1025];
 		while (true){
 			Read_File(STDIN, 1024, buffer, &filled);
 			text += ((std::string)buffer).substr(0, filled);
-			if (buffer[filled] == EOF) { //goodbye
+			if (buffer[filled] == EOF) { //konec
 				break;
 			}
 
@@ -70,7 +66,7 @@ size_t __stdcall sort(const CONTEXT &regs) {
 		success = Write_File(STDOUT, (char *)sorted.c_str(), size, &written);		
 	}
 	else if (args.size() == 1) {
-		/*read from file*/
+		//cte ze souboru
 		FDHandle file;
 		char * path = (char*)args[0].c_str();
 		if (!Open_File(&file, path, F_MODE_READ)) {
@@ -81,7 +77,7 @@ size_t __stdcall sort(const CONTEXT &regs) {
 		size_t bsize = 1024;
 		size_t filled;
 		std::string text = "";
-		/*read whole file*/
+		//precte cely soubor
 		do {
 			if (!Read_File(file, bsize, buffer, &filled)) {
 				Print_Last_Error(STDERR, "SORT: An error occurred while reading from: " + std::string(path));
@@ -89,17 +85,18 @@ size_t __stdcall sort(const CONTEXT &regs) {
 			}
 			text += ((std::string)buffer).substr(0, filled);
 		} while (bsize == filled);
+		//seradi a vypises
 		std::string sorted = sortText(text);
 		size = sorted.length();
 		success = Write_File(STDOUT, (char *)sorted.c_str(), size, &written);		
 	}
 	else {
-		/*wrong number of params*/
+		//prilis mnoho parametru
 		char * msg = "SORT: The syntax of the command is incorrect.\n\0";
 		Write_File(STDERR, msg, strlen(msg));
 		return (size_t)1;
 	}
-	/*Handle not all has been written*/
+	//osetreni chyby vypisu
 	if (!success || written != size) {
 		if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
 			Print_Last_Error(STDERR, "SORT: writing to stdout failed.");
@@ -109,12 +106,12 @@ size_t __stdcall sort(const CONTEXT &regs) {
 	return (size_t)0;
 }
 
-
+//seradi abecedne radky textu
 std::string sortText(std::string text) {
 	size_t position = 0;
 	size_t from = 0;
 	std::vector<std::string> lines;
-	/*split by lines*/
+	//rozdeleni dole radek
 	int offset = 2;
 	while (true) {
 		offset = 2;
@@ -131,6 +128,7 @@ std::string sortText(std::string text) {
 		lines.push_back(text.substr(from, position-from));
 		from = position;
 	}
+	//serazeni a spojeni zpet
 	std::sort(lines.begin(), lines.end());
 	std::string sorted = "";
 	for (size_t i = 0; i < lines.size(); i++) {

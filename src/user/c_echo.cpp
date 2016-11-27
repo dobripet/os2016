@@ -1,9 +1,7 @@
 ﻿#include "rtl.h"
 #include "c_echo.h"
-#include <string>
-#include <iostream>
 
-/*prints whole input argument and a newline*/
+//vypise predany text
 size_t __stdcall echo(const CONTEXT &regs) {
 
 	FDHandle STDOUT = (FDHandle)regs.R9;
@@ -14,7 +12,7 @@ size_t __stdcall echo(const CONTEXT &regs) {
 	size_t size;
 	bool success;
 
-	//parse arg
+	//parsovani argumentu
 	std::string switches;
 	std::vector<std::string> args;
 	if (!parseCommandParams(arg, &switches, &args)) {
@@ -23,7 +21,7 @@ size_t __stdcall echo(const CONTEXT &regs) {
 		return (size_t)1;
 	}
 
-	//switches
+	//zpracovani prepinacu
 	for (size_t s = 0; s < switches.length(); s++) {
 		if (tolower(switches[s]) == 'h') {
 			char * msg = "Displays messages\n\n  ECHO[message]\n\nType ECHO without parameters to display the current echo setting.\n\0";
@@ -44,19 +42,20 @@ size_t __stdcall echo(const CONTEXT &regs) {
 			return (size_t)1;
 		}
 	}
-	/*No params*/
+	//zpracovani bez parametru, vypise stav
 	size = strlen(arg);
 	if (size == 0) {
 		char * msg = "ECHO is always on.\n\0";
 		size = strlen(msg);
 		success = Write_File(STDOUT, (char *)msg, size, &written);
 	}
+	//zapis parametru na vystup
 	else {
 		std::string m = std::string(arg) + "\n";
 		size = m.length();
 		success = Write_File(STDOUT, (char*)m.c_str(), size, &written);
 	}
-	/*Handle not all has been written*/
+	//osetreni chyby vypisu
 	if (!success || written != size) {
 		if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
 			Print_Last_Error(STDERR, "ECHO: writing to stdout failed.");

@@ -1,13 +1,10 @@
 #include "rtl.h"
 #include "c_wc.h"
-
-#include <iostream>
-#include <mutex>
 #include <sstream>
-#include <atomic>
 
 const int BUFFER_SIZE = 1024;
 
+//spocita pocet radek, slov a bytu vstupu, statistiku vypise
 size_t __stdcall wc(const CONTEXT &regs) {
 
 	FDHandle STDIN = (FDHandle)regs.R8;
@@ -15,7 +12,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 	FDHandle STDERR = (FDHandle)regs.R10;
 	char * arg = (char*)regs.Rcx;
 
-	//parse arg
+	//parsovani argumentu
 	std::string switches;
 	std::vector<std::string> args;
 	if (!parseCommandParams(arg, &switches, &args)) {
@@ -24,7 +21,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		return (size_t)1;
 	}
 
-	//switches
+	//zpracovani prepinacu
 	for (size_t s = 0; s < switches.length(); s++) {
 		if (tolower(switches[s]) == 'h') {
 			char * msg = "Counts lines, words and bytes of an input.\n\n  WC[[drive:][path]]filename\n\0";
@@ -51,11 +48,10 @@ size_t __stdcall wc(const CONTEXT &regs) {
 	size_t size;
 	bool success;
 
-	/*No params*/
+	//zpracovani bez parametru
 	if (args.size() == 0) {
-		/*Read from stdin until EOF*/
+		//cte ze vstupu dokud neni EOF
 		size_t filled;
-		//std::string text = "";
 		size_t words = 0;
 		size_t lines = 0;
 		size_t bytes = 0;
@@ -65,17 +61,17 @@ size_t __stdcall wc(const CONTEXT &regs) {
 			Read_File(STDIN, BUFFER_SIZE, buffer, &filled);
 			for (size_t i = 0; i < filled; i++) {
 				if (isblank(buffer[i])) {
-					//spaces and tabs
+					//mezery a tabulatory
 					if (!prev_blank) {
 						words++;
 						prev_blank = true;
 					}
 				}
 				else if (buffer[i] == '\r') {
-					//does nothing
+					//nedelej nic
 				}
 				else if (buffer[i] == '\n') {
-					//newline
+					//nove radky
 					lines++; 
 					if (!prev_blank) {
 						words++;
@@ -83,16 +79,17 @@ size_t __stdcall wc(const CONTEXT &regs) {
 					prev_blank = true;
 				}
 				else {
-					//regular char
+					//normalni znak
 					prev_blank = false;
 				}
 				bytes++;
 			}
-			if (buffer[filled] == EOF) { //goodbye
+			if (buffer[filled] == EOF) { //konec
 				break;
 			}
 
 		}
+		//hlavicka
 		std::string text = "";
 		std::stringstream ss;
 		ss.width(10);
@@ -121,7 +118,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		ss.str("");
 		size = text.length();
 		success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
-		/*Handle not all has been written*/
+		//osetreni chyby vypisu
 		if (!success || written != size) {
 			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
 				Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");
@@ -131,6 +128,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		}
 	}
 	else {
+		//hlavicka
 		std::string text = "";
 		std::stringstream ss;
 		ss.width(10);
@@ -151,7 +149,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		ss.str("");
 		size = text.length();
 		success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
-		/*Handle not all has been written*/
+		//osetreni chyby vypisu
 		if (!success || written != size) {
 			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
 				Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");
@@ -162,13 +160,13 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		size_t sum_words = 0;
 		size_t sum_lines = 0;
 		size_t sum_bytes = 0;
-		/*read from files*/
+		//postupne zpracovani kazdeho souboru
 		for (int i = 0; i < args.size(); i++) {
 			char * path = (char*)args[i].c_str();
 			FDHandle file;
 			if (!Open_File(&file, path, F_MODE_READ)) {
 				Print_Last_Error(STDERR, "WC: An error occurred while reading from: " + std::string(path));
-				continue;//continue to next file
+				continue;//pokracuj k dalsimu souboru
 			}
 			char buffer[BUFFER_SIZE + 1];
 			bool prev_blank = false;
@@ -177,7 +175,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 			size_t lines = 0;
 			size_t bytes = 0;
 			text = "";
-			/*read whole file*/
+			//cte cely soubor a pocita statistiku
 			do {
 				if (!Read_File(file, BUFFER_SIZE, buffer, &filled)) {
 					Print_Last_Error(STDERR, "WC: An error occurred while reading from: " + std::string(path));
@@ -185,17 +183,17 @@ size_t __stdcall wc(const CONTEXT &regs) {
 				}
 				for (size_t i = 0; i < filled; i++) {
 					if (isblank(buffer[i])) {
-						//spaces and tabs
+						//mezery a tabulatory
 						if (!prev_blank) {
 							words++;
 							prev_blank = true;
 						}
 					}
 					else if (buffer[i] == '\r') {
-						//does nothing
+						//nedelej nic
 					}
 					else if (buffer[i] == '\n') {
-						//newline
+						//nove radky
 						lines++;
 						if (!prev_blank) {
 							words++;
@@ -203,13 +201,13 @@ size_t __stdcall wc(const CONTEXT &regs) {
 						prev_blank = true;
 					}
 					else {
-						//regular char
+						//normalni znak
 						prev_blank = false;
 					}
 					bytes++;
 				}
 			} while (BUFFER_SIZE == filled);
-
+			//tabulka
 			ss.width(10);
 			ss << lines;
 			sum_lines += lines;
@@ -231,7 +229,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 			ss.str("");
 			size = text.length();
 			success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
-			/*Handle not all has been written*/
+			//osetreni chyby vypisu
 			if (!success || written != size) {
 				if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
 					Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");
@@ -240,6 +238,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 				return (size_t)0;
 			}
 		}
+		//celkova statistika
 		text = "";
 		ss.width(10);
 		ss << sum_lines;
@@ -259,6 +258,7 @@ size_t __stdcall wc(const CONTEXT &regs) {
 		ss.str("");
 		size = text.length();
 		success = Write_File(STDOUT, (char *)text.c_str(), size, &written);
+		//osetreni chyby vypisu
 		if (!success || written != size) {
 			if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
 				Print_Last_Error(STDERR, "WC: An error occurred while writing to STDOUT\n");

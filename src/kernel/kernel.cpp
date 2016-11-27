@@ -74,6 +74,6 @@ void __stdcall Run_VM() {
 	else {
 		joinProcess(pid);
 	}
-
+	
 	Shutdown_Kernel();
 }
