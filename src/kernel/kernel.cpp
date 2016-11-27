@@ -7,6 +7,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdio>
+#include <io.h>
 #include "..\common\api.h"
 
 HMODULE User_Programs;
@@ -26,7 +28,6 @@ void Initialize_Kernel() {
 }
 
 void Shutdown_Kernel() {
-	//closeSystemIO();//uvolni handly 0,1,2 pro standardni io
 	FreeLibrary(User_Programs);
 }
 
@@ -46,13 +47,12 @@ void __stdcall Run_VM() {
 
 	Initialize_Kernel();
 
-	std::cout << std::endl;
 	struct node *a, *b, *c, *d;
 	mkdir(&a, "zcu", getRoot());
 	mkdir(&b, "zcu/prvak", getRoot());
 	openFile(&c, "aaa", true, true, b);
 	mkdir(&b, "zcu/druhak", getRoot());
-	setData(&c,"nejaky text\0", strlen("nejaky text\0"));
+	setData(&c, "nejaky text\0", strlen("nejaky text\0"));
 	char *buffer = (char*)malloc(sizeof(char) * (strlen("nejaky text\0") + 1));
 	buffer[strlen("nejaky text\0")] = '\0';
 	size_t filled;
@@ -67,9 +67,15 @@ void __stdcall Run_VM() {
 	par.handles.push_back((FDHandle)2); 
 	par.name = "shell";
 	par.handles.push_back((FDHandle)3);
+	if (_isatty(_fileno(stdin))) {
+		par.stdinIsConsole = true;
+	} else {
+		par.stdinIsConsole = false;
+	}
 	int pid;
+	std::cout << "Boot successful." << std::endl;
 	if (createProcess(&par, &pid) == S_FALSE) {
-		std::cout << "It was not possible to start shell. Shutting down..." << std::endl;
+		std::cerr << "It was not possible to start shell. Shutting down..." << std::endl;
 	}
 	else {
 		joinProcess(pid);

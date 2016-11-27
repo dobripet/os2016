@@ -5,7 +5,6 @@
 #include <thread>
 #include <Windows.h>
 
-
 std::mutex process_table_mtx; //mutex for process table
 PCB * process_table[PROCESS_TABLE_SIZE] = { nullptr };//process table with max 1024 processes
 std::unordered_map< std::thread::id, int> TIDtoPID; //mapovani std::thread::id na nas pid
@@ -35,8 +34,7 @@ void HandleProcess(CONTEXT & regs) {
 	}
 }
 
-
-void runProcess(TEntryPoint func, int pid, char * arg) {
+void runProcess(TEntryPoint func, int pid, char * arg, bool stdinIsConsole) {
 
 	{
 		std::lock_guard<std::mutex> lock(process_table_mtx);
@@ -52,6 +50,7 @@ void runProcess(TEntryPoint func, int pid, char * arg) {
 	regs.Rax = (decltype(regs.Rax))process_table[pid]->name;
 	regs.Rcx = (decltype(regs.Rcx))arg;
 	regs.R13 = (decltype(regs.R13))&(process_table[pid]->currentPath);
+	regs.R14 = (decltype(regs.R14))&stdinIsConsole;
 
 	//zavolame vstupni bod kodu procesu
 	size_t ret = func(regs);
@@ -116,7 +115,7 @@ HRESULT createProcess(command_params * par, int *proc_pid)
 	}
 
 	//konecne spustime proces
-	process_table[pid]->thr = std::thread(runProcess, func, pid, par->arg);
+	process_table[pid]->thr = std::thread(runProcess, func, pid, par->arg, par->stdinIsConsole);
 	*proc_pid = pid;
 	return S_OK;
 }

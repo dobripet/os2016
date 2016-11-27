@@ -60,11 +60,9 @@ typedef struct get_node_info {
 /*struktura pro predani parametru spousteni procesu*/
 typedef struct create_process_params {
 	std::vector <FDHandle> handles; //0=STDIN, 1=STDOUT, 2=STDERR, 3=SLOZKA kde se proces nachazi
-	//char * switches; //prepinace programu
-	//char ** argv; //argumenty programu
-	//int argc; //pocet argumentu
 	char * arg; //argumenty a prepinace (jako jeden string)
 	const char * name; //jmeno programu
+	bool stdinIsConsole;
 } command_params;
 
 

@@ -13,6 +13,20 @@ const std::set<std::string> SET_valid_commands = { "exit", "cd", "md", "wc", "rd
 const std::regex RGX_nab("[^a-zA-Z]");
 //const std::regex RGX_abnum("[a-zA-Z0-9\\\\.]+");
 const std::regex RGX_arg("[a-zA-z0-9\\\\._]+|[^ \t\n\r\"<>]+");
+const std::regex RGX_line("[\n\r]+");
+
+bool splitByLines(std::string whole, std::vector<std::string> * lines) {
+	std::smatch newline;
+	while (whole.length() > 0 && std::regex_search(whole, newline, RGX_line)) {
+		(*lines).push_back(newline.prefix());
+		whole = newline.suffix();
+	}
+	if (whole.length() > 0) {
+		(*lines).push_back(whole);
+	}
+	return true;
+}
+
 
 //rozseka poslanou sekvenci prikazu (line) podle rour (pokud nejsou mezi "")
 bool splitByPipes(std::string line, std::vector<std::string> * commandsStr) {
