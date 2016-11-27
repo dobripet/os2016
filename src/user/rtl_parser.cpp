@@ -11,8 +11,8 @@ std::string get_error_message() {
 
 const std::set<std::string> SET_valid_commands = { "exit", "cd", "md", "wc", "rd", "echo", "dir", "type", "freq", "rgen", "ps", "sort", "shell", "del" };
 const std::regex RGX_nab("[^a-zA-Z]");
-const std::regex RGX_abnum("[a-zA-Z0-9]+");
-const std::regex RGX_arg("[a-zA-z0-9]+|[^ \t\"]+");
+//const std::regex RGX_abnum("[a-zA-Z0-9\\\\.]+");
+const std::regex RGX_arg("[a-zA-z0-9\\\\._]+|[^ \t\n\r\"<>]+");
 
 //rozseka poslanou sekvenci prikazu (line) podle rour (pokud nejsou mezi "")
 bool splitByPipes(std::string line, std::vector<std::string> * commandsStr) {
@@ -186,7 +186,7 @@ bool parseCommandRedirects(std::string commandStr, Parsed_command * parsedComman
 					continue;
 				}
 				std::string suffix = commandStr.substr(i, std::string::npos);
-				std::regex_search(suffix, command_match, RGX_abnum);
+				std::regex_search(suffix, command_match, RGX_arg);
 				std::string m = command_match.str();
 				if (inPending) {
 					parsedCommand->redirectstdin = true;
