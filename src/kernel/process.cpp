@@ -1,13 +1,12 @@
 #include "process.h"
 #include "kernel.h"
 #include "io.h"
-#include <iostream>
 #include <thread>
 #include <Windows.h>
 
 
-std::mutex process_table_mtx; //mutex for process table
-PCB * process_table[PROCESS_TABLE_SIZE] = { nullptr };//process table with max 1024 processes
+std::mutex process_table_mtx; //mutex pro tabulky procesu
+PCB * process_table[PROCESS_TABLE_SIZE] = { nullptr };//tabulka procesu pro max 1024 procesu
 std::unordered_map< std::thread::id, int> TIDtoPID; //mapovani std::thread::id na nas pid
 
 void HandleProcess(CONTEXT & regs) {
@@ -67,6 +66,7 @@ void runProcess(TEntryPoint func, int pid, char * arg) {
 HRESULT createProcess(command_params * par, int *proc_pid)
 {
 	int pid = -1;
+	//najde prvni misto volne v tabulce procesu a vytvori novy PCB
 	{
 		std::lock_guard<std::mutex> lock(process_table_mtx);
 		for (int i = 0; i < PROCESS_TABLE_SIZE; i++) {
@@ -134,8 +134,10 @@ HRESULT joinProcess(int pid) {
 }
 HRESULT getProcesses(std::vector<process_info*> *all_info) {
 	std::lock_guard<std::mutex> lock(process_table_mtx);
+	//projde tabulku procesu
 	for (size_t i = 0; i < PROCESS_TABLE_SIZE; i++) {
 		if (process_table[i] != nullptr) {
+			//pro kazdy existujici proces vytvori info a plni jej o vektoru
 			process_info *info = new process_info;
 			info->name = process_table[i]->name;
 			info->pid = i;

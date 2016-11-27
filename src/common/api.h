@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <string>
 #include <vector>
 #include <thread>
 
@@ -26,6 +27,8 @@ const int ERR_IO_WRITE_STD = 0x207; //neslo zapsat na STDOUT (konzole).. neni na
 const int ERR_IO_PIPE_READCLOSED = 0x208; //roura je zavrena pro cteni (tj. nelze zapisovat)
 const int ERR_IO_READ_STD = 0x209; //neslo cist ze STDIN (konzole).. neni nase chyba
 const int ERR_IO_FOLDER_EXISTS = 0x210; //slozka uz existuje (prikaz md)
+const int ERR_IO_FILE_READ_ONLY = 0x211; //soubor otevren pouze pro cteni
+const int ERR_IO_FILE_WRITE_ONLY = 0x212; //soubor otevren pouze pro zapis
 
 
 //IO konstanty
