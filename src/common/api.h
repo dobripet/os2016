@@ -12,7 +12,7 @@ typedef void(__stdcall *TSysCall)(CONTEXT &context);			//prototyp funkce, ktera 
 
 const __int64 CarryFlag = 1;
 
-/*Error codes*/
+//Error codes
 const int ERR_NOERROR = 0x0; //zadny error
 const int ERR_PROCESS_CREATE = 0x101; //proces nejde vyrobit
 const int ERR_PROCESS_NOTFOUND = 0x102; //nenalezen vstupni bod procesu
@@ -28,19 +28,17 @@ const int ERR_IO_READ_STD = 0x209; //neslo cist ze STDIN (konzole).. neni nase c
 const int ERR_IO_FOLDER_EXISTS = 0x210; //slozka uz existuje (prikaz md)
 
 
-/*IO konstanty*/
+//IO konstanty
 const int F_MODE_READ = 7;
 const int F_MODE_WRITE = 8;
 const int F_MODE_BOTH = 9;
-//const int F_MODE_CLEAR_WRITE = 10;
-//const int F_MODE_CLEAR_BOTH = 11;
 const bool F_OPEN_REWRITE = true;
 const bool F_OPEN_APPEND = false;
 
 const int TYPE_DIRECTORY = 0;
 const int TYPE_FILE = 1;
 
-/*struktura pro predani vlastnosti procesu*/
+//struktura pro predani vlastnosti procesu
 typedef struct get_process_info {
 	size_t pid; // pid procesu
 	std::thread::id threadID; //id threadu
@@ -48,7 +46,7 @@ typedef struct get_process_info {
 	std::string workingDir; //slozka kde je proces spusten
 } process_info;
 
-/*struktura pro predani vlastnosti procesu*/
+//struktura pro predani vlastnosti uzlu
 typedef struct get_node_info {
 	std::string name; //jmeno nodu
 	size_t size; // velikost nodu
@@ -57,12 +55,9 @@ typedef struct get_node_info {
 	std::string pathParent;//absolutni cesta rodice
 } node_info;
 
-/*struktura pro predani parametru spousteni procesu*/
+//struktura pro predani parametru spousteni procesu
 typedef struct create_process_params {
 	std::vector <FDHandle> handles; //0=STDIN, 1=STDOUT, 2=STDERR, 3=SLOZKA kde se proces nachazi
-	//char * switches; //prepinace programu
-	//char ** argv; //argumenty programu
-	//int argc; //pocet argumentu
 	char * arg; //argumenty a prepinace (jako jeden string)
 	const char * name; //jmeno programu
 } command_params;
