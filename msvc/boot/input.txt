@@ -1,3 +1,3 @@
 cd zcu
 echo aaa > f
-type f
+type f /q
