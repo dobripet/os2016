@@ -1,22 +1,28 @@
 Kernel
 Filesystem
-Jeho implementace se v kernelu nachází v souborech filesystem.h a filesystem.cpp. Filesystem je pouze v RAM a modelován stromovou strukturou pomocí uzlù, které pøedstavuje struktura node, která v sobì uchovává odkaz na rodièe a seznam svých potomkù. Dále nese informaci o jeho jménu, typu (zda se jedná o složku nebo soubor) a datech. Data ukládáme jako string. Obsahuje obslužné funkce viditelné pouze pro jádro, které umožòují pøímoèarou manipulaci.
+Jeho implementace se v kernelu nachází v souborech filesystem.h a filesystem.cpp. Filesystem je pouze v RAM a modelován stromovou strukturou pomocí uzlù, které pøedstavuje struktura node. Ta v sobì uchovává odkaz na rodièe a seznam svých potomkù. Dále nese informaci o jeho jménu, typu (zda se jedná o složku nebo soubor) a datech. Data ukládáme jako string. Obsahuje obslužné funkce viditelné pouze pro jádro, které umožòují pøímoèarou manipulaci.
 
 IO operace
-Jejich implementace se nachází v souborech io.h a io.cpp. Nachází se zde dvì tabulky. První tabulka v sobì uchovává struktury opened_file, které v sobì mají informaci o typu souboru (stdio, roura a uzel), ukazatel na nìj a poètu otevøení. V druhé tabulce se nachází struktury open_file_instance, které v sobì uchovávají handle(index do tabulky otevøených souborù), typ otevøení(zápis, ètení a oboje) a pozici pro ètení a zápis. Také  se  zde obsluhují systémová volání týkající se IO. Implementovali jsme jich 12.
-scWriteFile – zapíše na výstup urèený FDHandlem daný poèet znakù z bufferu a vrátí poèet úspìšnì zapsaných
-ScOpenFile – otevøe soubor dané cesty a vrátí na nìj FDHandle, s využitím flagu lze jen kontrolovat existenci souboru
-scCreatePipe – vytvoøí rouru v systému a vrátí FDHandly na její konce
-scCloseFile – zavøe otevøený soubor urèený FDHandlem
-scReadFile – pøeète poèet bitù ze souboru urèeného FDHandlem do pøedaného bufferu a vrátí poèet úspìšnì pøeètených znakù
+Jejich implementace se nachází v souborech io.h a io.cpp. Nachází se zde dvì tabulky. První tabulka v sobì uchovává struktury opened_file (maximálnì 2056 unikátních souborù). Ty v sobì mají informaci o typu souboru (stdio, roura a uzel), ukazatel na nìj a poètu otevøení. V druhé tabulce se nachází struktury open_file_instance (maximálnì 8224 instancí), které v sobì uchovávají handle (index do tabulky otevøených souborù), typ otevøení (zápis, ètení a oboje) a pozici pro ètení a zápis. Také  se  zde obsluhují systémová volání týkající se IO. Implementovali jsme jich 12.
+scWriteFile – Zapíše na výstup urèený FDHandlem daný poèet znakù z bufferu a vrátí poèet úspìšnì zapsaných.
+ScOpenFile – Otevøe soubor dané cesty a vrátí na nìj FDHandle, s využitím flagu lze jen kontrolovat existenci souboru.
+scCreatePipe – Vytvoøí rouru v systému a vrátí FDHandly na její konce.
+scCloseFile – Zavøe otevøený soubor urèený FDHandlem.
+scReadFile – Pøeète poèet bitù ze souboru urèeného FDHandlem do pøedaného bufferu a vrátí poèet úspìšnì pøeètených znakù.
 scDuplicateHandle 
 scPeekFile
-scMakeDir – vytvoøí ve filesystému složku daného jména(cesty)
-scChangeDir – zmìní pracovní složku daného procesu
-scRemoveDir – smaže danou složku ze systému, pokud je prázdná nebo není domovská jinému procesu
-scRemoveFile – smaže daný soubor ze systému pokud , pokud není ještì nìkde otevøený
-scGetDirNodes – vrátí seznam struktur node_info, které obsahují informace o uzlu, jako jsou jeho jméno, velikost, typ, absolutní cestu a pøípadnì absolutní cestu rodièe
+scMakeDir – Vytvoøí ve filesystému složku daného jména (cesty).
+scChangeDir – Zmìní pracovní složku daného procesu.
+scRemoveDir – Smaže danou složku ze systému, pokud je prázdná nebo není domovská jinému procesu.
+scRemoveFile – Smaže daný soubor ze systému pokud , pokud není ještì nìkde otevøený.
+scGetDirNodes – Vrátí seznam struktur node_info, které obsahují informace o uzlu. To jsou jeho jméno, velikost, typ, absolutní cestu a pøípadnì absolutní cestu rodièe.
 
+Procesy
+Jejich implementace se v kernelu nachází v souborech process.h a process.cpp. Nachází se zde tabulka procesù (maximálnì 1024 procesù), která v sobì uchovává struktury PCB (process control block). V tìch se nachází jméno procesu, jeho vlákno, vektor handlù do tabulky instancí otevøených souborù a øetìzec aktuální cesty. První ètyøi handly jsou dané pro každý proces. Handle 0 je standardní vstup, handle 1 je standardní výstup, handle 2 je standardní chybový výstup a handle 3 je pracovní adresáø procesu. PID je index do tabulky procesù a k rychlému pøevodu identifikátoru vlákna na PID se požívá mapa. Jsou zde implementována 3 systémová volání.
+scCreateProcess – Spouští nový proces ve vlastním vláknì a vrací PID.
+scJoinProcess – Provede join vlákna procesu s daným PID.
+scGetProcesses - Vrátí seznam struktur process_info, které obsahují informace o procesu. To jsou jeho jméno, PID, id vlákna a cestu aktuálního pracovního adresáøe.
+Spouštìní procesu probíhá
 
 Boot Systému
 Pøi bootu se vytvoøí první tøi položky v tabulce otevøených souborù, které pøedstavují standardní vstup, výstup a chybový výstup celého systému. Dále se vytvoøí koøenový node filesystemu C://. Poté je již možné spustit shell jako první proces s pøedanými handly na STDIO a C://.
@@ -38,4 +44,3 @@ freq [jméno souboru]: Poèítá výskyty jednotlivých bytù ve vstupu a výsledné nenu
 echo [text]: vypíše pøedaný text 
 
 
-TODO: uvolnit handly IO pøi shutdownu 
