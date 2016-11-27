@@ -11,6 +11,8 @@ void close_pipes(std::vector<FDHandle> in, std::vector<FDHandle> out, size_t i, 
 	}
 }
 
+//vstupni bod shellu
+//shell prijima prikazy a spousti procesy
 size_t __stdcall shell(const CONTEXT &regs) {
 
 	FDHandle STDIN = (FDHandle)regs.R8;
@@ -35,6 +37,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 		char * shell__ = (char *)shell_.c_str();
 		Write_File(STDOUT, shell__, strlen(shell__));
 
+		//precteme prikazy
 		size_t filled;
 		Read_File(STDIN, 1000, buf_command, &filled);
 		if (filled == 0 && buf_command[filled] == EOF) { //goodbye
@@ -57,6 +60,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 				Write_File(STDOUT, shell__, strlen(shell__));
 			}
 
+			//necteme z konzole, budeme tedy vypisovat provadeny prikaz
 			if (!stdinIsConsole) {
 				std::string command = line + '\n';
 				char * command_ = (char *)command.c_str();
@@ -142,7 +146,7 @@ size_t __stdcall shell(const CONTEXT &regs) {
 						Write_File(STDOUT, errTxt, strlen(errTxt));
 					}
 					else if (args.size() != 1) {
-						Write_File(STDOUT, (char*)(*path).c_str(), (*path).length());
+						Write_File(STDOUT, (char*)(*path + '\n').c_str(), (*path + '\n').length());
 					}
 					else {
 						if (!Change_Dir((char*)args[0].c_str())) {
@@ -255,11 +259,10 @@ size_t __stdcall shell(const CONTEXT &regs) {
 		}	
 	} //konec cyklu shellu
 
-
+	//shell konci
 	st = "\nShell exits.\n";
 	st_ = (char *)st.c_str();
 	Write_File(STDOUT, st_, strlen(st_));
-
 	delete[] buf_command;
 	return(size_t)0;
 }
