@@ -5,16 +5,19 @@
 #include <cctype>
 #include <mutex>
 
-
+//zamek pro operace, ktere meni strukturu stromu
 std::mutex FS_mtx;
 
+//vraci true pokud se "a" a "b" rovnaji v lowercase
 bool char_equals_lowerCase(unsigned char a, unsigned char b) {
 	return std::tolower(a) == std::tolower(b);
 }
+//porovna v lowercase dva stringy (vraci true pokud jsou stejne)
 bool str_equals(std::string const& a, std::string const& b) {
 	return a.length() == b.length() && std::equal(b.begin(), b.end(),a.begin(), char_equals_lowerCase);
 }
 
+//vytvori korenovy uzel stromu (slozka C:)
 node *mkroot() {
 	struct node *newFile = new node;
 	newFile->type = TYPE_DIRECTORY;
@@ -23,6 +26,7 @@ node *mkroot() {
 	return newFile;
 }
 
+//koren stromu
 struct node *root = mkroot();
 
 HRESULT mkdir(node **dir, char *path, node *currentDir) {

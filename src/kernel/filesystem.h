@@ -7,12 +7,13 @@
 #include <vector>
 #include <algorithm>
 
+//struktura pro ulozeni souboru - uzel ve stromu
 typedef struct node {
-	int type;
-	std::string name;
-	std::string data;
-	std::vector<struct node*> children;
-	struct node *parent;
+	int type; //slozka nebo soubor
+	std::string name; //nazev
+	std::string data; //data
+	std::vector<struct node*> children; //vektor potomku ve stromu
+	struct node *parent; //rodic ve stromu
 } node;
 
 //vraci korenovy uzel filesystemu (C://)
