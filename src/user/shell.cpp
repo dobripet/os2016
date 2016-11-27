@@ -4,7 +4,7 @@
 #include <thread>
 #include <chrono>
 
-/* zavre roury procesy na obou stranach*/
+/* zavre roury procesu na obou stranach*/
 void close_pipes(std::vector<FDHandle> in, std::vector<FDHandle> out, size_t i, size_t last) {
 	if (i != 0) {
 		Close_File(in[i - 1]);
