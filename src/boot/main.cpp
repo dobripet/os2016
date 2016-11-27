@@ -1,6 +1,6 @@
 #include <Windows.h>
 
-/* takhle jsme kod mainu dostali, takze jsme to nememenili - nepokouseli se warningy odstranit, pouze je vypnuli */
+/* takhle jsme kod mainu dostali, takze jsme ho nemenili - nepokouseli se warningy odstranit, pouze je vypnuli */
 // C4191 = 'type cast': unsafe conversion from 'FARPROC' to 'TRun_VM' 
 // C4007 = 'main': must be '__cdecl'
 #pragma warning ( push )
