@@ -82,7 +82,7 @@ CONTEXT Prepare_SysCall_Context(__int8 major, __int8 minor) {
 	return regs;
 }
 
-//returns true if syscall was completed without an error
+//return true pokud syscall probehl bez chyb
 bool Do_SysCall(CONTEXT &regs) {
 	SysCall(regs);
 	const bool failed = test_cf(regs.EFlags);

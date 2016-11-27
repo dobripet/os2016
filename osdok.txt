@@ -19,10 +19,14 @@ scGetDirNodes – Vrátí seznam struktur node_info, které obsahují informace o uzlu
 
 Procesy
 Jejich implementace se v kernelu nachází v souborech process.h a process.cpp. Nachází se zde tabulka procesù (maximálnì 1024 procesù), která v sobì uchovává struktury PCB (process control block). V tìch se nachází jméno procesu, jeho vlákno, vektor handlù do tabulky instancí otevøenıch souborù a øetìzec aktuální cesty. První ètyøi handly jsou dané pro kadı proces. Handle 0 je standardní vstup, handle 1 je standardní vıstup, handle 2 je standardní chybovı vıstup a handle 3 je pracovní adresáø procesu. PID je index do tabulky procesù a k rychlému pøevodu identifikátoru vlákna na PID se poívá mapa. Jsou zde implementována 3 systémová volání.
-scCreateProcess – Spouští novı proces ve vlastním vláknì a vrací PID.
+scCreateProcess – Spouští novı proces definovanı strukturou command_params ve vlastním vláknì a vrací PID.
 scJoinProcess – Provede join vlákna procesu s danım PID.
 scGetProcesses - Vrátí seznam struktur process_info, které obsahují informace o procesu. To jsou jeho jméno, PID, id vlákna a cestu aktuálního pracovního adresáøe.
-Spouštìní procesu probíhá
+Pro spouštìní procesu je potøeba naplnit strukturu command_params. V té se nachází vektor prvních 4 handlù, název programu v uivatelské knihovnì a øetìzec, kterı obsahuje parametry spouštìného programu. Pomocí systémového volání se tato struktura dostane do jádra. Zde se vytvoøí novı PCB záznam na volném místì v tabulce procesù. Poté se najde vstupní bod daného uivatelského programu a obalenı obslunımi funkcemi (zajišují øádné otevøení a zavøení handlù procesu, úpravu PCB a mapy) se vykoná ve vlastním vláknì. 
+
+Parser
+
+Shell
 
 Boot Systému
 Pøi bootu se vytvoøí první tøi poloky v tabulce otevøenıch souborù, které pøedstavují standardní vstup, vıstup a chybovı vıstup celého systému. Dále se vytvoøí koøenovı node filesystemu C://. Poté je ji moné spustit shell jako první proces s pøedanımi handly na STDIO a C://.

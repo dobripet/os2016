@@ -48,7 +48,7 @@ void initSystemIO() {
 	opened_files_table_instances[2]->mode = F_MODE_WRITE;
 
 	/*
-	working directory (FS root) for the first shell
+	pracovni adresar (root FS) pro prvni shell
 	*/
 	opened_files_table[3] = new opened_file();
 	opened_files_table[3]->node = getRoot();
@@ -326,20 +326,18 @@ HRESULT duplicate_handle(FDHandle orig_handle, FDHandle * duplicated_handle) {
 
 //jen pro soubory (node) - otevre soubor ve FS a vrati na nej deskriptor v "handle"
 HRESULT open_file(char *path, int MODE, bool rewrite, FDHandle * handle) {
-
 	FDHandle H;
-
 	const int pid = TIDtoPID[std::this_thread::get_id()]; 
 	const FDHandle inst_h = process_table[pid]->IO_descriptors[3]; 
 	const FDHandle file_h = opened_files_table_instances[inst_h]->file; 
 	node * current = opened_files_table[file_h]->node;
-
 	node *n;
+	//vytvoreni nebo nalezeni souboru ve FS
 	HRESULT ok = openFile(&n, path, rewrite, MODE != F_MODE_READ, current);
 	if (ok == S_FALSE) {
 		return S_FALSE;
 	}
-
+	//pokud neni otevreny pridat do tabulky otevrenych
 	if (!findIfOpenedFileExists(n, &H)) {
 		int _h = takeFirstEmptyPlaceInFileTable();
 		if (_h < 0) {
@@ -350,41 +348,40 @@ HRESULT open_file(char *path, int MODE, bool rewrite, FDHandle * handle) {
 		opened_files_table[_h]->node = n;
 		H = _h;
 	}
-
+	//pridat do tabulky instanci
 	int _h = takeFirstEmptyPlaceInInstanceTable();
 	if (_h < 0) {
 		SetLastError(ERR_IO_FILE_CREATE);
 		return S_FALSE;
 	}
+	//zvysit pocet otevreni
 	{
 		std::lock_guard<std::mutex> lock(files_table_mtx);
 		opened_files_table[H]->openCount++;
 	}
-
 	opened_files_table_instances[_h]->mode = MODE;
 	opened_files_table_instances[_h]->file = H;
 	*handle = _h;
+	//pridat procesu do PCB
 	process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors.push_back(_h);
 	return S_OK;
 }
 
 //uzavre soubor identifikovany v "handle". Pokud to byl posledni ukazatel na otevreny soubor, bude tento i smazan z tabulky otevrenych souboru
 HRESULT close_file(FDHandle handle) {
-
 	std::vector<FDHandle> &handles = process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors;
 	handles.erase(std::remove(handles.begin(), handles.end(), handle), handles.end()); //smazat z PCB
-
 	FD_instance * inst = opened_files_table_instances[handle];
 	if (inst == nullptr) {
 		return S_FALSE;
 	}
 	FD * fd = opened_files_table[inst->file];
-
+	//snizi pocet instanci
 	{
 		std::lock_guard<std::mutex> lock(files_table_mtx);
 		fd->openCount--;
 	}
-
+	//osetreni roury
 	if (fd->FILE_TYPE == F_TYPE_PIPE) {
 		if (inst->mode == F_MODE_WRITE && !findIfSomeoneElseHasPipeOpenedForWriting(handle, inst->file)) {
 			fd->pipe->close_write();
@@ -393,7 +390,7 @@ HRESULT close_file(FDHandle handle) {
 			fd->pipe->close_read();
 		}
 	}
-
+	//odebrani z tabulek
 	std::lock_guard<std::mutex> lock(files_table_mtx);
 	if (fd->openCount <= 0) {	
 		if (fd->FILE_TYPE == F_TYPE_PIPE) {
@@ -443,16 +440,16 @@ HRESULT peek_file(FDHandle handle, size_t *available) {
 //tj. precte mene, nez bylo pozadovano (howMuch), bude EOF v buf[read].
 //Nedava na konec \0, to si musi uzivatelsky program pohlidat sam.
 HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read) {
-
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
-	opened_file *file = opened_files_table[file_inst->file];
-	
+	opened_file *file = opened_files_table[file_inst->file];	
 	if (file_inst->mode == F_MODE_WRITE) {
-		//TODO set error ze neni pro cteni
-		return 0;
+		//otevreni pouze pro cteni
+		SetLastError(ERR_IO_FILE_WRITE_ONLY);
+		return S_FALSE;
 	}
 	switch (file->FILE_TYPE) {
 	case F_TYPE_STD: {
+		//cteni ze stdin kernelu
 		unsigned long r;
 		bool success = (ReadFile(file->std, buf, (DWORD)howMuch, &r, nullptr) != FALSE);
 		if (r == 0 && success) {
@@ -466,10 +463,12 @@ HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read) {
 		break;
 	}
 	case F_TYPE_PIPE: {
+		//cteni z roury
 		file->pipe->read(howMuch, buf, read);
 		break;
 	}
 	case F_TYPE_FILE: {
+		//cteni ze souboru FS
 		bool success = (S_OK == getData(&(file->node), file_inst->pos, howMuch, &buf, read));
 		file_inst->pos += *read;
 		break;
@@ -479,16 +478,16 @@ HRESULT read_file(FDHandle handle, size_t howMuch, char * buf, size_t * read) {
 }
 
 HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written) {
-
 	opened_file_instance *file_inst = opened_files_table_instances[handle];
 	opened_file *file = opened_files_table[file_inst->file];
-
 	if (file_inst->mode == F_MODE_READ) {
-		//TODO set error ze neni pro zapis
+		//otevreni pouze pro zapis
+		SetLastError(ERR_IO_FILE_READ_ONLY);
 		return S_FALSE;
 	}
 	switch (file->FILE_TYPE) {
 	case F_TYPE_STD: {
+		//zapis na std out kernelu
 		if (WriteFile(file->std, buf, (DWORD)howMuch, (LPDWORD)written, nullptr) == FALSE) {
 			*written = 0;
 			SetLastError(ERR_IO_WRITE_STD);
@@ -497,12 +496,14 @@ HRESULT write_file(FDHandle handle, size_t howMuch, char * buf, size_t *written)
 		break;
 	}
 	case F_TYPE_PIPE: {
+		//zapis do roury
 		if (!((file->pipe)->write(buf, howMuch, written))) {
 			return S_FALSE;
 		}
 		break;
 	}
 	case F_TYPE_FILE: {
+		//zapis do souboru ve FS
 		if (setData(&(file->node), buf, howMuch) == S_OK) {
 			*written = howMuch;
 		} else {
@@ -525,56 +526,52 @@ HRESULT mkdir(char * path) {
 }
 
 HRESULT remove_dir(char * path) {
-
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
 	node * currentNode = opened_files_table[currentInst->file]->node;
-
 	node *n;
 	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
-		/*not found, chybu nastavuje FS*/
+		//not found, chybu nastavuje FS
 		return S_FALSE;
 	}
 	if (n->type != TYPE_DIRECTORY) {
-		/*not directory*/
+		//neni to slozka
 		SetLastError(ERR_IO_FILE_ISNOTFOLDER);
 		return S_FALSE;
 	}
 	FDHandle openedHandle;
 	bool exists = findIfOpenedFileExists(n, &openedHandle);
 	if (exists) {
-		/*dir is being used by another process*/
+		//je otevreny i v jinem procesu
 		SetLastError(ERR_IO_FILE_ISOPENED);
 		return S_FALSE;
 	}
 	return deleteNode(n);
 }
 HRESULT remove_file(char * path) {
-
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
 	node * currentNode = opened_files_table[currentInst->file]->node;
-
 	node *n;
 	HRESULT ok = getNodeFromPath(path, true, currentNode, &n);
 	if (ok != S_OK) {
-		/*not found, chybu nastavuje FS*/
+		//not found, chybu nastavuje FS
 		return S_FALSE;
 	}
 	if (n->type != TYPE_FILE) {
-		/*it's not a file*/
+		//neni to soubor
 		SetLastError(ERR_IO_FILE_ISNOTFILE);
 		return S_FALSE;
 	}
 	FDHandle openedHandle;
 	bool exists = findIfOpenedFileExists(n, &openedHandle);
 	if (exists) {
-		/*file is being used by another process*/
+		//je otevreny i v jinem procesu
 		SetLastError(ERR_IO_FILE_ISOPENED);
 		return S_FALSE;
 	}
 	return deleteNode(n);
 }
-/*On zero position is always current dir*/
+
 HRESULT getDirNodes(std::vector<node_info*> *all_info, char *path) {
 	opened_file_instance *currentInst = opened_files_table_instances[process_table[TIDtoPID[std::this_thread::get_id()]]->IO_descriptors[3]];
 	node * currentNode = opened_files_table[currentInst->file]->node;
@@ -584,19 +581,22 @@ HRESULT getDirNodes(std::vector<node_info*> *all_info, char *path) {
 	}
 	else {
 		if (getNodeFromPath(path, true, currentNode, &n) != S_OK) {
-			/*not found, error nastavuje FS*/
+			//not found, error nastavuje FS
 			return S_FALSE;
 		}
 	}
+	//nastaveni aktualniho adresare vzdy na nultou pozici
 	node_info *info = new node_info;
 	info->name = n->name;
 	info->type = n->type;
 	info->size = n->data.size();
 	getPathFromNode(n, &(info->path));
+	//pro soubor nastavuje cestu rodice
 	if (n->type == TYPE_FILE) {
 		getPathFromNode(n->parent, &(info->pathParent));
 	}
 	all_info->push_back(info);
+	//pro kazdeho potomka se vytvori a prida info
 	for (size_t i = 0; i < n->children.size(); i++) {
 		if (n->children[i] != nullptr) {
 			node_info *info = new node_info;

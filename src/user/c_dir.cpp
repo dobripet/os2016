@@ -1,13 +1,10 @@
 ﻿#include "rtl.h"
 #include "c_dir.h"
-
-#include <string>
-#include <iostream>
 #include <sstream>
 
-/*Prints contents of a directory*/
 HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR);
 
+//vypise obsah adresare/u
 size_t __stdcall dir(const CONTEXT &regs) {
 
 	FDHandle STDIN = (FDHandle)regs.R8;
@@ -15,7 +12,7 @@ size_t __stdcall dir(const CONTEXT &regs) {
 	FDHandle STDERR = (FDHandle)regs.R10;
 	char * arg = (char*)regs.Rcx;
 
-	//parse arg
+	//parsovani argumentu
 	std::string switches;
 	std::vector<std::string> args;
 	if (!parseCommandParams(arg, &switches, &args)) {
@@ -24,7 +21,7 @@ size_t __stdcall dir(const CONTEXT &regs) {
 		return (size_t)1;
 	}
 
-	//switches
+	//zpracovani prepinacu
 	for (size_t s = 0; s < switches.length(); s++) {
 		if (tolower(switches[s]) == 'h') {
 			char * msg = "Print list of files and subdirectories in a directory.\n\n  DIR [path]\n\0";
@@ -47,14 +44,14 @@ size_t __stdcall dir(const CONTEXT &regs) {
 	}
 
 
-	/*No params, current dir*/
+	//zpracovani bez parametru, vypise aktualni adresar
 	if (args.size() == 0) {
 		if (handle_dir(nullptr, STDOUT, STDERR) != S_OK) {
 			return (size_t)1;
 		}
 	}
 	else {
-		/*multiple dirs*/
+		//zpracovani adresaru o jednom 
 		for (size_t i = 0; i < args.size(); i++) {
 			char * path = (char*)(args[i].c_str());
 			if (handle_dir(path, STDOUT, STDERR) != S_OK) {
@@ -65,7 +62,7 @@ size_t __stdcall dir(const CONTEXT &regs) {
 	return (size_t)0;
 }
 
-
+//slouzi k vypisu tabulky pro jeden adresar
 HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR) {
 	bool success;
 	size_t written;
@@ -81,6 +78,7 @@ HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR) {
 	}
 	std::stringstream ss;
 	std::stringstream text;
+	//vypis pro slozku
 	if (all_info[0]->type == TYPE_DIRECTORY) {
 		text << "Directory of: " << all_info[0]->path << "\n\n";
 		ss.width(30);
@@ -107,6 +105,7 @@ HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR) {
 		ss << "<DIR>";
 		text << ss.str() << "\n";
 	}
+	//vypis pro soubor
 	else {
 		text << "Directory of: " << all_info[0]->pathParent << "\n\n";
 		ss.width(30);
@@ -128,6 +127,7 @@ HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR) {
 		text << ss.str() << "\n";
 	}
 	delete all_info[0];
+	//vypis potomku
 	for (size_t i = 1; i < all_info.size(); i++) {
 		std::string line = "";
 		std::stringstream ss;
@@ -153,7 +153,7 @@ HRESULT handle_dir(char *path, FDHandle STDOUT, FDHandle STDERR) {
 	text << "\t\t" << dir_count << " Dir(s) \n";
 	size = text.str().length();
 	success = Write_File(STDOUT, (char *)text.str().c_str(), size, &written);
-	/*Handle not all has been written*/
+	//osetreni chyby vypisu
 	if (!success || written != size) {
 		if (Get_Last_Error() != ERR_IO_PIPE_READCLOSED) {
 			Print_Last_Error(STDERR, "DIR: writing to stdout failed.\n");

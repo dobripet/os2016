@@ -1,17 +1,14 @@
 ﻿#include "rtl.h"
 #include "c_rd.h"
 
-#include <string>
-#include <iostream>
-
-/*Removes an empty directory*/
+//odstrani adresar/e
 size_t __stdcall rd(const CONTEXT &regs) {
 
 	FDHandle STDOUT = (FDHandle)regs.R9;
 	FDHandle STDERR = (FDHandle)regs.R10;
 	char * arg = (char*)regs.Rcx;
 
-	//parse arg
+	//parsovani argumentu
 	std::string switches;
 	std::vector<std::string> args;
 	if (!parseCommandParams(arg, &switches, &args)) {
@@ -20,7 +17,7 @@ size_t __stdcall rd(const CONTEXT &regs) {
 		return (size_t)1;
 	}
 
-	//switches
+	//zpracovani prepinacu
 	for (size_t s = 0; s < switches.length(); s++) {
 		if (tolower(switches[s]) == 'h') {
 			char * msg = "Removes (deletes) an empty directory.\n\n  RD [drive:]path\n\0";
@@ -42,7 +39,7 @@ size_t __stdcall rd(const CONTEXT &regs) {
 		}
 	}
 
-	/*Calling with zero params*/
+	//zpracovani bez parametru
 	if (args.size() == 0) {
 		char * msg = "The syntax of the RD command is incorrect.\n\0";
 		Write_File(STDERR, msg, strlen(msg));
