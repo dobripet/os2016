@@ -34,12 +34,12 @@ HRESULT mkdir(node **dir, char *path, node *currentDir) {
 	if (parent != nullptr) {
 		std::string pathString(path);
 		std::vector<std::string> absolutePath = split_string(pathString);
-		if (absolutePath[absolutePath.size() - 1] == ".." || absolutePath[absolutePath.size() - 1] == ".") { //skok o adresáø výše
+		if (absolutePath[absolutePath.size() - 1] == ".." || absolutePath[absolutePath.size() - 1] == ".") { //cesta pro vytvoreni slozky nemuze koncit ".." nebo "."
 			SetLastError(ERR_IO_PATH_NOEXIST);
 			return S_FALSE;
 		}
 
-		for (size_t j = 0; j < parent->children.size(); j++) //hledání potomka v aktuálním uzlu podle cesty [i]
+		for (size_t j = 0; j < parent->children.size(); j++) //hledani potomka v aktualnim uzlu podle nazvu
 		{
 			if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) {
 				SetLastError(ERR_IO_FOLDER_EXISTS);
@@ -70,6 +70,7 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 	struct node *temp;
 	size_t i = 0;
 	(*node) = nullptr;
+	//temp = nastaveni zacatku prohledavani adresarove struktury (absolutni/relativni cesta)
 	if (str_equals(pathString.substr(0, 4), "C://")) {
 		i = 1;
 		temp = root;
@@ -77,19 +78,18 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 	else {
 		temp = currentDir;
 	}
-
-	//temp = uzel, kde mam zaèít prohledávat zadanou cestu pathString
+	
 	absolutePath = split_string(pathString);
 	struct node *walker;
 
-	for (; i < absolutePath.size() - (last ? 0 : 1); i++) //prolezení všech èástí [i] cesty
+	for (; i < absolutePath.size() - (last ? 0 : 1); i++)
 	{
 		if (absolutePath[i] == ".") {
 			continue;
 		}
 
 		walker = temp;
-		if (absolutePath[i] == "..") { //skok o adresáø výše
+		if (absolutePath[i] == "..") { //skok o adresar vyse
 			if (temp->parent == nullptr) {
 				SetLastError(ERR_IO_PATH_NOEXIST);
 				return S_FALSE;
@@ -99,9 +99,9 @@ HRESULT getNodeFromPath(char *path, bool last, node *currentDir, node **node) {
 			}
 		}
 
-		for (size_t j = 0; j < temp->children.size(); j++) //hledání potomka v aktuálním uzlu podle cesty [i]
+		for (size_t j = 0; j < temp->children.size(); j++) 
 		{
-			if (absolutePath[i] == temp->children[j]->name) { //nalezli jsme správného potomka
+			if (absolutePath[i] == temp->children[j]->name) { //nalezli jsme spravneho potomka
 				if (i == (absolutePath.size() - 1) || temp->children[j]->type == TYPE_DIRECTORY) { //pouze posledni nemusi byt slozka
 					temp = temp->children[j];
 					break;
@@ -143,22 +143,22 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 	if (parent != nullptr) {
 		std::string pathString(path);
 		std::vector<std::string> absolutePath = split_string(pathString);
-		if (absolutePath[absolutePath.size() - 1] == ".." || absolutePath[absolutePath.size() - 1] == ".") { //poslední kus cesty k souboru nemùže být skok o úroveò výš
+		if (absolutePath[absolutePath.size() - 1] == ".." || absolutePath[absolutePath.size() - 1] == ".") { //cesta k souboru nesmi koncit "." nebo ".."
 			SetLastError(ERR_IO_FILE_ISNOTFILE);
 			return S_FALSE;
 		}
-		for (size_t j = 0; j < parent->children.size(); j++) //hledání souboru v aktuálním uzlu
+		for (size_t j = 0; j < parent->children.size(); j++)
 		{
 			
-			if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) { //nalezli jsme potomka správného jména
-				if (parent->children[j]->type == TYPE_FILE) { // je to soubor, to chceme
+			if (absolutePath[absolutePath.size() - 1] == parent->children[j]->name) { 
+				if (parent->children[j]->type == TYPE_FILE) { //nalazeny potomek muze pouze typu soubor
 					if (rewrite) {
-						//chceme pøepsat data
+						//chceme prepsat data
 						parent->children[j]->data.clear();
 					}
 					(*file) = parent->children[j];
 					return S_OK;
-				} else { //je to slozka, to nechceme
+				} else { 
 					SetLastError(ERR_IO_FILE_ISNOTFILE);
 					return S_FALSE;
 				}
@@ -166,7 +166,7 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 		}
 
 		if (create) {
-			//našli jsme soubor a chceme ho vytvoøit
+			//nasli jsme soubor a chceme ho vytvorit
 			struct node *newFile = new node();
 			newFile->name = absolutePath[absolutePath.size() - 1];
 			newFile->type = TYPE_FILE;
@@ -176,7 +176,7 @@ HRESULT openFile(node **file, char *path, bool rewrite, bool create, node *curre
 			return S_OK;
 		}
 		else {
-			//nenašli jsme soubor a ani ho nechceme vytvoøit
+			//nenasli jsme soubor a ani ho nechceme vytvorit
 			SetLastError(ERR_IO_PATH_NOEXIST);
 			return S_FALSE;
 		}
@@ -207,13 +207,6 @@ HRESULT deleteNode(struct node *toDelete) {
 		if (!(toDelete->children).empty()) {
 			SetLastError(ERR_IO_FILE_NOTEMPTY);
 			return S_FALSE;
-			/* //rekurzivní mazání
-			size_t	 = (toDelete->children).size();
-			for (size_t i = 0; i < last; i++)
-			{
-				deleteFile(toDelete->children[0]);
-			}
-			*/
 		}
 
 		for (size_t i = 0; i < parent->children.size(); i++) {
@@ -235,7 +228,6 @@ HRESULT deleteNode(struct node *toDelete) {
 		}
 	}
 
-	//sem to nikdy nedoleze?
 	SetLastError(ERR_IO_PATH_NOEXIST);
 	return S_FALSE;
 }
