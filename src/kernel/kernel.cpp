@@ -47,6 +47,8 @@ void __stdcall Run_VM() {
 
 	Initialize_Kernel();
 
+	/*
+	//testovaci slozky a soubory
 	struct node *a, *b, *c, *d;
 	mkdir(&a, "zcu", getRoot());
 	mkdir(&b, "zcu/prvak", getRoot());
@@ -59,6 +61,7 @@ void __stdcall Run_VM() {
 	getData(&c, 0, strlen("nejaky text\0"), &buffer, &filled);
 	openFile(&d, "C://zcu/prvak/bbb", true, true, a);
 	setData(&d, buffer, filled);
+	*/
 
 	//run shell
 	command_params par;
